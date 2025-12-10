@@ -144,7 +144,9 @@ export default function CalendarSettingsPage() {
       await setWorkingHoursBatch(requests);
       
       toast.success('Working hours saved successfully!');
-      await loadSettings(); // Reload to get updated data
+      
+      // Redirect to calendar page after saving
+      router.push('/recruiter/calendar');
     } catch (error: any) {
       console.error('❌ [SETTINGS] Error saving working hours:', error);
       toast.error(error.message || 'Failed to save working hours');

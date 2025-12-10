@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, useCallback } from "react";
+import { useRouter } from "next/navigation";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Bot,
@@ -33,6 +34,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { toast } from "sonner";
 import CVSidebar from "@/components/layout/CVSidebar";
 import { useLayout } from "@/contexts/LayoutContext";
+import { useAuthStore } from "@/store/use-auth-store";
 import {
   startAIInterview,
   answerQuestion,
@@ -51,7 +53,10 @@ import {
   getCandidatePastInterviews,
   type InterviewScheduleResponse
 } from "@/lib/interview-api";
+import { fetchMyJobApplications } from "@/lib/my-jobs-api";
+import { fetchLikedJobs, fetchSavedJobs } from "@/lib/job-api";
 import api from "@/lib/api";
+import React from "react";
 
 // Types for chat messages
 type MessageType = 'bot' | 'user' | 'system' | 'score';
@@ -70,14 +75,29 @@ interface ChatMessage {
 // Interview stages
 type InterviewStage = 'start' | 'job-description' | 'interview' | 'completed' | 'history';
 
+type JobSource = 'applied' | 'saved' | 'liked';
+
+interface JobSourceOption {
+  jobId: number;
+  title: string;
+  company?: string;
+  description: string;
+  source: JobSource;
+}
+
 export default function AIInterviewPracticePage() {
   const { headerHeight } = useLayout();
+  const router = useRouter();
+  const { candidateId, fetchCandidateProfile } = useAuthStore();
   
   // Stage management
   const [stage, setStage] = useState<InterviewStage>('start');
   
   // Job description input
   const [jobDescription, setJobDescription] = useState('');
+  const [jobOptions, setJobOptions] = useState<JobSourceOption[]>([]);
+  const [loadingJobOptions, setLoadingJobOptions] = useState(false);
+  const [redirectingToJobs, setRedirectingToJobs] = useState(false);
   
   // Interview session state
   const [session, setSession] = useState<InterviewSessionResponse | null>(null);
@@ -113,6 +133,21 @@ export default function AIInterviewPracticePage() {
       chatContainerRef.current.scrollTop = chatContainerRef.current.scrollHeight;
     }
   }, [messages]);
+
+  // Ensure candidate profile is loaded so we can fetch personalized job sources
+  useEffect(() => {
+    const ensureCandidate = async () => {
+      if (!candidateId) {
+        try {
+          await fetchCandidateProfile();
+        } catch (error) {
+          console.error('Failed to load candidate profile:', error);
+        }
+      }
+    };
+
+    ensureCandidate();
+  }, [candidateId, fetchCandidateProfile]);
   
   // Focus input after bot message
   useEffect(() => {
@@ -134,7 +169,7 @@ export default function AIInterviewPracticePage() {
     };
     loadOngoingSessions();
   }, []);
-  
+
   // Load candidate's interviews
   const loadCandidateInterviews = useCallback(async () => {
     try {
@@ -153,6 +188,102 @@ export default function AIInterviewPracticePage() {
       setLoadingInterviews(false);
     }
   }, []);
+
+  const fetchJobDescriptionByJobId = useCallback(async (jobId: number) => {
+    try {
+      const response = await api.get(`/api/job-postings/${jobId}`);
+      const job = response.data?.result;
+      if (!job) return null;
+
+      const rawDescription = job.description || job.jobDescription;
+      const description = Array.isArray(rawDescription)
+        ? rawDescription.join('\n')
+        : rawDescription || '';
+
+      if (!description) return null;
+
+      return {
+        title: job.title || job.jobTitle || 'Job Posting',
+        company: job.recruiterInfo?.companyName || job.companyName || job.employerName,
+        description,
+      };
+    } catch (error) {
+      console.error(`Failed to fetch job description for job ${jobId}:`, error);
+      return null;
+    }
+  }, []);
+
+  const loadJobOptions = useCallback(async () => {
+    if (!candidateId) return;
+
+    setLoadingJobOptions(true);
+    try {
+      const options: JobSourceOption[] = [];
+      const seen = new Set<number>();
+
+      // Recent applications
+      const applications = await fetchMyJobApplications(candidateId);
+      applications.forEach((app) => {
+        if (!app.jobPostingId || !app.jobDescription || seen.has(app.jobPostingId)) return;
+        options.push({
+          jobId: app.jobPostingId,
+          title: app.jobTitle || 'Applied Job',
+          company: app.companyName,
+          description: app.jobDescription,
+          source: 'applied',
+        });
+        seen.add(app.jobPostingId);
+      });
+
+      // Saved and liked jobs
+      const [savedJobs, likedJobs] = await Promise.all([
+        fetchSavedJobs(candidateId),
+        fetchLikedJobs(candidateId),
+      ]);
+
+      const savedMap = new Map(savedJobs.map((job) => [job.jobId, job]));
+      const likedMap = new Map(likedJobs.map((job) => [job.jobId, job]));
+      const savedLikedIds = Array.from(new Set<number>([
+        ...savedMap.keys(),
+        ...likedMap.keys(),
+      ]));
+
+      for (const jobId of savedLikedIds) {
+        if (seen.has(jobId)) continue;
+        const detail = await fetchJobDescriptionByJobId(jobId);
+        if (!detail) continue;
+
+        options.push({
+          jobId,
+          title: detail.title || savedMap.get(jobId)?.jobTitle || likedMap.get(jobId)?.jobTitle || 'Job Posting',
+          company: detail.company,
+          description: detail.description,
+          source: savedMap.has(jobId) ? 'saved' : 'liked',
+        });
+        seen.add(jobId);
+      }
+
+      setJobOptions(options);
+
+      if (options.length === 0) {
+        setRedirectingToJobs(true);
+        setTimeout(() => router.push('/jobs-list'), 800);
+      } else {
+        setRedirectingToJobs(false);
+      }
+    } catch (error) {
+      console.error('Failed to load job descriptions for AI practice:', error);
+      toast.error('Unable to load job descriptions right now');
+    } finally {
+      setLoadingJobOptions(false);
+    }
+  }, [candidateId, fetchJobDescriptionByJobId, router]);
+
+  useEffect(() => {
+    if (candidateId) {
+      loadJobOptions();
+    }
+  }, [candidateId, loadJobOptions]);
   
   // Fetch job description from job post
   const fetchJobDescription = async (interview: InterviewScheduleResponse) => {
@@ -498,6 +629,72 @@ export default function AIInterviewPracticePage() {
     setSelectedSession(null);
     setSelectedJobTitle('');
   };
+
+  const handleOpenJobSelection = () => {
+    if (candidateId && !jobOptions.length && !loadingJobOptions) {
+      loadJobOptions();
+    }
+
+    setStage('job-description');
+
+    if (jobOptions.length === 0 && !loadingJobOptions) {
+      setRedirectingToJobs(true);
+      setTimeout(() => router.push('/jobs-list'), 600);
+    }
+  };
+
+  const renderReportContent = (report: string) => {
+    const lines = report.split('\n').map((line) => line.trim()).filter(Boolean);
+    const blocks: React.ReactNode[] = [];
+    let listBuffer: string[] = [];
+
+    const flushList = () => {
+      if (listBuffer.length === 0) return;
+      blocks.push(
+        <ul className="space-y-2" key={`list-${blocks.length}`}>
+          {listBuffer.map((item, idx) => (
+            <li key={idx} className="flex items-start gap-3 text-sm text-slate-700 leading-relaxed">
+              <span className="mt-1 h-2 w-2 rounded-full bg-blue-500" />
+              <span className="flex-1">{item}</span>
+            </li>
+          ))}
+        </ul>
+      );
+      listBuffer = [];
+    };
+
+    lines.forEach((line) => {
+      const clean = line.replace(/^\*\*|\*\*$/g, '');
+      const isHeading = line.startsWith('**') && line.endsWith('**') && line.length > 4;
+      const isBullet = line.startsWith('- ') || line.startsWith('• ');
+
+      if (isHeading) {
+        flushList();
+        blocks.push(
+          <div className="flex items-center gap-2 text-sm font-semibold text-slate-900" key={`h-${blocks.length}`}>
+            <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-blue-100 text-blue-700 text-[11px]">◆</span>
+            {clean}
+          </div>
+        );
+        return;
+      }
+
+      if (isBullet) {
+        listBuffer.push(clean.replace(/^(-|•)\s*/, ''));
+        return;
+      }
+
+      flushList();
+      blocks.push(
+        <p className="text-sm text-slate-700 leading-relaxed bg-white/70 border border-slate-100 rounded-lg px-3 py-2" key={`p-${blocks.length}`}>
+          {clean}
+        </p>
+      );
+    });
+
+    flushList();
+    return <div className="space-y-3">{blocks}</div>;
+  };
   
   // Render start screen
   const renderStartScreen = () => (
@@ -619,7 +816,7 @@ export default function AIInterviewPracticePage() {
       <div className="flex flex-col sm:flex-row gap-4 justify-center">
         <Button
           size="lg"
-          onClick={() => setStage('job-description')}
+          onClick={handleOpenJobSelection}
           className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700 text-white shadow-lg"
         >
           <PlusCircle className="w-5 h-5 mr-2" />
@@ -683,8 +880,10 @@ export default function AIInterviewPracticePage() {
               <Button
                 variant="outline"
                 onClick={() => {
+                  if (!jobOptions.length && !loadingJobOptions) {
+                    loadJobOptions();
+                  }
                   setShowInterviewSelector(true);
-                  loadCandidateInterviews();
                 }}
                 className="border-blue-300 text-blue-700 hover:bg-blue-100"
               >
@@ -707,25 +906,74 @@ export default function AIInterviewPracticePage() {
               <span className="w-full border-t" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
-              <span className="bg-white px-2 text-muted-foreground">Or enter manually</span>
+              <span className="bg-white px-2 text-muted-foreground">Select from your jobs</span>
             </div>
           </div>
           
-          <Textarea
-            placeholder="Paste the job description here...
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <h4 className="font-medium text-gray-900">Pick a job description</h4>
+                <p className="text-sm text-gray-600">Use your applied, liked, or saved jobs to practice.</p>
+              </div>
+              {loadingJobOptions && <Loader2 className="w-5 h-5 text-blue-600 animate-spin" />}
+            </div>
 
-Example:
-We are looking for a Senior Full-Stack Developer with experience in:
-- React, TypeScript, Node.js
-- Database design (PostgreSQL, MongoDB)
-- RESTful API design
-- Agile methodologies
+            {redirectingToJobs ? (
+              <div className="py-10 text-center text-gray-500">
+                Redirecting to All Jobs...
+              </div>
+            ) : loadingJobOptions ? (
+              <div className="py-10 text-center text-gray-500">Loading job descriptions...</div>
+            ) : jobOptions.length === 0 ? (
+              <div className="py-10 text-center text-gray-500">
+                No job descriptions found from your activity.
+              </div>
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                {jobOptions.slice(0, 4).map((option) => (
+                  <button
+                    key={`${option.source}-${option.jobId}`}
+                    type="button"
+                    onClick={() => {
+                      setJobDescription(option.description);
+                      setSelectedJobTitle(`${option.title}${option.company ? ` • ${option.company}` : ''}`);
+                    }}
+                    className="w-full p-4 text-left border rounded-xl hover:border-blue-400 hover:shadow-sm transition bg-gray-50"
+                  >
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="font-semibold text-gray-900 line-clamp-1">{option.title}</p>
+                        {option.company && (
+                          <p className="text-sm text-gray-600 line-clamp-1">{option.company}</p>
+                        )}
+                        <p className="text-xs text-gray-500 mt-2 line-clamp-2">
+                          {option.description.substring(0, 180)}{option.description.length > 180 ? '...' : ''}
+                        </p>
+                      </div>
+                      <Badge variant="outline" className="text-xs uppercase">
+                        {option.source}
+                      </Badge>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
 
-Responsibilities include leading technical projects, mentoring junior developers..."
-            value={jobDescription}
-            onChange={(e) => setJobDescription(e.target.value)}
-            className="min-h-[200px] resize-none"
-          />
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="text-sm font-medium text-gray-800">Selected Job Description</p>
+              {selectedJobTitle && <Badge variant="outline">{selectedJobTitle}</Badge>}
+            </div>
+            <Textarea
+              placeholder="Select a job to load its description"
+              value={jobDescription}
+              readOnly
+              disabled
+              className="min-h-[200px] resize-none bg-gray-50 cursor-not-allowed"
+            />
+          </div>
           
           <div className="flex items-center justify-between">
             <p className="text-sm text-gray-500">
@@ -733,7 +981,7 @@ Responsibilities include leading technical projects, mentoring junior developers
             </p>
             <Button
               onClick={handleStartInterview}
-              disabled={!jobDescription.trim() || isLoading}
+              disabled={!jobDescription.trim() || isLoading || redirectingToJobs}
               className="bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700"
             >
               {isLoading ? (
@@ -752,69 +1000,64 @@ Responsibilities include leading technical projects, mentoring junior developers
         </CardContent>
       </Card>
       
-      {/* Interview Selector Dialog */}
+      {/* Job Selector Dialog */}
       <Dialog open={showInterviewSelector} onOpenChange={setShowInterviewSelector}>
         <DialogContent className="max-w-lg max-h-[80vh] overflow-hidden flex flex-col">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Calendar className="w-5 h-5 text-blue-600" />
-              Select an Interview
+              Select a Job
             </DialogTitle>
             <DialogDescription>
-              Choose from your scheduled or past interviews to practice with the actual job description.
+              Choose from your applied, liked, or saved jobs to practice with the actual description.
             </DialogDescription>
           </DialogHeader>
           
           <div className="flex-1 overflow-y-auto py-2">
-            {loadingInterviews ? (
+            {loadingJobOptions ? (
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="w-8 h-8 text-blue-600 animate-spin" />
               </div>
-            ) : candidateInterviews.length === 0 ? (
+            ) : jobOptions.length === 0 ? (
               <div className="text-center py-8">
                 <Calendar className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                <p className="text-gray-500">No interviews found</p>
+                <p className="text-gray-500">No job activity found</p>
                 <p className="text-sm text-gray-400 mt-1">
-                  You can still enter a job description manually
+                  Browse jobs to start practicing.
                 </p>
               </div>
             ) : (
               <div className="space-y-2">
-                {candidateInterviews.map((interview) => (
+                {jobOptions.map((option) => (
                   <button
-                    key={interview.id}
-                    onClick={() => fetchJobDescription(interview)}
+                    key={`${option.source}-modal-${option.jobId}`}
+                    onClick={() => {
+                      setJobDescription(option.description);
+                      setSelectedJobTitle(`${option.title}${option.company ? ` • ${option.company}` : ''}`);
+                      setShowInterviewSelector(false);
+                    }}
                     disabled={isLoading}
                     className="w-full p-4 bg-gray-50 hover:bg-blue-50 rounded-xl border border-gray-200 hover:border-blue-300 transition-all text-left group disabled:opacity-50"
                   >
                     <div className="flex items-start gap-3">
-                      {interview.companyLogo ? (
-                        <img 
-                          src={interview.companyLogo} 
-                          alt={interview.companyName || "Company"} 
-                          className="w-12 h-12 rounded-lg object-contain border bg-white"
-                        />
-                      ) : (
-                        <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center">
-                          <Building2 className="w-6 h-6 text-blue-600" />
-                        </div>
-                      )}
+                      <div className="w-12 h-12 rounded-lg bg-blue-100 flex items-center justify-center">
+                        <Building2 className="w-6 h-6 text-blue-600" />
+                      </div>
                       <div className="flex-1 min-w-0">
                         <h4 className="font-semibold text-gray-900 truncate group-hover:text-blue-700">
-                          {interview.jobTitle || interview.positionTitle || "Position"}
+                          {option.title}
                         </h4>
-                        <p className="text-sm text-gray-600 truncate">
-                          {interview.companyName || "Company"}
+                        {option.company && (
+                          <p className="text-sm text-gray-600 truncate">
+                            {option.company}
+                          </p>
+                        )}
+                        <p className="text-xs text-gray-500 mt-1 line-clamp-2">
+                          {option.description.substring(0, 200)}{option.description.length > 200 ? '...' : ''}
                         </p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Badge variant="outline" className="text-xs">
-                            {new Date(interview.scheduledDate).toLocaleDateString()}
-                          </Badge>
-                          <Badge 
-                            variant={interview.status === 'COMPLETED' ? 'secondary' : 'default'}
-                            className="text-xs"
-                          >
-                            {interview.status}
+                        <div className="flex items-center gap-2 mt-2">
+                          <Badge variant="outline" className="text-xs uppercase">
+                            {option.source}
                           </Badge>
                         </div>
                       </div>
@@ -1063,17 +1306,25 @@ Responsibilities include leading technical projects, mentoring junior developers
         </TabsList>
 
         <TabsContent value="report">
-          <Card>
-            <CardContent className="pt-6">
-              <div className="prose prose-sm max-w-none">
-                {session?.finalReport ? (
-                  <div className="whitespace-pre-wrap text-gray-700">
-                    {session.finalReport}
+          <Card className="bg-gradient-to-br from-slate-50 to-white border-slate-200 shadow-sm">
+            <CardContent className="pt-6 space-y-4">
+              {session?.finalReport ? (
+                <div className="space-y-5">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-xs uppercase text-slate-500 tracking-[0.08em]">AI Summary</p>
+                      <h3 className="text-lg font-semibold text-slate-900">Performance Overview</h3>
+                      <p className="text-xs text-slate-500 mt-1">Auto-generated from your answers</p>
+                    </div>
+                    <Badge variant="outline" className="text-xs bg-white text-slate-700 border-slate-200">Auto-generated</Badge>
                   </div>
-                ) : (
-                  <p className="text-gray-500">Report not available</p>
-                )}
-              </div>
+                  <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-4">
+                    {renderReportContent(session.finalReport)}
+                  </div>
+                </div>
+              ) : (
+                <p className="text-gray-500">Report not available</p>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -1174,7 +1425,7 @@ Responsibilities include leading technical projects, mentoring junior developers
           </Button>
           
           {/* Session Details */}
-          <Card className="mb-6">
+          <Card className="mb-6 bg-gradient-to-br from-slate-50 to-white border-slate-200">
             <CardHeader>
               <div className="flex items-center justify-between">
                 <div>
@@ -1224,33 +1475,33 @@ Responsibilities include leading technical projects, mentoring junior developers
               )}
 
               <div className="grid grid-cols-3 gap-4 mb-6">
-                <div className="text-center p-4 bg-gray-50 rounded-lg">
-                  <div className="text-2xl font-bold text-green-600">
-                    {selectedSession.averageScore?.toFixed(1) || '-'}
+                {[{
+                  label: 'Avg Score',
+                  value: selectedSession.averageScore?.toFixed(1) || '-',
+                  color: 'text-green-600'
+                }, {
+                  label: 'Questions',
+                  value: selectedSession.questions?.length || 0,
+                  color: 'text-blue-600'
+                }, {
+                  label: 'Duration',
+                  value: formatSessionDuration(selectedSession.createdAt, selectedSession.completedAt),
+                  color: 'text-blue-600'
+                }].map((item, idx) => (
+                  <div key={idx} className="text-center p-4 bg-white rounded-xl border border-slate-200 shadow-xs">
+                    <div className={`text-2xl font-bold ${item.color}`}>
+                      {item.value}
+                    </div>
+                    <div className="text-sm text-slate-600">{item.label}</div>
                   </div>
-                  <div className="text-sm text-gray-600">Avg Score</div>
-                </div>
-                <div className="text-center p-4 bg-gray-50 rounded-lg">
-                  <div className="text-2xl font-bold text-blue-600">
-                    {selectedSession.questions?.length || 0}
-                  </div>
-                  <div className="text-sm text-gray-600">Questions</div>
-                </div>
-                <div className="text-center p-4 bg-gray-50 rounded-lg">
-                  <div className="text-2xl font-bold text-blue-600">
-                    {formatSessionDuration(selectedSession.createdAt, selectedSession.completedAt)}
-                  </div>
-                  <div className="text-sm text-gray-600">Duration</div>
-                </div>
+                ))}
               </div>
               
               {/* Job Description Preview */}
               <div className="mb-6">
                 <h4 className="font-medium text-gray-700 mb-2">Job Description</h4>
-                <div className="bg-gray-50 rounded-lg p-3 max-h-32 overflow-y-auto">
-                  <p className="text-sm text-gray-600 whitespace-pre-wrap">
-                    {selectedSession.jobDescription}
-                  </p>
+                <div className="bg-white rounded-xl border border-slate-200 p-4 max-h-32 overflow-y-auto text-sm text-slate-700 whitespace-pre-wrap">
+                  {selectedSession.jobDescription}
                 </div>
               </div>
               
@@ -1258,10 +1509,8 @@ Responsibilities include leading technical projects, mentoring junior developers
               {selectedSession.finalReport && (
                 <div className="mb-6">
                   <h4 className="font-medium text-gray-700 mb-2">Final Report</h4>
-                  <div className="bg-blue-50 rounded-lg p-4">
-                    <p className="text-sm text-gray-700 whitespace-pre-wrap">
-                      {selectedSession.finalReport}
-                    </p>
+                  <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs">
+                    {renderReportContent(selectedSession.finalReport)}
                   </div>
                 </div>
               )}
@@ -1271,26 +1520,26 @@ Responsibilities include leading technical projects, mentoring junior developers
                 <h4 className="font-medium text-gray-700 mb-3">Questions & Answers</h4>
                 <div className="space-y-4">
                   {selectedSession.questions?.map((q) => (
-                    <div key={q.questionId} className="border rounded-lg p-4">
+                    <div key={q.questionId} className="border border-slate-200 rounded-xl p-4 bg-white shadow-xs">
                       <div className="flex items-start justify-between mb-2">
-                        <span className="font-medium">Q{q.questionNumber}</span>
+                        <span className="font-semibold text-slate-900">Q{q.questionNumber}</span>
                         {q.score !== undefined && (
                           <Badge className={getScoreColor(q.score)}>
                             {q.score}/10
                           </Badge>
                         )}
                       </div>
-                      <p className="text-gray-700 mb-2">{q.question}</p>
+                      <p className="text-sm text-slate-800 mb-3 leading-relaxed">{q.question}</p>
                       {q.candidateAnswer && (
-                        <div className="bg-gray-50 rounded p-2 mb-2">
-                          <p className="text-xs text-gray-500">Your answer:</p>
-                          <p className="text-sm">{q.candidateAnswer}</p>
+                        <div className="bg-slate-50 rounded-lg p-3 mb-2 border border-slate-100">
+                          <p className="text-xs text-slate-500 mb-1">Your answer</p>
+                          <p className="text-sm text-slate-800 leading-relaxed">{q.candidateAnswer}</p>
                         </div>
                       )}
                       {q.feedback && (
-                        <div className="bg-blue-50 rounded p-2">
-                          <p className="text-xs text-blue-600">Feedback:</p>
-                          <p className="text-sm">{q.feedback}</p>
+                        <div className="bg-blue-50 rounded-lg p-3 border border-blue-100">
+                          <p className="text-xs text-blue-700 mb-1">AI Feedback</p>
+                          <p className="text-sm text-slate-800 leading-relaxed">{q.feedback}</p>
                         </div>
                       )}
                     </div>

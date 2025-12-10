@@ -26,6 +26,16 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/use-auth-store";
 import {
@@ -86,6 +96,7 @@ export default function ScheduleInterviewPage() {
   const [mounted, setMounted] = useState(false);
   const [isReschedule, setIsReschedule] = useState(false);
   const [originalInterview, setOriginalInterview] = useState<InterviewScheduleResponse | null>(null);
+  const [showConfirmDialog, setShowConfirmDialog] = useState(false);
   
   // Use ref to ensure handleSchedule always has the latest interview data
   // This prevents stale closure issues with React state
@@ -864,7 +875,7 @@ export default function ScheduleInterviewPage() {
 
               {/* Schedule Button */}
               <Button
-                onClick={handleSchedule}
+                onClick={() => setShowConfirmDialog(true)}
                 disabled={scheduling || !form.scheduledTime}
                 className="w-full"
                 size="lg"
@@ -896,6 +907,48 @@ export default function ScheduleInterviewPage() {
           </Card>
         </div>
       </div>
+
+      {/* Confirmation Dialog */}
+      <AlertDialog open={showConfirmDialog} onOpenChange={setShowConfirmDialog}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {isReschedule ? "Confirm Interview Reschedule" : "Confirm Interview Schedule"}
+            </AlertDialogTitle>
+            <AlertDialogDescription asChild>
+              <div className="space-y-3">
+                <p>
+                  {isReschedule 
+                    ? "Are you sure you want to reschedule this interview? The candidate will be notified of the change."
+                    : "Please confirm the interview details. The candidate will receive a notification about this interview."}
+                </p>
+                <div className="bg-muted p-3 rounded-lg space-y-2 text-sm">
+                  <div><strong>Candidate:</strong> {form.candidateName}</div>
+                  <div><strong>Position:</strong> {form.positionTitle}</div>
+                  <div><strong>Date:</strong> {form.scheduledDate}</div>
+                  <div><strong>Time:</strong> {form.scheduledTime ? formatTime(form.scheduledTime) : "Not selected"}</div>
+                  <div><strong>Duration:</strong> {form.durationMinutes} minutes</div>
+                  <div><strong>Type:</strong> {INTERVIEW_TYPES.find(t => t.value === form.interviewType)?.label || form.interviewType}</div>
+                  {form.location && <div><strong>Location:</strong> {form.location}</div>}
+                  {form.meetingLink && <div><strong>Meeting Link:</strong> {form.meetingLink}</div>}
+                </div>
+                <p className="text-amber-600 font-medium">
+                  ⚠️ A notification will be sent to the candidate immediately after confirmation.
+                </p>
+              </div>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => {
+              setShowConfirmDialog(false);
+              handleSchedule();
+            }}>
+              {isReschedule ? "Confirm Reschedule" : "Confirm Schedule"}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

@@ -207,9 +207,28 @@ const CVManagementPage = () => {
       return;
     }
 
-    // If can create, navigate to CV builder with clean slate
-    // The cv-templates page will use SAMPLE_CV_DATA as default when no data is provided
-    router.push('/cv-templates');
+    // Create new resume via API
+    try {
+      toast.loading('Creating new CV...', { id: 'create-cv' });
+      
+      const { createResume } = await import('@/services/resumeService');
+      
+      // Call API to create resume
+      const newResume = await createResume({
+        aboutMe: "",
+        resumeUrl: "",
+        type: "WEB",
+        isActive: false
+      });
+
+      toast.success('CV created successfully!', { id: 'create-cv' });
+      
+      // Navigate to cm-profile with resumeId
+      router.push(`/candidate/cm-profile?resumeId=${newResume.resumeId}`);
+    } catch (error: any) {
+      console.error('Failed to create CV:', error);
+      toast.error(error?.message || 'Failed to create CV. Please try again.', { id: 'create-cv' });
+    }
   }, [builtCVs.length, currentPackage, router]);
 
   // Loading state - use skeleton

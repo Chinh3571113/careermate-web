@@ -261,6 +261,21 @@ export function NotificationBell() {
         redirectUrl = '/candidate/my-jobs';
         console.log('✅ [Candidate] Application status changed -> /candidate/my-jobs');
       }
+      else if (eventType === 'OFFER_EXTENDED') {
+        // v3.1: Job offer extended - candidate needs to confirm
+        redirectUrl = '/candidate/my-jobs';
+        console.log('🎉 [Candidate] Job offer extended -> /candidate/my-jobs');
+      }
+      else if (eventType === 'OFFER_ACCEPTED') {
+        // v3.1: Candidate accepted offer - notification for recruiter
+        redirectUrl = '/recruiter/recruiter-feature/candidates/applications';
+        console.log('🎉 [Recruiter] Offer accepted by candidate -> /recruiter/recruiter-feature/candidates/applications');
+      }
+      else if (eventType === 'OFFER_DECLINED') {
+        // v3.1: Candidate declined offer - notification for recruiter
+        redirectUrl = '/recruiter/recruiter-feature/candidates/applications';
+        console.log('❌ [Recruiter] Offer declined by candidate -> /recruiter/recruiter-feature/candidates/applications');
+      }
       else if (eventType === 'AUTO_WITHDRAW' || eventType === 'APPLICATION_AUTO_WITHDRAWN' || eventType === 'APPLICATIONS_AUTO_WITHDRAWN') {
         // Application(s) auto-withdrawn because candidate was hired elsewhere
         redirectUrl = '/candidate/my-jobs';

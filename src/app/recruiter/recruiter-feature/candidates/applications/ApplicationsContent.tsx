@@ -3,7 +3,7 @@
 import { Search, Filter, Download, FileText, Calendar, MapPin, Clock, CheckCircle, XCircle, Eye, RefreshCw, AlertCircle, MoreHorizontal, ChevronDown } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { getJobApplications, getRecruiterApplications, getRecruiterApplicationsFiltered, approveJobApplication, rejectJobApplication, setReviewingJobApplication, JobApplication, updateJobApplicationStatus } from "@/lib/recruiter-api";
+import { getJobApplications, getRecruiterApplications, getRecruiterApplicationsFiltered, approveJobApplication, rejectJobApplication, setReviewingJobApplication, JobApplication, updateJobApplicationStatus, extendJobOffer } from "@/lib/recruiter-api";
 import { createEmploymentVerification } from "@/lib/employment-api";
 import { StatusBadgeFull } from "@/components/shared/StatusBadge";
 import { getRecruiterActions, sortStatuses } from "@/lib/status-utils";
@@ -49,11 +49,12 @@ export function ApplicationsContent() {
   const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
   const [isBanDialogOpen, setIsBanDialogOpen] = useState(false);
   const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false);
+  const [isExtendOfferDialogOpen, setIsExtendOfferDialogOpen] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
   const [banReason, setBanReason] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
 
-  // Available statuses for filtering (13 statuses)
+  // Available statuses for filtering (13 statuses including OFFER_EXTENDED)
   const availableStatuses: Array<JobApplicationStatus | 'ALL'> = [
     'ALL',
     'SUBMITTED',
@@ -61,10 +62,10 @@ export function ApplicationsContent() {
     'INTERVIEW_SCHEDULED',
     'INTERVIEWED',
     'APPROVED',
+    'OFFER_EXTENDED',
     'ACCEPTED',
     'WORKING',
     'REJECTED',
-    'PROBATION_FAILED',
     'TERMINATED',
     'NO_RESPONSE',
     'WITHDRAWN',
@@ -121,6 +122,7 @@ export function ApplicationsContent() {
 
         case 'start_employment':
           // For APPROVED/ACCEPTED status - transition to WORKING and create employment record
+          // Note: In v3.1, recruiters should use extend_offer instead for APPROVED candidates
           if (confirm('Are you sure you want to start this employee? This will mark them as currently working and begin employment tracking.')) {
             try {
               // First create employment verification record
@@ -146,16 +148,14 @@ export function ApplicationsContent() {
           }
           break;
 
-        case 'terminate':
-          router.push('/recruiter/employments');
+        case 'extend_offer':
+          // v3.1: Recruiter extends job offer to candidate (APPROVED → OFFER_EXTENDED)
+          setSelectedApplication(application || null);
+          setIsExtendOfferDialogOpen(true);
           break;
 
-        case 'probation_failed':
-          if (confirm('Are you sure you want to mark this employee as probation failed?')) {
-            await updateJobApplicationStatus(applicationId, 'PROBATION_FAILED');
-            toast.success('Marked as probation failed');
-            await fetchApplications();
-          }
+        case 'terminate':
+          router.push('/recruiter/employments');
           break;
 
         case 'view_employment':
@@ -750,6 +750,76 @@ export function ApplicationsContent() {
                 <>
                   <XCircle className="mr-2 h-4 w-4" />
                   Confirm Ban
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Extend Offer Dialog */}
+      <Dialog open={isExtendOfferDialogOpen} onOpenChange={setIsExtendOfferDialogOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <CheckCircle className="h-5 w-5 text-green-600" />
+              Extend Job Offer
+            </DialogTitle>
+            <DialogDescription>
+              You are about to extend a job offer to this candidate. They will receive a notification and must confirm or decline before they can start working.
+            </DialogDescription>
+          </DialogHeader>
+          {selectedApplication && (
+            <div className="bg-green-50 p-4 rounded-md border border-green-200 my-4">
+              <p className="font-medium text-gray-900">{selectedApplication.fullName}</p>
+              <p className="text-sm text-gray-600">{selectedApplication.jobTitle}</p>
+              <p className="text-sm text-gray-500 mt-1">Current Status: {selectedApplication.status}</p>
+            </div>
+          )}
+          <div className="bg-amber-50 p-3 rounded-md border border-amber-200 text-sm">
+            <p className="font-medium text-amber-800">⚠️ Important:</p>
+            <ul className="list-disc list-inside text-amber-700 mt-1 space-y-1">
+              <li>The candidate will be notified immediately</li>
+              <li>They must accept or decline the offer</li>
+              <li>You cannot extend offers to candidates already employed elsewhere</li>
+            </ul>
+          </div>
+          <DialogFooter className="mt-4">
+            <Button
+              variant="outline"
+              onClick={() => setIsExtendOfferDialogOpen(false)}
+              disabled={actionLoading}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={async () => {
+                if (!selectedApplication) return;
+                try {
+                  setActionLoading(true);
+                  await extendJobOffer(selectedApplication.id);
+                  toast.success('🎉 Job offer extended! Waiting for candidate confirmation.');
+                  setIsExtendOfferDialogOpen(false);
+                  await fetchApplications();
+                } catch (error: any) {
+                  console.error("Failed to extend offer:", error);
+                  toast.error(error.message || "Failed to extend job offer. The candidate may already be employed.");
+                } finally {
+                  setActionLoading(false);
+                }
+              }}
+              disabled={actionLoading}
+              className="bg-green-600 hover:bg-green-700"
+            >
+              {actionLoading ? (
+                <>
+                  <RefreshCw className="mr-2 h-4 w-4 animate-spin" />
+                  Extending Offer...
+                </>
+              ) : (
+                <>
+                  <CheckCircle className="mr-2 h-4 w-4" />
+                  Confirm & Extend Offer
                 </>
               )}
             </Button>

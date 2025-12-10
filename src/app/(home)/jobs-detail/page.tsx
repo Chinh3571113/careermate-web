@@ -19,6 +19,8 @@ import {
   fetchLikedJobs,
   type JobPosting,
 } from "@/lib/job-api";
+import { fetchMyJobApplications } from "@/lib/my-jobs-api";
+import { normalizeStatus } from "@/lib/status-utils";
 import { useAuthStore } from "@/store/use-auth-store";
 import toast from "react-hot-toast";
 import { JobCardSkeleton, JobDetailSkeleton } from "@/components/skeletons";
@@ -243,6 +245,7 @@ export default function JobsDetailPage() {
   // ✅ Use maps to track saved/liked status per job
   const [savedMap, setSavedMap] = useState<Record<number, boolean>>({});
   const [likedMap, setLikedMap] = useState<Record<number, boolean>>({});
+  const [appliedStatusMap, setAppliedStatusMap] = useState<Record<number, string>>({});
 
   const [isSaving, setIsSaving] = useState<boolean>(false);
   const [isLiking, setIsLiking] = useState<boolean>(false);
@@ -266,6 +269,29 @@ export default function JobsDetailPage() {
       });
     }
   }, [isAuthenticated, candidateId, fetchCandidateProfile]);
+
+  // ✅ Load candidate's existing applications to disable apply when already in flow/working
+  useEffect(() => {
+    const loadAppliedStatuses = async () => {
+      if (!isAuthenticated || !candidateId) {
+        setAppliedStatusMap({});
+        return;
+      }
+
+      try {
+        const apps = await fetchMyJobApplications(candidateId);
+        const statusMap: Record<number, string> = {};
+        apps.forEach((app) => {
+          statusMap[app.jobPostingId] = normalizeStatus(app.status);
+        });
+        setAppliedStatusMap(statusMap);
+      } catch (err) {
+        console.error("❌ Failed to load candidate applications:", err);
+      }
+    };
+
+    loadAppliedStatuses();
+  }, [isAuthenticated, candidateId]);
   const jobsPerPage = 10;
 
   // Fetch jobs from API
@@ -352,6 +378,17 @@ export default function JobsDetailPage() {
     [selectedJobId, likedMap]
   );
 
+  // Application guard: disable apply when already in flow/working
+  const appliedStatus = useMemo(() =>
+    selectedJobId ? appliedStatusMap[selectedJobId] : undefined,
+    [selectedJobId, appliedStatusMap]
+  );
+  const reapplyAllowed = new Set(["rejected", "withdrawn", "no_response", "terminated"]);
+  const isApplyDisabled = !!appliedStatus && !reapplyAllowed.has(appliedStatus);
+  const appliedStatusLabel = appliedStatus
+    ? appliedStatus.replace(/_/g, " ").toUpperCase()
+    : undefined;
+
   // ✅ Memoize handlers with useCallback
   const handleJobSelect = useCallback((jobId: number) => {
     setSelectedJobId(jobId);
@@ -369,9 +406,13 @@ export default function JobsDetailPage() {
       setShowLoginModal(true);
       return;
     }
+    if (isApplyDisabled) {
+      toast.error("You already have an application in progress for this job.");
+      return;
+    }
     // Navigate directly to the apply page (skip redirect stub)
     router.push(`/jobs-detail/${selectedJobId}/apply`);
-  }, [isAuthenticated, selectedJobId, router]);
+  }, [isAuthenticated, isApplyDisabled, selectedJobId, router]);
 
   // Handler for CV Analyse button
   const handleCVAnalyse = useCallback(async () => {
@@ -983,9 +1024,12 @@ ${jobData.recruiterInfo?.about || 'N/A'}
                       <div className="flex gap-3 mb-4">
                         <button
                           onClick={handleApplyNow}
-                          className="flex-1 bg-gradient-to-r from-[#3a4660] to-gray-400 text-white px-6 py-2 rounded-md font-medium hover:bg-gradient-to-r hover:from-[#3a4660] hover:to-[#3a4660] transition-colors"
+                          disabled={isApplyDisabled}
+                          className="flex-1 bg-gradient-to-r from-[#3a4660] to-gray-400 text-white px-6 py-2 rounded-md font-medium hover:bg-gradient-to-r hover:from-[#3a4660] hover:to-[#3a4660] transition-colors disabled:opacity-60 disabled:cursor-not-allowed"
                         >
-                          Apply Now
+                          {isApplyDisabled
+                            ? `Already applied${appliedStatusLabel ? ` (${appliedStatusLabel})` : ""}`
+                            : "Apply Now"}
                         </button>
 
                         {/* Like Button */}

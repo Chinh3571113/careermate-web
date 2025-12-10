@@ -71,6 +71,9 @@ export interface InterviewScheduleResponse {
   hasInterviewTimePassed?: boolean;
   isInterviewInProgress?: boolean;
   hoursUntilInterview?: number;
+  // Conflict detection - indicates if candidate has another interview at overlapping time
+  hasConflict?: boolean;
+  conflictDetails?: string;       // Details about the conflicting interview
   // Candidate fields from backend
   candidateId?: number;
   candidateName?: string;

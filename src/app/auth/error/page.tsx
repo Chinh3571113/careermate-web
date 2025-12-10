@@ -1,153 +1,86 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
-import { AlertCircle, ArrowLeft, Home } from "lucide-react";
+import { useSearchParams } from "next/navigation";
+import Link from "next/link";
+import { Suspense } from "react";
 
-/**
- * Authentication Error Page Content
- */
 function AuthErrorContent() {
   const searchParams = useSearchParams();
-  const router = useRouter();
-  const [error, setError] = useState<string>("Unknown authentication error");
-  const [errorDetails, setErrorDetails] = useState<string | null>(null);
+  const error = searchParams.get("error");
 
-  useEffect(() => {
-    // Get error from query parameters
-    const errorParam = searchParams.get("error");
-    const errorDescription = searchParams.get("error_description");
-    const errorMessage = searchParams.get("message");
-
-    if (errorParam) {
-      setError(getErrorMessage(errorParam));
-    } else if (errorMessage) {
-      setError(errorMessage);
+  const getErrorMessage = (errorCode: string | null) => {
+    switch (errorCode) {
+      case "Configuration":
+        return "There is a problem with the server configuration.";
+      case "AccessDenied":
+        return "Access denied. You do not have permission to sign in.";
+      case "Verification":
+        return "The verification link has expired or has already been used.";
+      case "OAuthSignin":
+        return "Error occurred while trying to sign in with OAuth provider.";
+      case "OAuthCallback":
+        return "Error occurred during OAuth callback.";
+      case "OAuthCreateAccount":
+        return "Could not create OAuth account.";
+      case "EmailCreateAccount":
+        return "Could not create email account.";
+      case "Callback":
+        return "Error occurred during callback.";
+      case "OAuthAccountNotLinked":
+        return "This email is already associated with another account.";
+      case "EmailSignin":
+        return "Error sending email sign-in link.";
+      case "CredentialsSignin":
+        return "Invalid credentials. Please check your email and password.";
+      case "SessionRequired":
+        return "Please sign in to access this page.";
+      default:
+        return "An unexpected authentication error occurred.";
     }
-
-    if (errorDescription) {
-      setErrorDetails(errorDescription);
-    }
-  }, [searchParams]);
-
-  const getErrorMessage = (errorCode: string): string => {
-    const errorMessages: Record<string, string> = {
-      "Configuration": "Authentication configuration error",
-      "AccessDenied": "Access denied. You don't have permission to sign in.",
-      "Verification": "Email verification failed",
-      "OAuthSignin": "Error starting OAuth sign-in",
-      "OAuthCallback": "Error handling OAuth callback",
-      "OAuthCreateAccount": "Could not create OAuth account",
-      "EmailCreateAccount": "Could not create email account",
-      "Callback": "Error in authentication callback",
-      "OAuthAccountNotLinked": "This account is already linked to another provider",
-      "EmailSignin": "Error sending sign-in email",
-      "CredentialsSignin": "Invalid credentials",
-      "SessionRequired": "Please sign in to access this page",
-      "Default": "An error occurred during authentication",
-    };
-
-    return errorMessages[errorCode] || errorMessages["Default"];
-  };
-
-  const handleGoBack = () => {
-    router.back();
-  };
-
-  const handleGoHome = () => {
-    router.push("/");
-  };
-
-  const handleRetrySignIn = () => {
-    router.push("/sign-in");
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-50 flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-white rounded-lg shadow-xl p-8">
-        {/* Error Icon */}
-        <div className="flex justify-center mb-6">
-          <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center">
-            <AlertCircle className="w-10 h-10 text-red-600" />
-          </div>
-        </div>
-
-        {/* Error Title */}
-        <h1 className="text-2xl font-bold text-gray-900 text-center mb-4">
-          Authentication Error
-        </h1>
-
-        {/* Error Message */}
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-6">
-          <p className="text-red-800 font-semibold mb-2">{error}</p>
-          {errorDetails && (
-            <p className="text-red-700 text-sm">{errorDetails}</p>
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-md w-full space-y-8">
+        <div className="text-center">
+          <h2 className="mt-6 text-3xl font-extrabold text-gray-900">
+            Authentication Error
+          </h2>
+          <p className="mt-2 text-sm text-gray-600">
+            {getErrorMessage(error)}
+          </p>
+          {error && (
+            <p className="mt-1 text-xs text-gray-400">Error code: {error}</p>
           )}
         </div>
-
-        {/* Error Code (if available) */}
-        {searchParams.get("error") && (
-          <div className="mb-6">
-            <p className="text-sm text-gray-600">
-              Error Code:{" "}
-              <code className="bg-gray-100 px-2 py-1 rounded text-red-600 font-mono">
-                {searchParams.get("error")}
-              </code>
-            </p>
-          </div>
-        )}
-
-        {/* Action Buttons */}
-        <div className="space-y-3">
-          <button
-            onClick={handleRetrySignIn}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
+        <div className="mt-8 space-y-4">
+          <Link
+            href="/auth/login"
+            className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
           >
-            Try Again
-          </button>
-
-          <button
-            onClick={handleGoHome}
-            className="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 px-4 rounded-lg transition-colors duration-200 flex items-center justify-center gap-2"
+            Try signing in again
+          </Link>
+          <Link
+            href="/"
+            className="w-full flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
           >
-            <Home className="w-4 h-4" />
-            Go to Home
-          </button>
-
-          <button
-            onClick={handleGoBack}
-            className="w-full bg-white hover:bg-gray-50 text-gray-600 font-semibold py-3 px-4 rounded-lg border border-gray-300 transition-colors duration-200 flex items-center justify-center gap-2"
-          >
-            <ArrowLeft className="w-4 h-4" />
-            Go Back
-          </button>
-        </div>
-
-        {/* Help Text */}
-        <div className="mt-6 pt-6 border-t border-gray-200">
-          <p className="text-sm text-gray-600 text-center">
-            If the problem persists, please contact support.
-          </p>
+            Go back home
+          </Link>
         </div>
       </div>
     </div>
   );
 }
 
-/**
- * Authentication Error Page
- * 
- * Displays authentication errors and provides options to retry or go home.
- */
 export default function AuthErrorPage() {
   return (
-    <Suspense fallback={
-      <div className="min-h-screen bg-gradient-to-br from-red-50 to-orange-50 flex items-center justify-center p-4">
-        <div className="text-center">
-          <div className="w-12 h-12 border-4 border-red-600 border-t-transparent rounded-full animate-spin mx-auto"></div>
+    <Suspense
+      fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
         </div>
-      </div>
-    }>
+      }
+    >
       <AuthErrorContent />
     </Suspense>
   );

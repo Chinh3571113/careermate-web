@@ -107,3 +107,67 @@ export const formatApplicationDate = (dateString: string): string => {
     return dateString;
   }
 };
+
+// ==================== OFFER CONFIRMATION API (v3.1) ====================
+
+export interface OfferConfirmationResponse {
+  code: number;
+  message: string;
+  result: JobApplication;
+}
+
+/**
+ * Confirm a job offer (Candidate only)
+ * Transitions application from OFFER_EXTENDED to WORKING
+ * @param jobApplyId - The ID of the job application
+ */
+export const confirmJobOffer = async (jobApplyId: number): Promise<OfferConfirmationResponse> => {
+  try {
+    console.log(`✅ [CONFIRM OFFER] Confirming offer for application ID: ${jobApplyId}`);
+    const response = await api.post<OfferConfirmationResponse>(`/api/job-apply/${jobApplyId}/confirm-offer`);
+    console.log('✅ [CONFIRM OFFER] Response:', response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ [CONFIRM OFFER] Full Error:', error);
+    console.error('❌ [CONFIRM OFFER] Response:', error?.response);
+    console.error('❌ [CONFIRM OFFER] Status:', error?.response?.status);
+    console.error('❌ [CONFIRM OFFER] Data:', error?.response?.data);
+    throw new Error(error?.response?.data?.message || error?.message || 'Failed to confirm job offer');
+  }
+};
+
+/**
+ * Candidate terminates current employment (WORKING/ACCEPTED → TERMINATED)
+ */
+export const terminateEmployment = async (jobApplyId: number): Promise<OfferConfirmationResponse> => {
+  try {
+    console.log(`✅ [TERMINATE EMPLOYMENT] Terminating employment for application ID: ${jobApplyId}`);
+    const response = await api.post<OfferConfirmationResponse>(`/api/job-apply/${jobApplyId}/terminate`);
+    console.log('✅ [TERMINATE EMPLOYMENT] Response:', response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ [TERMINATE EMPLOYMENT] Full Error:', error);
+    console.error('❌ [TERMINATE EMPLOYMENT] Response:', error?.response);
+    console.error('❌ [TERMINATE EMPLOYMENT] Status:', error?.response?.status);
+    console.error('❌ [TERMINATE EMPLOYMENT] Data:', error?.response?.data);
+    throw new Error(error?.response?.data?.message || error?.message || 'Failed to terminate employment');
+  }
+};
+
+/**
+ * Decline a job offer (Candidate only)
+ * Transitions application from OFFER_EXTENDED to WITHDRAWN
+ * @param jobApplyId - The ID of the job application
+ */
+export const declineJobOffer = async (jobApplyId: number): Promise<OfferConfirmationResponse> => {
+  try {
+    console.log(`❌ [DECLINE OFFER] Declining offer for application ID: ${jobApplyId}`);
+    const response = await api.post<OfferConfirmationResponse>(`/api/job-apply/${jobApplyId}/decline-offer`);
+    console.log('✅ [DECLINE OFFER] Response:', response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ [DECLINE OFFER] Error:', error?.response?.data || error);
+    throw new Error(error?.response?.data?.message || 'Failed to decline job offer');
+  }
+};
+

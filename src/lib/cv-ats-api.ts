@@ -1,6 +1,6 @@
 import { CVATSAnalyzeResponse } from '@/types/cv-ats';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8000';
+const API_BASE_URL = process.env.NEXT_PUBLIC_PYTHON_API_URL || 'http://localhost:8000';
 
 export async function analyzeCVATS(
   jobDescription: string,

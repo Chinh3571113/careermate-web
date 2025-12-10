@@ -3,7 +3,7 @@
 import { Search, Filter, Download, FileText, Calendar, MapPin, Clock, CheckCircle, XCircle, Eye, RefreshCw, AlertCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { getJobApplications, getRecruiterApplications, getRecruiterApplicationsFiltered, approveJobApplication, rejectJobApplication, setReviewingJobApplication, JobApplication, updateJobApplicationStatus } from "@/lib/recruiter-api";
+import { getJobApplications, getRecruiterApplications, getRecruiterApplicationsFiltered, approveJobApplication, rejectJobApplication, setReviewingJobApplication, JobApplication, updateJobApplicationStatus, extendJobOffer } from "@/lib/recruiter-api";
 import { StatusBadgeFull } from "@/components/shared/StatusBadge";
 import { getRecruiterActions, sortStatuses } from "@/lib/status-utils";
 import { JobApplicationStatus } from "@/types/status";
@@ -53,9 +53,9 @@ export default function ApplicationsPageContent() {
     'INTERVIEW_SCHEDULED',
     'INTERVIEWED',
     'APPROVED',
+    'OFFER_EXTENDED',
     'WORKING',
     'REJECTED',
-    'PROBATION_FAILED',
     'TERMINATED',
     'NO_RESPONSE',
     'WITHDRAWN',
@@ -116,10 +116,25 @@ export default function ApplicationsPageContent() {
         
         case 'start_employment':
           // For ACCEPTED status - transition to WORKING
+          // Note: In v3.1, recruiters should use extend_offer instead for APPROVED candidates
           if (confirm('Are you sure you want to start this employee? This will mark them as currently working.')) {
             await updateJobApplicationStatus(applicationId, 'WORKING');
             toast.success('Employment started successfully!');
             await fetchApplications();
+          }
+          break;
+
+        case 'extend_offer':
+          // v3.1: Recruiter extends job offer to candidate (APPROVED → OFFER_EXTENDED)
+          if (confirm('Extend job offer to this candidate?\n\nThe candidate will be notified and must confirm or decline the offer before they can start working.')) {
+            try {
+              await extendJobOffer(applicationId);
+              toast.success('🎉 Job offer extended! Waiting for candidate confirmation.');
+              await fetchApplications();
+            } catch (error: any) {
+              console.error('Failed to extend offer:', error);
+              toast.error(error.message || 'Failed to extend job offer');
+            }
           }
           break;
           
@@ -129,14 +144,6 @@ export default function ApplicationsPageContent() {
           
         case 'terminate':
           router.push('/recruiter/employments');
-          break;
-          
-        case 'probation_failed':
-          if (confirm('Are you sure you want to mark this employee as probation failed?')) {
-            await updateJobApplicationStatus(applicationId, 'PROBATION_FAILED');
-            toast.success('Marked as probation failed');
-            await fetchApplications();
-          }
           break;
           
         case 'view_employment':

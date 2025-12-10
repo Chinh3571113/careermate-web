@@ -322,7 +322,7 @@ AND interview_status = 'SCHEDULED';
 
 ## Related Documentation
 
-- [Job Application Flow](./JOB_APPLICATION_API.md)
+- [Job Application Flow](JOB_APPLICATION_API.md)
 - [Interview Scheduling](./INTERVIEW_API_DOCS.md)
 - [Notification System](./NOTIFICATION_SYSTEM.md)
 

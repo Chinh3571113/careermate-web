@@ -175,7 +175,8 @@ export const getDisplayStatus = (status: string): string => {
  */
 export const requiresCandidateAction = (status: JobApplicationStatus): boolean => {
   const actions = getCandidateActions(status);
-  const criticalActions = ['confirm_interview'];
+  // v3.1: Added confirm_offer and decline_offer as critical actions
+  const criticalActions = ['confirm_interview', 'confirm_offer', 'decline_offer'];
   return actions.some((action) => criticalActions.includes(action.action));
 };
 
@@ -184,7 +185,7 @@ export const requiresCandidateAction = (status: JobApplicationStatus): boolean =
  */
 export const requiresRecruiterAction = (status: JobApplicationStatus): boolean => {
   const actions = getRecruiterActions(status);
-  const criticalActions = ['review', 'schedule_interview', 'approve', 'reject'];
+  const criticalActions = ['review', 'schedule_interview', 'approve', 'reject', 'extend_offer'];
   return actions.some((action) => criticalActions.includes(action.action));
 };
 
@@ -199,13 +200,13 @@ export const getStatusSortOrder = (status: JobApplicationStatus): number => {
     INTERVIEW_SCHEDULED: 4,
     INTERVIEWED: 5,
     APPROVED: 6,
-    ACCEPTED: 7,
-    WORKING: 8,
-    PROBATION_FAILED: 9,
+    OFFER_EXTENDED: 7,  // v3.1: New status between APPROVED and employment
+    ACCEPTED: 8,
+    WORKING: 9,
     TERMINATED: 10,
-    REJECTED: 11,
-    WITHDRAWN: 12,
-    BANNED: 13,
+    REJECTED: 12,
+    WITHDRAWN: 13,
+    BANNED: 14,
   };
   
   return order[status] || 999;
@@ -234,7 +235,7 @@ export const getStatusBadgeVariant = (
     case 'decision':
       return status === 'REJECTED' ? 'destructive' : 'default';
     case 'employment':
-      return status === 'PROBATION_FAILED' || status === 'TERMINATED' ? 'destructive' : 'default';
+      return status === 'TERMINATED' ? 'destructive' : 'default';
     case 'special':
       return status === 'BANNED' ? 'destructive' : 'outline';
     default:
@@ -270,7 +271,6 @@ export const getStatusHelpText = (status: JobApplicationStatus): string => {
     REJECTED: 'Unfortunately, your application was not successful at this time.',
     ACCEPTED: 'You have accepted. The company will contact you for onboarding.',
     WORKING: 'You are currently employed at this company.',
-    PROBATION_FAILED: 'The probation period was not successfully completed.',
     TERMINATED: 'Your employment at this company has ended.',
     WITHDRAWN: 'You have withdrawn your application.',
     BANNED: 'You have been banned from applying to this company.',
@@ -283,7 +283,7 @@ export const getStatusHelpText = (status: JobApplicationStatus): string => {
  * Check if status allows review submission
  */
 export const canSubmitReview = (status: JobApplicationStatus): boolean => {
-  return ['WORKING', 'PROBATION_FAILED', 'TERMINATED'].includes(status);
+  return ['WORKING', 'TERMINATED'].includes(status);
 };
 
 /**

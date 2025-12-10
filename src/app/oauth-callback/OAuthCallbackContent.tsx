@@ -11,7 +11,8 @@ export function OAuthCallbackContent() {
   useEffect(() => {
     const success = searchParams.get("success");
     const email = searchParams.get("email");
-    const accountStatus = searchParams.get("account_status"); // Backend sends account_status, not status
+    // Backend sends "status" but fallback to "account_status" for compatibility
+    const accountStatus = searchParams.get("status") || searchParams.get("account_status");
     const accountType = searchParams.get("account_type");
     const profileCompleted = searchParams.get("profile_completed");
     const accessToken = searchParams.get("access_token");

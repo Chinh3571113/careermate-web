@@ -11,6 +11,7 @@ import {
   User,
   Phone,
   MapPin,
+  Mail,
 } from "lucide-react";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
@@ -29,7 +30,7 @@ export default function CompleteRecruiterPageContent({
     website: "",
     logoUrl: "",
     about: "",
-    businessLicense: "",
+    companyEmail: "",
     contactPerson: "",
     phoneNumber: "",
     companyAddress: "",
@@ -45,8 +46,10 @@ export default function CompleteRecruiterPageContent({
       newErrors.companyName = "Company name is required";
     }
 
-    if (!formData.businessLicense.trim()) {
-      newErrors.businessLicense = "Business license is required";
+    if (!formData.companyEmail.trim()) {
+      newErrors.companyEmail = "Company email is required";
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.companyEmail)) {
+      newErrors.companyEmail = "Please enter a valid email address";
     }
 
     if (!formData.contactPerson.trim()) {
@@ -238,30 +241,33 @@ export default function CompleteRecruiterPageContent({
               </p>
             </div>
 
-            {/* Business License */}
+            {/* Company Email */}
             <div>
               <label className="flex items-center text-sm font-medium text-gray-700 mb-2">
-                <FileText className="w-4 h-4 mr-2" />
-                Giấy Phép Kinh Doanh{" "}
+                <Mail className="w-4 h-4 mr-2" />
+                Email Công Ty{" "}
                 <span className="text-red-500 ml-1">*</span>
               </label>
               <input
-                type="text"
-                name="businessLicense"
+                type="email"
+                name="companyEmail"
                 required
                 maxLength={100}
-                value={formData.businessLicense}
+                value={formData.companyEmail}
                 onChange={handleChange}
                 className={`w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent ${
-                  errors.businessLicense ? "border-red-500" : "border-gray-300"
+                  errors.companyEmail ? "border-red-500" : "border-gray-300"
                 }`}
-                placeholder="BL-2025-123456"
+                placeholder="hr@company.com"
               />
-              {errors.businessLicense && (
+              {errors.companyEmail && (
                 <p className="text-sm text-red-600 mt-1">
-                  {errors.businessLicense}
+                  {errors.companyEmail}
                 </p>
               )}
+              <p className="text-xs text-gray-500 mt-1">
+                Email công ty dùng để xác minh và liên hệ công việc
+              </p>
             </div>
 
             {/* Contact Person */}
@@ -345,7 +351,7 @@ export default function CompleteRecruiterPageContent({
               disabled={
                 loading ||
                 !formData.companyName ||
-                !formData.businessLicense ||
+                !formData.companyEmail ||
                 !formData.contactPerson ||
                 !formData.phoneNumber ||
                 !formData.companyAddress

@@ -14,13 +14,13 @@ export type JobApplicationStatus =
   | 'INTERVIEWED'           // Interview completed, awaiting decision
   
   // Decision Phase
-  | 'APPROVED'              // Approved for hiring
+  | 'APPROVED'              // Approved for next stage
+  | 'OFFER_EXTENDED'        // Job offer extended, awaiting candidate confirmation (v3.1)
   | 'REJECTED'              // Application/interview rejected
   
   // Employment Phase
   | 'ACCEPTED'              // Legacy: Offer accepted (use WORKING in v3.0)
   | 'WORKING'               // Currently employed (v3.0 standard)
-  | 'PROBATION_FAILED'      // Failed probation period
   | 'TERMINATED'            // Employment ended
   
   // Special Statuses
@@ -146,6 +146,17 @@ export const STATUS_CONFIGS: Record<JobApplicationStatus, StatusConfig> = {
     category: 'decision',
     isTerminal: false,
   },
+  OFFER_EXTENDED: {
+    status: 'OFFER_EXTENDED',
+    color: 'text-amber-800',
+    bgColor: 'bg-amber-100',
+    borderColor: 'border-amber-300',
+    icon: '📨',
+    lucideIcon: 'Mail',
+    text: 'Job offer received - Action required!',
+    category: 'decision',
+    isTerminal: false,
+  },
   REJECTED: {
     status: 'REJECTED',
     color: 'text-red-800',
@@ -178,17 +189,6 @@ export const STATUS_CONFIGS: Record<JobApplicationStatus, StatusConfig> = {
     text: 'Currently employed',
     category: 'employment',
     isTerminal: false,
-  },
-  PROBATION_FAILED: {
-    status: 'PROBATION_FAILED',
-    color: 'text-orange-800',
-    bgColor: 'bg-orange-100',
-    borderColor: 'border-orange-300',
-    icon: '⚠️',
-    lucideIcon: 'AlertTriangle',
-    text: 'Probation not passed',
-    category: 'employment',
-    isTerminal: true,
   },
   TERMINATED: {
     status: 'TERMINATED',
@@ -226,7 +226,10 @@ export const STATUS_CONFIGS: Record<JobApplicationStatus, StatusConfig> = {
 };
 
 /**
- * Status transition rules (Aligned with Backend v3.0)
+ * Status transition rules (Aligned with Backend v3.1)
+ * 
+ * NEW IN v3.1: Offer confirmation flow
+ * APPROVED → Recruiter extends offer → OFFER_EXTENDED → Candidate confirms → WORKING
  * 
  * Auto-withdrawal: When a candidate is hired (ACCEPTED/WORKING), all their other 
  * pending applications are automatically withdrawn by the system.
@@ -253,16 +256,22 @@ export const STATUS_TRANSITIONS: StatusTransition[] = [
   // From INTERVIEWED - can approve, reject, or schedule another interview round
   { from: 'INTERVIEWED', to: ['APPROVED', 'REJECTED', 'INTERVIEW_SCHEDULED'], actor: 'recruiter' },
   
-  // From APPROVED - recruiter marks as WORKING when candidate starts, candidate can withdraw
-  { from: 'APPROVED', to: ['WORKING', 'REJECTED'], actor: 'recruiter' },
+  // From APPROVED - recruiter extends job offer (v3.1), candidate can withdraw
+  { from: 'APPROVED', to: ['OFFER_EXTENDED', 'REJECTED'], actor: 'recruiter' },
   { from: 'APPROVED', to: ['WITHDRAWN'], actor: 'candidate' },
+  
+  // From OFFER_EXTENDED - candidate confirms or declines the offer (v3.1)
+  { from: 'OFFER_EXTENDED', to: ['WORKING'], actor: 'candidate' },  // Confirm offer
+  { from: 'OFFER_EXTENDED', to: ['WITHDRAWN'], actor: 'candidate' }, // Decline offer
+  { from: 'OFFER_EXTENDED', to: ['REJECTED'], actor: 'recruiter' },  // Recruiter can rescind offer
   
   // From ACCEPTED (legacy - kept for backward compatibility)
   { from: 'ACCEPTED', to: ['WORKING'], actor: 'recruiter' },
   { from: 'ACCEPTED', to: ['WITHDRAWN'], actor: 'candidate' },
   
   // From WORKING - can end employment
-  { from: 'WORKING', to: ['PROBATION_FAILED', 'TERMINATED', 'BANNED'], actor: 'recruiter' },
+  { from: 'WORKING', to: ['TERMINATED', 'BANNED'], actor: 'recruiter' },
+  { from: 'WORKING', to: ['TERMINATED'], actor: 'candidate' },
   
   // System-triggered transitions (auto-withdrawal when hired elsewhere)
   { from: 'SUBMITTED', to: ['WITHDRAWN'], actor: 'system' },
@@ -270,10 +279,11 @@ export const STATUS_TRANSITIONS: StatusTransition[] = [
   { from: 'INTERVIEW_SCHEDULED', to: ['WITHDRAWN'], actor: 'system' },
   { from: 'INTERVIEWED', to: ['WITHDRAWN'], actor: 'system' },
   { from: 'APPROVED', to: ['WITHDRAWN'], actor: 'system' },
+  { from: 'OFFER_EXTENDED', to: ['WITHDRAWN'], actor: 'system' },
   
   // Terminal statuses (no transitions)
   { from: 'REJECTED', to: [], actor: 'recruiter' },
-  { from: 'PROBATION_FAILED', to: [], actor: 'recruiter' },
+  { from: 'OFFER_EXTENDED', to: [], actor: 'recruiter' }, // Terminal for recruiter (candidate must respond)
   { from: 'TERMINATED', to: [], actor: 'recruiter' },
   { from: 'WITHDRAWN', to: [], actor: 'candidate' },
   { from: 'BANNED', to: [], actor: 'recruiter' },
@@ -348,8 +358,19 @@ export const STATUS_ACTIONS: Record<JobApplicationStatus, StatusActions> = {
       { label: 'Withdraw', action: 'withdraw', variant: 'outline', icon: 'Undo2' },
     ],
     recruiter: [
-      { label: 'Start Employment', action: 'start_employment', variant: 'default', icon: 'Briefcase' },
+      { label: 'Extend Job Offer', action: 'extend_offer', variant: 'default', icon: 'Mail' },
       { label: 'Reject', action: 'reject', variant: 'destructive', icon: 'XCircle' },
+    ],
+  },
+  OFFER_EXTENDED: {
+    candidate: [
+      { label: '✅ Accept Offer', action: 'confirm_offer', variant: 'default', icon: 'CheckCircle' },
+      { label: '❌ Decline Offer', action: 'decline_offer', variant: 'destructive', icon: 'XCircle' },
+      { label: 'View Offer Details', action: 'view_details', variant: 'outline', icon: 'Eye' },
+    ],
+    recruiter: [
+      { label: 'Waiting for Response', action: 'view_details', variant: 'outline', icon: 'Clock' },
+      { label: 'Rescind Offer', action: 'reject', variant: 'destructive', icon: 'XCircle' },
     ],
   },
   REJECTED: {
@@ -370,19 +391,10 @@ export const STATUS_ACTIONS: Record<JobApplicationStatus, StatusActions> = {
     candidate: [
       { label: 'Submit Review', action: 'submit_review', variant: 'default', icon: 'Star' },
       { label: 'View Employment', action: 'view_employment', variant: 'outline', icon: 'Eye' },
+      { label: 'End Employment', action: 'terminate_employment', variant: 'destructive', icon: 'Flag' },
     ],
     recruiter: [
       { label: 'Terminate Employment', action: 'terminate', variant: 'destructive', icon: 'Flag' },
-      { label: 'Mark Probation Failed', action: 'probation_failed', variant: 'destructive', icon: 'AlertTriangle' },
-      { label: 'View Details', action: 'view_employment', variant: 'outline', icon: 'Eye' },
-    ],
-  },
-  PROBATION_FAILED: {
-    candidate: [
-      { label: 'Submit Review', action: 'submit_review', variant: 'default', icon: 'Star' },
-      { label: 'View Details', action: 'view_employment', variant: 'outline', icon: 'Eye' },
-    ],
-    recruiter: [
       { label: 'View Details', action: 'view_employment', variant: 'outline', icon: 'Eye' },
     ],
   },

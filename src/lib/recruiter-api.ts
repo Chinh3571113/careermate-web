@@ -814,6 +814,11 @@ export const approveJobApplication = async (applicationId: number): Promise<any>
   return updateJobApplicationStatus(applicationId, 'APPROVED');
 };
 
+// Extend Job Offer to candidate (v3.1 - transitions APPROVED → OFFER_EXTENDED)
+export const extendJobOffer = async (applicationId: number): Promise<any> => {
+  return updateJobApplicationStatus(applicationId, 'OFFER_EXTENDED');
+};
+
 // Reject Job Application (using updateJobApplicationStatus)
 export const rejectJobApplication = async (applicationId: number, reason?: string): Promise<any> => {
   return updateJobApplicationStatus(applicationId, 'REJECTED');

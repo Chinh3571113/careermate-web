@@ -332,8 +332,8 @@ Backend team cần đảm bảo:
 
 ## 📖 Documentation Links
 
-- [Payment System README](./PRICING_SYSTEM_README.md)
-- [Backend Implementation Guide](./PAYMENT_BACKEND_IMPLEMENTATION.md)
+- [Payment System README](../PRICING_SYSTEM_README.md)
+- [Backend Implementation Guide](../PAYMENT_BACKEND_IMPLEMENTATION.md)
 - [Backend Configuration](./PAYMENT_BACKEND_CONFIG.md)
 
 ---

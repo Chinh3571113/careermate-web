@@ -30,6 +30,7 @@ import { useLayout } from "@/contexts/LayoutContext";
 import { useAuthStore } from "@/store/use-auth-store";
 import {
   fetchMyJobApplications,
+  terminateEmployment,
   type JobApplication
 } from "@/lib/my-jobs-api";
 import {
@@ -79,6 +80,7 @@ export default function CandidateEmploymentsPage() {
     reasonForLeaving: ''
   });
   const [submitting, setSubmitting] = useState(false);
+  const [terminatingId, setTerminatingId] = useState<number | null>(null);
 
   useEffect(() => {
     const initAuth = async () => {
@@ -106,7 +108,7 @@ export default function CandidateEmploymentsPage() {
       // Get all applications with WORKING status
       const applications = await fetchMyJobApplications(candidateId!);
       const workingApplications = applications.filter(app => 
-        app.status === 'WORKING' || app.status === 'TERMINATED' || app.status === 'PROBATION_FAILED'
+        app.status === 'WORKING' || app.status === 'TERMINATED'
       );
       
       // Initialize employments with loading state
@@ -208,6 +210,24 @@ export default function CandidateEmploymentsPage() {
     }
     
     return null;
+  };
+
+  const handleTerminateEmployment = async (applicationId: number) => {
+    if (!confirm('End your employment for this job? This will set status to TERMINATED.')) {
+      return;
+    }
+
+    try {
+      setTerminatingId(applicationId);
+      await terminateEmployment(applicationId);
+      toast.success('Employment terminated successfully');
+      await loadEmployments();
+    } catch (error: any) {
+      console.error('Failed to terminate employment:', error);
+      toast.error(error.response?.data?.message || 'Failed to terminate employment');
+    } finally {
+      setTerminatingId(null);
+    }
   };
 
   const getEligibilityBadge = (eligibility?: string) => {
@@ -315,7 +335,7 @@ export default function CandidateEmploymentsPage() {
                             </div>
                           ) : (
                             <>
-                              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-4">
                                 <div>
                                   <p className="text-xs text-gray-500 uppercase tracking-wider">Start Date</p>
                                   <p className="font-medium">
@@ -325,20 +345,12 @@ export default function CandidateEmploymentsPage() {
                                   </p>
                                 </div>
                                 <div>
-                                  <p className="text-xs text-gray-500 uppercase tracking-wider">Duration</p>
-                                  <p className="font-medium">
-                                    {employment.verification?.startDate 
-                                      ? formatEmploymentDuration(employment.verification.startDate, employment.verification.endDate)
-                                      : 'N/A'}
-                                  </p>
-                                </div>
-                                <div>
-                                  <p className="text-xs text-gray-500 uppercase tracking-wider">Days Employed</p>
-                                  <p className="font-medium">{employment.verification?.daysEmployed || 0} days</p>
+                                  <p className="text-xs text-gray-500 uppercase tracking-wider">Days Working</p>
+                                  <p className="font-medium">{employment.verification?.daysEmployed ?? 0} days</p>
                                 </div>
                                 <div>
                                   <p className="text-xs text-gray-500 uppercase tracking-wider">Position</p>
-                                  <p className="font-medium">{employment.verification?.position || employment.application.jobTitle}</p>
+                                  <p className="font-medium">{employment.application.jobTitle}</p>
                                 </div>
                               </div>
 
@@ -408,6 +420,16 @@ export default function CandidateEmploymentsPage() {
                                       Write Review
                                     </Button>
                                   </Link>
+                                )}
+                                {isActive && (
+                                  <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    disabled={terminatingId === employment.application.id}
+                                    onClick={() => handleTerminateEmployment(employment.application.id)}
+                                  >
+                                    {terminatingId === employment.application.id ? 'Ending...' : 'End Employment'}
+                                  </Button>
                                 )}
                                 <Link href={`/jobs-detail?id=${employment.application.jobPostingId}`}>
                                   <Button variant="outline" size="sm">

@@ -10,6 +10,9 @@ import { useAuthStore } from "@/store/use-auth-store";
 import {
   fetchMyJobApplications,
   formatApplicationDate,
+  confirmJobOffer,
+  declineJobOffer,
+  terminateEmployment,
   type JobApplication
 } from "@/lib/my-jobs-api";
 import {
@@ -258,6 +261,40 @@ const MyJobsPage = () => {
           router.push('/candidate/employments');
           break;
           
+        case 'confirm_offer':
+          if (confirm('Are you sure you want to accept this job offer? This will start your employment with the company.')) {
+            const confirmResult = await confirmJobOffer(applicationId);
+            toast.success('Congratulations! Job offer accepted. You are now employed!');
+            // Refresh the job applications list
+            const updatedApps = await fetchMyJobApplications(candidateId!);
+            setJobApplications(updatedApps);
+          }
+          break;
+          
+        case 'decline_offer':
+          if (confirm('Are you sure you want to decline this job offer? This action cannot be undone.')) {
+            const declineResult = await declineJobOffer(applicationId);
+            toast.success('Job offer declined successfully');
+            // Refresh the job applications list
+            const updatedApps2 = await fetchMyJobApplications(candidateId!);
+            setJobApplications(updatedApps2);
+          }
+          break;
+
+        case 'terminate_employment':
+          if (confirm('End your employment for this job? This will set status to TERMINATED.')) {
+            await terminateEmployment(applicationId);
+            toast.success('Employment terminated successfully');
+            const updatedApps3 = await fetchMyJobApplications(candidateId!);
+            setJobApplications(updatedApps3);
+          }
+          break;
+          
+        case 'view_details':
+          // Just expand the job details section
+          toggleJobDetails(applicationId);
+          break;
+          
         case 'appeal_ban':
           toast.error('Ban appeal process not yet implemented');
           break;
@@ -421,11 +458,25 @@ const MyJobsPage = () => {
                                         Action Required
                                       </button>
                                     )}
-                                    {/* Action Required badge - for APPROVED status (accept/decline offer) */}
-                                    {application.status === 'APPROVED' && (
-                                      <span className="px-3 py-1 text-xs font-medium rounded-full bg-amber-100 text-amber-800 border border-amber-300 animate-pulse">
-                                        Action Required
-                                      </span>
+                                    {/* Action Required badge - for OFFER_EXTENDED status (accept/decline offer) */}
+                                    {application.status === 'OFFER_EXTENDED' && (
+                                      <div className="flex items-center gap-2">
+                                        <Button
+                                          size="sm"
+                                          onClick={() => handleCandidateAction('confirm_offer', application.id)}
+                                          className="bg-green-600 hover:bg-green-700 text-white text-xs px-3 py-1"
+                                        >
+                                          ✅ Accept Offer
+                                        </Button>
+                                        <Button
+                                          size="sm"
+                                          variant="destructive"
+                                          onClick={() => handleCandidateAction('decline_offer', application.id)}
+                                          className="text-xs px-3 py-1"
+                                        >
+                                          ❌ Decline
+                                        </Button>
+                                      </div>
                                     )}
                                     {new Date(application.expirationDate) < new Date() && (
                                       <span className="px-3 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-600">
@@ -594,7 +645,7 @@ const MyJobsPage = () => {
                                 )}
                                 
                                 {/* Contact Information - Only visible when status >= APPROVED */}
-                                {['APPROVED', 'ACCEPTED', 'WORKING'].includes(application.status) && application.companyEmail ? (
+                                {['APPROVED', 'OFFER_EXTENDED', 'ACCEPTED', 'WORKING'].includes(application.status) && application.companyEmail ? (
                                   <div className="mt-4 pt-4 border-t border-gray-200">
                                     <h4 className="font-semibold text-green-700 mb-3 flex items-center gap-2">
                                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -638,7 +689,7 @@ const MyJobsPage = () => {
                                       </div>
                                     </div>
                                   </div>
-                                ) : !['APPROVED', 'ACCEPTED', 'WORKING'].includes(application.status) && (
+                                ) : !['APPROVED', 'OFFER_EXTENDED', 'ACCEPTED', 'WORKING'].includes(application.status) && (
                                   <div className="mt-4 pt-4 border-t border-gray-200">
                                     <div className="bg-gray-100 border border-gray-200 rounded-lg p-4 flex items-center gap-3">
                                       <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

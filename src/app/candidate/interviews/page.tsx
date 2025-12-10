@@ -11,6 +11,7 @@ import {
   Users, 
   CheckCircle, 
   AlertCircle,
+  AlertTriangle,
   MessageSquare,
   ExternalLink,
   RefreshCw,
@@ -285,6 +286,13 @@ function CandidateInterviewsContent() {
                           {isUpcoming(interview) && !isToday(interview) && (
                             <Badge variant="outline">Soon</Badge>
                           )}
+                          {/* Conflict Warning Badge */}
+                          {interview.hasConflict && (
+                            <Badge variant="destructive" className="bg-orange-500 hover:bg-orange-600 flex items-center gap-1">
+                              <AlertTriangle className="h-3 w-3" />
+                              Conflict
+                            </Badge>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -292,6 +300,21 @@ function CandidateInterviewsContent() {
                   </div>
                 </CardHeader>
                 <CardContent className="space-y-4">
+                  {/* Conflict Warning - Show if this interview has scheduling conflict */}
+                  {interview.hasConflict && (
+                    <div className="p-3 bg-orange-50 border border-orange-200 rounded-md flex items-start gap-2">
+                      <AlertTriangle className="h-5 w-5 text-orange-600 mt-0.5" />
+                      <div className="flex-1">
+                        <p className="text-sm font-medium text-orange-900">
+                          Scheduling Conflict
+                        </p>
+                        <p className="text-sm text-orange-700">
+                          {interview.conflictDetails || "You have another interview scheduled at this time. Consider rescheduling one of them."}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
                   {interview.status === "SCHEDULED" && (
                     <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md flex items-start gap-2">
                       <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5" />

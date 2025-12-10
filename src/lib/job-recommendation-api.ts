@@ -9,7 +9,7 @@ import axios from 'axios';
 
 // Create a dedicated axios instance for AI recommendation service
 const aiApi = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_AI_API_URL || 'http://localhost:8000',
+  baseURL: process.env.NEXT_PUBLIC_PYTHON_API_URL || 'http://localhost:8000',
   timeout: 30000,
   headers: { "Content-Type": "application/json" },
 });
@@ -57,14 +57,14 @@ export const getJobRecommendations = async (
   try {
     console.log('🔵 [JOB RECOMMENDATION] Request:', data);
     console.log('🔵 [JOB RECOMMENDATION] URL:', aiApi.defaults.baseURL + '/api/v1/jobs/job-postings/');
-    
+
     const response = await aiApi.post<JobRecommendationResponse>(
       '/api/v1/jobs/job-postings/',
       data
     );
 
     console.log('✅ [JOB RECOMMENDATION] Response:', response.data);
-    
+
     if (!response.data.ok) {
       throw new Error('Failed to get job recommendations');
     }

@@ -10,6 +10,9 @@ import { useAuthStore } from "@/store/use-auth-store";
 import {
   fetchMyJobApplications,
   formatApplicationDate,
+  confirmJobOffer,
+  declineJobOffer,
+  terminateEmployment,
   type JobApplication
 } from "@/lib/my-jobs-api";
 import {
@@ -21,7 +24,7 @@ import { updateJobApplicationStatus } from "@/lib/recruiter-api";
 import { getDaysDiff } from "@/lib/my-jobs-utils";
 import { ClockIcon, BriefcaseIcon, ChevronDownIcon } from "@/components/ui/icons";
 import { StatusBadgeFull } from "@/components/shared/StatusBadge";
-import { getCandidateActions, requiresCandidateAction } from "@/lib/status-utils";
+import { getCandidateActions, requiresCandidateAction, normalizeStatus } from "@/lib/status-utils";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -250,19 +253,40 @@ const MyJobsPage = () => {
           router.push('/candidate/interviews');
           break;
           
-        case 'accept_offer':
-          if (confirm('Are you sure you want to accept this job offer? The recruiter will be notified to proceed with onboarding.')) {
-            await updateJobApplicationStatus(applicationId, 'ACCEPTED');
-            toast.success('Job offer accepted! The company will contact you for next steps.');
+        case 'confirm_offer':
+          // v3.1: Candidate confirms job offer using new endpoint
+          if (confirm('🎉 Are you sure you want to accept this job offer?\n\nOnce accepted:\n• You will be marked as employed\n• All your other pending applications will be automatically withdrawn\n• The company will contact you for onboarding')) {
+            await confirmJobOffer(applicationId);
+            toast.success('🎉 Congratulations! Job offer accepted! You are now employed.');
             const updatedApplications = await fetchMyJobApplications(candidateId!);
             setJobApplications(updatedApplications);
           }
           break;
           
         case 'decline_offer':
-          if (confirm('Are you sure you want to decline this job offer?')) {
-            await updateJobApplicationStatus(applicationId, 'REJECTED');
-            toast.success('Job offer declined');
+          // v3.1: Candidate declines job offer using new endpoint
+          if (confirm('Are you sure you want to decline this job offer?\n\nThis action cannot be undone.')) {
+            await declineJobOffer(applicationId);
+            toast.success('Job offer declined. Your application has been withdrawn.');
+            const updatedApplications = await fetchMyJobApplications(candidateId!);
+            setJobApplications(updatedApplications);
+          }
+          break;
+
+        case 'terminate_employment':
+          if (confirm('End your employment for this job? This will set status to TERMINATED.')) {
+            await terminateEmployment(applicationId);
+            toast.success('Employment terminated successfully');
+            const updatedApplications = await fetchMyJobApplications(candidateId!);
+            setJobApplications(updatedApplications);
+          }
+          break;
+          
+        case 'accept_offer':
+          // Legacy: For backward compatibility with old ACCEPTED status
+          if (confirm('Are you sure you want to accept this job offer? The recruiter will be notified to proceed with onboarding.')) {
+            await updateJobApplicationStatus(applicationId, 'ACCEPTED');
+            toast.success('Job offer accepted! The company will contact you for next steps.');
             const updatedApplications = await fetchMyJobApplications(candidateId!);
             setJobApplications(updatedApplications);
           }
@@ -430,7 +454,7 @@ const MyJobsPage = () => {
                                       size="md"
                                     />
                                     {/* Action Required badge - for INTERVIEW_SCHEDULED, only show if interview not confirmed */}
-                                    {application.status === 'INTERVIEW_SCHEDULED' && interviewsMap[application.id] && !interviewsMap[application.id].candidateConfirmed && (
+                                    {normalizeStatus(application.status) === 'INTERVIEW_SCHEDULED' && interviewsMap[application.id] && !interviewsMap[application.id].candidateConfirmed && (
                                       <button
                                         onClick={() => router.push(`/candidate/interviews?action=confirm&id=${interviewsMap[application.id].id}`)}
                                         className="px-3 py-1 text-xs font-medium rounded-full bg-amber-100 text-amber-800 border border-amber-300 animate-pulse hover:bg-amber-200 cursor-pointer transition-colors"
@@ -438,18 +462,39 @@ const MyJobsPage = () => {
                                         Action Required
                                       </button>
                                     )}
-                                    {/* Action Required badge - for APPROVED status (accept/decline offer) */}
-                                    {application.status === 'APPROVED' && (
-                                      <span className="px-3 py-1 text-xs font-medium rounded-full bg-amber-100 text-amber-800 border border-amber-300 animate-pulse">
-                                        Action Required
-                                      </span>
-                                    )}
                                     {new Date(application.expirationDate) < new Date() && (
                                       <span className="px-3 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-600">
                                         Expired
                                       </span>
                                     )}
                                   </div>
+                                  
+                                  {/* Accept/Decline buttons for OFFER_EXTENDED */}
+                                  {(() => {
+                                    const normalizedStatus = normalizeStatus(application.status);
+                                    console.log('Application status:', application.status, '-> normalized:', normalizedStatus);
+                                    if (normalizedStatus === 'OFFER_EXTENDED') {
+                                      return (
+                                        <div className="flex gap-2 mt-3 p-3 bg-green-50 border border-green-200 rounded-lg">
+                                          <Button
+                                            size="sm"
+                                            onClick={() => handleCandidateAction('confirm_offer', application.id)}
+                                            className="bg-green-600 hover:bg-green-700 text-white"
+                                          >
+                                            ✅ Accept Offer
+                                          </Button>
+                                          <Button
+                                            size="sm"
+                                            variant="destructive"
+                                            onClick={() => handleCandidateAction('decline_offer', application.id)}
+                                          >
+                                            ❌ Decline Offer
+                                          </Button>
+                                        </div>
+                                      );
+                                    }
+                                    return null;
+                                  })()}
                                 </div>
 
                                 {/* Expand Button */}
@@ -498,9 +543,20 @@ const MyJobsPage = () => {
                                             </svg>
                                           </div>
                                           <div>
-                                            <h4 className="font-semibold text-purple-900 text-sm">
-                                              {application.status === 'INTERVIEW_SCHEDULED' ? 'Upcoming Interview' : 'Interview Completed'}
-                                            </h4>
+                                            <div className="flex items-center gap-2">
+                                              <h4 className="font-semibold text-purple-900 text-sm">
+                                                {application.status === 'INTERVIEW_SCHEDULED' ? 'Upcoming Interview' : 'Interview Completed'}
+                                              </h4>
+                                              {/* Conflict Warning Badge */}
+                                              {interviewsMap[application.id].hasConflict && (
+                                                <span className="inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded-full bg-orange-100 text-orange-800 border border-orange-300">
+                                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                                  </svg>
+                                                  Conflict
+                                                </span>
+                                              )}
+                                            </div>
                                             <p className="text-purple-700 text-sm">
                                               {formatInterviewDateTime(getInterviewDateTimeStr(interviewsMap[application.id]))}
                                             </p>
@@ -518,6 +574,18 @@ const MyJobsPage = () => {
                                           View Details
                                         </Button>
                                       </div>
+                                      
+                                      {/* Conflict Warning - Full message */}
+                                      {interviewsMap[application.id].hasConflict && (
+                                        <div className="mt-3 pt-3 border-t border-orange-200 p-2 bg-orange-50 rounded-md">
+                                          <p className="text-xs text-orange-800">
+                                            <svg className="w-3 h-3 inline mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                                            </svg>
+                                            {interviewsMap[application.id].conflictDetails || "You have another interview scheduled at this time. Consider rescheduling one of them."}
+                                          </p>
+                                        </div>
+                                      )}
                                       
                                       {/* Quick info row */}
                                       <div className="mt-3 pt-3 border-t border-purple-200 flex flex-wrap gap-4 text-xs text-purple-700">
@@ -610,8 +678,8 @@ const MyJobsPage = () => {
                                   </div>
                                 )}
                                 
-                                {/* Contact Information - Only visible when status >= APPROVED */}
-                                {['APPROVED', 'ACCEPTED', 'WORKING'].includes(application.status) && application.companyEmail ? (
+                                {/* Contact Information - Only visible when status >= OFFER_EXTENDED */}
+                                {['OFFER_EXTENDED', 'APPROVED', 'ACCEPTED', 'WORKING'].includes(normalizeStatus(application.status)) && application.companyEmail ? (
                                   <div className="mt-4 pt-4 border-t border-gray-200">
                                     <h4 className="font-semibold text-green-700 mb-3 flex items-center gap-2">
                                       <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -655,7 +723,7 @@ const MyJobsPage = () => {
                                       </div>
                                     </div>
                                   </div>
-                                ) : !['APPROVED', 'ACCEPTED', 'WORKING'].includes(application.status) && (
+                                ) : !['OFFER_EXTENDED', 'APPROVED', 'ACCEPTED', 'WORKING'].includes(normalizeStatus(application.status)) && (
                                   <div className="mt-4 pt-4 border-t border-gray-200">
                                     <div className="bg-gray-100 border border-gray-200 rounded-lg p-4 flex items-center gap-3">
                                       <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">

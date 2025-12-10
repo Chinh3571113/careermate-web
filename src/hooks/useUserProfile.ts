@@ -38,18 +38,21 @@ export const useUserProfile = () => {
           }
         }
 
-        // Fetch avatar from /api/candidates/profiles/current
-        try {
-          const candidateProfile = await fetchCurrentCandidateProfile();
-          console.log('📦 [useUserProfile] Candidate Profile Response:', candidateProfile);
-          if (candidateProfile?.image) {
-            console.log('✅ [useUserProfile] Avatar from API:', candidateProfile.image);
-            setAvatarUrl(candidateProfile.image);
-          }
-        } catch (profileError: any) {
-          // Profile not found is expected for new users
-          if (profileError?.message !== 'PROFILE_NOT_FOUND') {
-            console.error('❌ [useUserProfile] Error fetching candidate profile:', profileError);
+        // Fetch avatar from /api/candidates/profiles/current - ONLY for candidates
+        // Recruiters and other roles don't have access to this endpoint
+        if (user?.role === 'CANDIDATE') {
+          try {
+            const candidateProfile = await fetchCurrentCandidateProfile();
+            console.log('📦 [useUserProfile] Candidate Profile Response:', candidateProfile);
+            if (candidateProfile?.image) {
+              console.log('✅ [useUserProfile] Avatar from API:', candidateProfile.image);
+              setAvatarUrl(candidateProfile.image);
+            }
+          } catch (profileError: any) {
+            // Profile not found is expected for new users
+            if (profileError?.message !== 'PROFILE_NOT_FOUND') {
+              console.error('❌ [useUserProfile] Error fetching candidate profile:', profileError);
+            }
           }
         }
       } catch (error) {

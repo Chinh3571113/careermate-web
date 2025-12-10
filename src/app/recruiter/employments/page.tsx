@@ -283,24 +283,6 @@ export default function EmploymentsPage() {
                         <XCircle className="h-4 w-4 mr-1" />
                         Terminate Employment
                       </Button>
-                      {isProbation && (
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => {
-                            setSelectedEmployment(employment);
-                            setTerminationForm({
-                              terminationType: 'PROBATION_FAILED',
-                              terminationDate: new Date().toISOString().split('T')[0],
-                              reason: 'Failed probation period'
-                            });
-                            setTerminateDialogOpen(true);
-                          }}
-                        >
-                          <AlertTriangle className="h-4 w-4 mr-1" />
-                          Mark Probation Failed
-                        </Button>
-                      )}
                     </div>
                   )}
                 </CardContent>
@@ -314,13 +296,9 @@ export default function EmploymentsPage() {
       <Dialog open={terminateDialogOpen} onOpenChange={setTerminateDialogOpen}>
         <DialogContent className="max-w-md">
           <DialogHeader>
-            <DialogTitle>
-              {terminationForm.terminationType === 'PROBATION_FAILED' ? "Mark Probation Failed" : "Terminate Employment"}
-            </DialogTitle>
+            <DialogTitle>Terminate Employment</DialogTitle>
             <DialogDescription>
-              {terminationForm.terminationType === 'PROBATION_FAILED'
-                ? "This will mark the employee as having failed their probation period."
-                : "This action will end the employee's employment. Please provide details."}
+              This action will end the employee&apos;s employment. Please provide details.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
