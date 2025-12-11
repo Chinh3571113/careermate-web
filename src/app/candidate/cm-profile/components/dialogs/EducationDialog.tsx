@@ -7,6 +7,15 @@ import { Education } from "../types";
 import { useState, useEffect, useRef, useCallback } from "react";
 import { FiFileText, FiTrash2 } from "react-icons/fi";
 
+// Degree options matching SyncCVSummaryDialog
+const DEGREE_OPTIONS = [
+    { value: 'College', label: 'College' },
+    { value: 'Bachelor', label: 'Bachelor' },
+    { value: 'Master', label: 'Master' },
+    { value: 'PhD', label: 'PhD' },
+    { value: 'Other', label: 'Other' },
+];
+
 // ===== Custom Context Menu Component =====
 interface ContextMenuProps {
     x: number;
@@ -117,7 +126,25 @@ export default function EducationDialog({
 }: EducationDialogProps) {
     // ===== Context Menu State =====
     const [contextMenu, setContextMenu] = useState<{ x: number; y: number } | null>(null);
+    const [dateError, setDateError] = useState<string>("");
     const formContainerRef = useRef<HTMLDivElement>(null);
+
+    // Validate dates whenever they change
+    useEffect(() => {
+        if (editingEducation?.startMonth && editingEducation?.startYear && 
+            editingEducation?.endMonth && editingEducation?.endYear) {
+            const startDate = new Date(parseInt(editingEducation.startYear), parseInt(editingEducation.startMonth) - 1);
+            const endDate = new Date(parseInt(editingEducation.endYear), parseInt(editingEducation.endMonth) - 1);
+            
+            if (endDate < startDate) {
+                setDateError("Please enter an end date bigger than the start date.");
+            } else {
+                setDateError("");
+            }
+        } else {
+            setDateError("");
+        }
+    }, [editingEducation?.startMonth, editingEducation?.startYear, editingEducation?.endMonth, editingEducation?.endYear]);
 
     // Handle right-click on form container
     const handleContextMenu = useCallback((event: React.MouseEvent) => {
@@ -134,7 +161,7 @@ export default function EducationDialog({
             const newEducation = {
                 ...editingEducation,
                 school: "FPT University",
-                degree: "Bachelor of Software Engineering",
+                degree: "Bachelor",
                 major: "Information Technology",
                 startMonth: "09",  // Two-digit format matching MonthYearPicker options
                 startYear: "2020",
@@ -191,6 +218,13 @@ export default function EducationDialog({
         }
     };
 
+    const handleSave = () => {
+        if (dateError) {
+            return; // Prevent save if there's a date error
+        }
+        onSave();
+    };
+
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-2xl bg-white">
@@ -221,11 +255,16 @@ export default function EducationDialog({
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                             Degree <span className="text-red-500">*</span>
                         </label>
-                        <Input
+                        <select
                             value={editingEducation?.degree || ''}
                             onChange={(e) => handleFieldChange('degree', e.target.value)}
-                            placeholder="e.g., Bachelor of Science"
-                        />
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                            <option value="">Select degree</option>
+                            {DEGREE_OPTIONS.map(d => (
+                                <option key={d.value} value={d.value}>{d.label}</option>
+                            ))}
+                        </select>
                     </div>
 
                     <div>
@@ -264,6 +303,10 @@ export default function EducationDialog({
                             />
                         </div>
                     </div>
+
+                    {dateError && (
+                        <p className="text-sm text-red-500 mt-1">{dateError}</p>
+                    )}
                 </div>
 
                 <DialogFooter className="gap-2">
@@ -271,8 +314,9 @@ export default function EducationDialog({
                         Cancel
                     </Button>
                     <Button
-                        onClick={onSave}
-                        className="bg-gradient-to-r from-[#3a4660] to-gray-400 text-white rounded-lg hover:from-[#3a4660] hover:to-[#3a4660]"
+                        onClick={handleSave}
+                        disabled={!!dateError}
+                        className="bg-gradient-to-r from-[#3a4660] to-gray-400 text-white rounded-lg hover:from-[#3a4660] hover:to-[#3a4660] disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         Save
                     </Button>

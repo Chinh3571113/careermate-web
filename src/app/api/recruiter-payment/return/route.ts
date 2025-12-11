@@ -74,18 +74,18 @@ export async function GET(request: NextRequest) {
  */
 function getErrorMessage(code: string): string {
   const errorMessages: Record<string, string> = {
-    '07': 'Giao dịch bị nghi ngờ gian lận',
-    '09': 'Thẻ chưa đăng ký dịch vụ Internet Banking',
-    '10': 'Xác thực thẻ không hợp lệ (quá 3 lần)',
-    '11': 'Hết thời gian thanh toán',
-    '12': 'Thẻ bị khóa',
-    '13': 'Mã OTP không đúng',
-    '24': 'Giao dịch đã bị hủy',
-    '51': 'Tài khoản không đủ số dư',
-    '65': 'Vượt quá hạn mức giao dịch trong ngày',
-    '75': 'Ngân hàng thanh toán đang bảo trì',
-    '79': 'Hết thời gian thanh toán',
+    '07': 'Transaction suspected of fraud',
+    '09': 'Card has not been registered for Internet Banking',
+    '10': 'Invalid card verification (more than 3 times)',
+    '11': 'Payment timeout',
+    '12': 'Card is locked',
+    '13': 'Incorrect OTP code',
+    '24': 'Transaction has been cancelled',
+    '51': 'Insufficient account balance',
+    '65': 'Daily transaction limit exceeded',
+    '75': 'Payment bank is under maintenance',
+    '79': 'Payment timeout',
   };
 
-  return errorMessages[code] || 'Thanh toán đã bị hủy hoặc thất bại';
+  return errorMessages[code] || 'Payment was cancelled or failed';
 }

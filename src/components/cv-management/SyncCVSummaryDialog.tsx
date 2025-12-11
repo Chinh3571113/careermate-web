@@ -131,6 +131,7 @@ export default function SyncCVSummaryDialog({
   const [editedData, setEditedData] = useState<ExtendedParsedCV | null>(parsedData as ExtendedParsedCV);
   const [saving, setSaving] = useState(false);
   const [showCVPreview, setShowCVPreview] = useState(false);
+  const [dateErrors, setDateErrors] = useState<{ [key: string]: string }>({});
 
   // Update editedData when parsedData changes
   // Transform Python API format to internal format
@@ -252,6 +253,50 @@ export default function SyncCVSummaryDialog({
       (newData as any)[arrayPath] = array;
       return newData;
     });
+  };
+
+  // Validate date range (end date should not be before start date)
+  const validateDateRange = (startMonth: string, startYear: string, endMonth: string, endYear: string): string => {
+    if (!startMonth || !startYear || !endMonth || !endYear) {
+      return ''; // Skip validation if any date part is missing
+    }
+    
+    const startDate = new Date(parseInt(startYear), parseInt(startMonth) - 1);
+    const endDate = new Date(parseInt(endYear), parseInt(endMonth) - 1);
+    
+    if (endDate < startDate) {
+      return 'Please enter an end date bigger than the start date.';
+    }
+    return '';
+  };
+
+  // Update validation when dates change
+  const updateArrayItemWithValidation = (arrayPath: string, index: number, field: string, value: any) => {
+    updateArrayItem(arrayPath, index, field, value);
+    
+    // Get updated item to validate
+    setTimeout(() => {
+      if (editedData) {
+        const array = (editedData as any)[arrayPath];
+        if (array && array[index]) {
+          const item = array[index];
+          const startDate = parseDateToMonthYear(item.start_date || '');
+          const endDate = parseDateToMonthYear(item.end_date || '');
+          
+          const error = validateDateRange(
+            startDate.month,
+            startDate.year,
+            endDate.month,
+            endDate.year
+          );
+          
+          setDateErrors(prev => ({
+            ...prev,
+            [`${arrayPath}-${index}`]: error
+          }));
+        }
+      }
+    }, 0);
   };
 
   // Parse date string to month/year
@@ -385,7 +430,7 @@ export default function SyncCVSummaryDialog({
                           <div className="flex gap-2 mt-1">
                             <select
                               value={startDate.month}
-                              onChange={(e) => updateArrayItem('education', index, 'start_date', `${e.target.value}/${startDate.year || new Date().getFullYear()}`)}
+                              onChange={(e) => updateArrayItemWithValidation('education', index, 'start_date', `${e.target.value}/${startDate.year || new Date().getFullYear()}`)}
                               className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                             >
                               <option value="">Month</option>
@@ -393,7 +438,7 @@ export default function SyncCVSummaryDialog({
                             </select>
                             <select
                               value={startDate.year}
-                              onChange={(e) => updateArrayItem('education', index, 'start_date', `${startDate.month || '01'}/${e.target.value}`)}
+                              onChange={(e) => updateArrayItemWithValidation('education', index, 'start_date', `${startDate.month || '01'}/${e.target.value}`)}
                               className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                             >
                               <option value="">Year</option>
@@ -407,7 +452,7 @@ export default function SyncCVSummaryDialog({
                           <div className="flex gap-2 mt-1">
                             <select
                               value={endDate.month}
-                              onChange={(e) => updateArrayItem('education', index, 'end_date', `${e.target.value}/${endDate.year || new Date().getFullYear()}`)}
+                              onChange={(e) => updateArrayItemWithValidation('education', index, 'end_date', `${e.target.value}/${endDate.year || new Date().getFullYear()}`)}
                               className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                             >
                               <option value="">Month</option>
@@ -415,7 +460,7 @@ export default function SyncCVSummaryDialog({
                             </select>
                             <select
                               value={endDate.year}
-                              onChange={(e) => updateArrayItem('education', index, 'end_date', `${endDate.month || '01'}/${e.target.value}`)}
+                              onChange={(e) => updateArrayItemWithValidation('education', index, 'end_date', `${endDate.month || '01'}/${e.target.value}`)}
                               className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                             >
                               <option value="">Year</option>
@@ -424,6 +469,9 @@ export default function SyncCVSummaryDialog({
                           </div>
                         </div>
                       </div>
+                      {dateErrors[`education-${index}`] && (
+                        <p className="text-sm text-red-500 mt-2">{dateErrors[`education-${index}`]}</p>
+                      )}
                     </div>
                   );
                 })}
@@ -497,7 +545,7 @@ export default function SyncCVSummaryDialog({
                           <div className="flex gap-2 mt-1">
                             <select
                               value={startDate.month}
-                              onChange={(e) => updateArrayItem('experience', index, 'start_date', `${e.target.value}/${startDate.year || new Date().getFullYear()}`)}
+                              onChange={(e) => updateArrayItemWithValidation('experience', index, 'start_date', `${e.target.value}/${startDate.year || new Date().getFullYear()}`)}
                               className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                             >
                               <option value="">Month</option>
@@ -505,7 +553,7 @@ export default function SyncCVSummaryDialog({
                             </select>
                             <select
                               value={startDate.year}
-                              onChange={(e) => updateArrayItem('experience', index, 'start_date', `${startDate.month || '01'}/${e.target.value}`)}
+                              onChange={(e) => updateArrayItemWithValidation('experience', index, 'start_date', `${startDate.month || '01'}/${e.target.value}`)}
                               className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                             >
                               <option value="">Year</option>
@@ -519,7 +567,7 @@ export default function SyncCVSummaryDialog({
                           <div className="flex gap-2 mt-1">
                             <select
                               value={endDate.month}
-                              onChange={(e) => updateArrayItem('experience', index, 'end_date', `${e.target.value}/${endDate.year || new Date().getFullYear()}`)}
+                              onChange={(e) => updateArrayItemWithValidation('experience', index, 'end_date', `${e.target.value}/${endDate.year || new Date().getFullYear()}`)}
                               className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                             >
                               <option value="">Month</option>
@@ -527,7 +575,7 @@ export default function SyncCVSummaryDialog({
                             </select>
                             <select
                               value={endDate.year}
-                              onChange={(e) => updateArrayItem('experience', index, 'end_date', `${endDate.month || '01'}/${e.target.value}`)}
+                              onChange={(e) => updateArrayItemWithValidation('experience', index, 'end_date', `${endDate.month || '01'}/${e.target.value}`)}
                               className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
                             >
                               <option value="">Year</option>
@@ -556,6 +604,9 @@ export default function SyncCVSummaryDialog({
                           />
                         </div>
                       </div>
+                      {dateErrors[`experience-${index}`] && (
+                        <p className="text-sm text-red-500 mt-2">{dateErrors[`experience-${index}`]}</p>
+                      )}
                     </div>
                   );
                 })}

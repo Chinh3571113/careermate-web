@@ -81,7 +81,7 @@ export default function CandidateDashboard() {
           setProfileImage(profile.image || "");
           
           // Calculate profile completion using same logic as cm-profile
-          const completionData = {
+          const completionData: any = {
             fullName: profile.fullName,
             title: profile.title,
             phone: profile.phone,
@@ -101,7 +101,30 @@ export default function CandidateDashboard() {
             coreSkills: (profile.coreSkillGroups || []).flatMap((g: any) => g.items || []),
             softSkills: (profile.softSkillGroups || []).flatMap((g: any) => g.items || []),
           };
+          
+          console.log('📊 Dashboard Profile Data:', {
+            workExperiences: completionData.workExperiences?.length || 0,
+            educations: completionData.educations?.length || 0,
+            coreSkills: completionData.coreSkills?.length || 0,
+            softSkills: completionData.softSkills?.length || 0,
+            awards: completionData.awards?.length || 0,
+            certificates: completionData.certificates?.length || 0,
+            projects: completionData.projects?.length || 0,
+            languages: completionData.languages?.length || 0,
+            hasAboutMe: !!completionData.aboutMe,
+            profileFields: {
+              fullName: !!completionData.fullName,
+              title: !!completionData.title,
+              phone: !!completionData.phone,
+              dob: !!completionData.dob,
+              gender: !!completionData.gender,
+              address: !!completionData.address,
+              link: !!completionData.link,
+            }
+          });
+          
           const completion = calculateProfileCompletion(completionData);
+          console.log('✅ Dashboard Profile Completion:', completion + '%');
           setProfileCompletion(completion);
         }
       } catch (error) {
@@ -186,16 +209,8 @@ export default function CandidateDashboard() {
     loadJobActivities();
   }, [candidateId]);
 
-  // Calculate profile completion (simplified)
-  useEffect(() => {
-    let completion = 20; // Base
-    if (profileName) completion += 15;
-    if (profileTitle) completion += 15;
-    if (profileImage) completion += 10;
-    if (allCVs.length > 0) completion += 20;
-    if (appliedJobsCount > 0) completion += 20;
-    setProfileCompletion(Math.min(completion, 100));
-  }, [profileName, profileTitle, profileImage, allCVs, appliedJobsCount]);
+  // Note: Profile completion is now calculated in the fetchProfile function above
+  // using the same logic as cm-profile (calculateProfileCompletion)
 
   // Display name
   const displayName = profileName || user?.fullName || user?.name || user?.email?.split('@')[0] || 'User';

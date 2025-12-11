@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import MonthYearPicker from "../MonthYearPicker";
 import { WorkExperience } from "../types";
+import { useState, useEffect } from "react";
 
 interface WorkExperienceDialogProps {
     open: boolean;
@@ -20,6 +21,25 @@ export default function WorkExperienceDialog({
     onEditingWorkExpChange,
     onSave
 }: WorkExperienceDialogProps) {
+    const [dateError, setDateError] = useState<string>("");
+
+    // Validate dates whenever they change
+    useEffect(() => {
+        if (editingWorkExp?.startMonth && editingWorkExp?.startYear && 
+            editingWorkExp?.endMonth && editingWorkExp?.endYear) {
+            const startDate = new Date(parseInt(editingWorkExp.startYear), parseInt(editingWorkExp.startMonth) - 1);
+            const endDate = new Date(parseInt(editingWorkExp.endYear), parseInt(editingWorkExp.endMonth) - 1);
+            
+            if (endDate < startDate) {
+                setDateError("Please enter an end date bigger than the start date.");
+            } else {
+                setDateError("");
+            }
+        } else {
+            setDateError("");
+        }
+    }, [editingWorkExp?.startMonth, editingWorkExp?.startYear, editingWorkExp?.endMonth, editingWorkExp?.endYear]);
+
     const handleFieldChange = (field: keyof WorkExperience, value: any) => {
         if (editingWorkExp) {
             onEditingWorkExpChange({
@@ -27,6 +47,13 @@ export default function WorkExperienceDialog({
                 [field]: value
             });
         }
+    };
+
+    const handleSave = () => {
+        if (dateError) {
+            return; // Prevent save if there's a date error
+        }
+        onSave();
     };
 
     return (
@@ -86,6 +113,10 @@ export default function WorkExperienceDialog({
                             />
                         </div>
                     </div>
+                    
+                    {dateError && (
+                        <p className="text-sm text-red-500 mt-1">{dateError}</p>
+                    )}
 
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -116,8 +147,9 @@ export default function WorkExperienceDialog({
                         Cancel
                     </Button>
                     <Button
-                        onClick={onSave}
-                        className="bg-gradient-to-r from-[#3a4660] to-gray-400 text-white rounded-lg hover:from-[#3a4660] hover:to-[#3a4660]"
+                        onClick={handleSave}
+                        disabled={!!dateError}
+                        className="bg-gradient-to-r from-[#3a4660] to-gray-400 text-white rounded-lg hover:from-[#3a4660] hover:to-[#3a4660] disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         Save
                     </Button>
