@@ -1,0 +1,457 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<mxfile host="app.diagrams.net" modified="2025-12-12T00:00:00.000Z" agent="CareerMate" version="22.0.0">
+  <diagram name="Workflow 8 - Blog Management" id="blog-management-workflow">
+    <mxGraphModel dx="1400" dy="900" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1400" pageHeight="1100" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        
+        <!-- Title -->
+        <mxCell id="title" value="WORKFLOW 8: BLOG MANAGEMENT (ADMIN &amp; USERS)" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=20;fontStyle=1;fontColor=#1a365d;" parent="1" vertex="1">
+          <mxGeometry x="400" y="20" width="550" height="40" as="geometry"/>
+        </mxCell>
+        
+        <!-- Swimlane Headers -->
+        <mxCell id="admin-lane" value="ADMIN (BLOG AUTHOR)" style="swimlane;startSize=30;horizontal=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;fontSize=14;" parent="1" vertex="1">
+          <mxGeometry x="40" y="80" width="600" height="950" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="user-lane" value="USERS (READERS)" style="swimlane;startSize=30;horizontal=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;fontSize=14;" parent="1" vertex="1">
+          <mxGeometry x="660" y="80" width="360" height="950" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="system-lane" value="SYSTEM" style="swimlane;startSize=30;horizontal=1;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;fontSize=14;" parent="1" vertex="1">
+          <mxGeometry x="1040" y="80" width="160" height="950" as="geometry"/>
+        </mxCell>
+        
+        <!-- ============ ADMIN BLOG CREATION ============ -->
+        <mxCell id="start" value="START" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;fontSize=11;" parent="admin-lane" vertex="1">
+          <mxGeometry x="255" y="50" width="90" height="40" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="nav-blog" value="Navigate to&#xa;Blog Management" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" parent="admin-lane" vertex="1">
+          <mxGeometry x="245" y="110" width="110" height="45" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="action-choice" value="Select Action" style="rhombus;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontStyle=1;fontSize=11;" parent="admin-lane" vertex="1">
+          <mxGeometry x="235" y="175" width="130" height="55" as="geometry"/>
+        </mxCell>
+        
+        <!-- Create New Blog Section -->
+        <mxCell id="create-section" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#82b366;strokeWidth=2;dashed=1;" parent="admin-lane" vertex="1">
+          <mxGeometry x="20" y="255" width="280" height="400" as="geometry"/>
+        </mxCell>
+        <mxCell id="create-title" value="📝 CREATE NEW BLOG" style="text;html=1;strokeColor=none;fillColor=#d5e8d4;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontStyle=1;" parent="admin-lane" vertex="1">
+          <mxGeometry x="30" y="263" width="260" height="22" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="click-create" value="Click&#xa;&quot;Create New Post&quot;" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;fontSize=10;" parent="admin-lane" vertex="1">
+          <mxGeometry x="100" y="300" width="120" height="40" as="geometry"/>
+        </mxCell>
+        
+        <!-- Blog Editor Form -->
+        <mxCell id="editor-form" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#6c8ebf;strokeWidth=1;dashed=1;" parent="admin-lane" vertex="1">
+          <mxGeometry x="35" y="355" width="250" height="180" as="geometry"/>
+        </mxCell>
+        <mxCell id="ef-title" value="BLOG EDITOR" style="text;html=1;strokeColor=none;fillColor=#dae8fc;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;fontStyle=1;" parent="admin-lane" vertex="1">
+          <mxGeometry x="45" y="362" width="230" height="15" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="f-blog-title" value="Post Title" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=8;" parent="admin-lane" vertex="1">
+          <mxGeometry x="55" y="387" width="80" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="f-category" value="Category" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=8;" parent="admin-lane" vertex="1">
+          <mxGeometry x="150" y="387" width="70" height="28" as="geometry"/>
+        </mxCell>
+        <mxCell id="f-tags" value="Tags" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=8;" parent="admin-lane" vertex="1">
+          <mxGeometry x="235" y="387" width="40" height="28" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="f-content" value="Rich Text Editor&#xa;(Blog Content)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=9;" parent="admin-lane" vertex="1">
+          <mxGeometry x="55" y="425" width="155" height="45" as="geometry"/>
+        </mxCell>
+        <mxCell id="f-thumbnail" value="Thumbnail&#xa;Image" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=9;" parent="admin-lane" vertex="1">
+          <mxGeometry x="220" y="425" width="55" height="45" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="f-seo" value="SEO Settings&#xa;(Meta Description)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=8;" parent="admin-lane" vertex="1">
+          <mxGeometry x="55" y="485" width="110" height="35" as="geometry"/>
+        </mxCell>
+        <mxCell id="f-schedule" value="Schedule&#xa;(Optional)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=8;" parent="admin-lane" vertex="1">
+          <mxGeometry x="180" y="485" width="70" height="35" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="save-choice" value="Save As?" style="rhombus;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=9;" parent="admin-lane" vertex="1">
+          <mxGeometry x="105" y="555" width="110" height="45" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="save-draft" value="💾 Save&#xa;DRAFT" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;fontSize=9;" parent="admin-lane" vertex="1">
+          <mxGeometry x="35" y="620" width="80" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="publish" value="✅ PUBLISH&#xa;Now" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;fontSize=9;" parent="admin-lane" vertex="1">
+          <mxGeometry x="200" y="620" width="80" height="40" as="geometry"/>
+        </mxCell>
+        
+        <!-- Manage Existing Blogs Section -->
+        <mxCell id="manage-section" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#6c8ebf;strokeWidth=2;dashed=1;" parent="admin-lane" vertex="1">
+          <mxGeometry x="310" y="255" width="280" height="400" as="geometry"/>
+        </mxCell>
+        <mxCell id="manage-title" value="📋 MANAGE EXISTING BLOGS" style="text;html=1;strokeColor=none;fillColor=#dae8fc;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontStyle=1;" parent="admin-lane" vertex="1">
+          <mxGeometry x="320" y="263" width="260" height="22" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="view-list" value="View Blog Posts List" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" parent="admin-lane" vertex="1">
+          <mxGeometry x="390" y="300" width="120" height="40" as="geometry"/>
+        </mxCell>
+        
+        <!-- Blog List Filters -->
+        <mxCell id="filter-box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#6c8ebf;strokeWidth=1;dashed=1;" parent="admin-lane" vertex="1">
+          <mxGeometry x="325" y="355" width="250" height="55" as="geometry"/>
+        </mxCell>
+        <mxCell id="fb-title" value="FILTER BY STATUS" style="text;html=1;strokeColor=none;fillColor=#dae8fc;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=8;fontStyle=1;" parent="admin-lane" vertex="1">
+          <mxGeometry x="335" y="360" width="230" height="12" as="geometry"/>
+        </mxCell>
+        <mxCell id="f-published" value="PUBLISHED" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=7;" parent="admin-lane" vertex="1">
+          <mxGeometry x="345" y="380" width="65" height="22" as="geometry"/>
+        </mxCell>
+        <mxCell id="f-drafts" value="DRAFTS" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=7;" parent="admin-lane" vertex="1">
+          <mxGeometry x="420" y="380" width="55" height="22" as="geometry"/>
+        </mxCell>
+        <mxCell id="f-scheduled" value="SCHEDULED" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=7;" parent="admin-lane" vertex="1">
+          <mxGeometry x="485" y="380" width="65" height="22" as="geometry"/>
+        </mxCell>
+        
+        <!-- Blog Actions -->
+        <mxCell id="select-blog" value="Select Blog Post" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" parent="admin-lane" vertex="1">
+          <mxGeometry x="390" y="430" width="120" height="40" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="action-box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#666666;strokeWidth=1;dashed=1;" parent="admin-lane" vertex="1">
+          <mxGeometry x="325" y="490" width="250" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="ab-title" value="BLOG ACTIONS" style="text;html=1;strokeColor=none;fillColor=#f5f5f5;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=8;fontStyle=1;" parent="admin-lane" vertex="1">
+          <mxGeometry x="335" y="495" width="230" height="12" as="geometry"/>
+        </mxCell>
+        <mxCell id="a-edit" value="✏️ Edit" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=8;" parent="admin-lane" vertex="1">
+          <mxGeometry x="345" y="515" width="50" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="a-view" value="👁️ View" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=8;" parent="admin-lane" vertex="1">
+          <mxGeometry x="405" y="515" width="50" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="a-unpublish" value="⏸️ Unpublish" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=8;" parent="admin-lane" vertex="1">
+          <mxGeometry x="465" y="515" width="65" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="a-delete" value="🗑️ Delete" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=8;" parent="admin-lane" vertex="1">
+          <mxGeometry x="540" y="515" width="55" height="30" as="geometry"/>
+        </mxCell>
+        
+        <!-- Blog Stats -->
+        <mxCell id="stats-box" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#82b366;strokeWidth=1;dashed=1;" parent="admin-lane" vertex="1">
+          <mxGeometry x="325" y="575" width="250" height="70" as="geometry"/>
+        </mxCell>
+        <mxCell id="sb-title" value="📊 BLOG STATISTICS" style="text;html=1;strokeColor=none;fillColor=#d5e8d4;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=8;fontStyle=1;" parent="admin-lane" vertex="1">
+          <mxGeometry x="335" y="580" width="230" height="12" as="geometry"/>
+        </mxCell>
+        <mxCell id="s-views" value="👁️ Views" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=8;" parent="admin-lane" vertex="1">
+          <mxGeometry x="350" y="600" width="55" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="s-likes" value="❤️ Likes" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=8;" parent="admin-lane" vertex="1">
+          <mxGeometry x="415" y="600" width="50" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="s-comments" value="💬 Comments" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=8;" parent="admin-lane" vertex="1">
+          <mxGeometry x="475" y="600" width="70" height="30" as="geometry"/>
+        </mxCell>
+        
+        <!-- Comment Moderation Section -->
+        <mxCell id="mod-section" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#b85450;strokeWidth=2;dashed=1;" parent="admin-lane" vertex="1">
+          <mxGeometry x="100" y="690" width="400" height="200" as="geometry"/>
+        </mxCell>
+        <mxCell id="mod-title" value="🛡️ COMMENT MODERATION" style="text;html=1;strokeColor=none;fillColor=#f8cecc;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontStyle=1;" parent="admin-lane" vertex="1">
+          <mxGeometry x="110" y="698" width="380" height="22" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="mod-pending" value="View Pending&#xa;Comments" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;" parent="admin-lane" vertex="1">
+          <mxGeometry x="250" y="735" width="100" height="45" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="mod-comment" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;strokeWidth=1;" parent="admin-lane" vertex="1">
+          <mxGeometry x="130" y="795" width="340" height="75" as="geometry"/>
+        </mxCell>
+        <mxCell id="mc-user" value="User" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=8;" parent="admin-lane" vertex="1">
+          <mxGeometry x="145" y="810" width="45" height="25" as="geometry"/>
+        </mxCell>
+        <mxCell id="mc-content" value="Comment Content" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=8;" parent="admin-lane" vertex="1">
+          <mxGeometry x="200" y="810" width="115" height="25" as="geometry"/>
+        </mxCell>
+        <mxCell id="mc-date" value="Date" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=8;" parent="admin-lane" vertex="1">
+          <mxGeometry x="325" y="810" width="45" height="25" as="geometry"/>
+        </mxCell>
+        <mxCell id="mc-approve" value="✅ Approve" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;fontSize=8;" parent="admin-lane" vertex="1">
+          <mxGeometry x="200" y="845" width="65" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="mc-delete" value="🗑️ Delete" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;fontSize=8;" parent="admin-lane" vertex="1">
+          <mxGeometry x="280" y="845" width="55" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="mc-flag" value="⚠️ Flag" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontStyle=1;fontSize=8;" parent="admin-lane" vertex="1">
+          <mxGeometry x="350" y="845" width="50" height="20" as="geometry"/>
+        </mxCell>
+        
+        <!-- ============ USER READER FLOW ============ -->
+        <mxCell id="user-start" value="Browse&#xa;Blog Posts" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" parent="user-lane" vertex="1">
+          <mxGeometry x="125" y="60" width="110" height="50" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="blog-list" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#6c8ebf;strokeWidth=1;dashed=1;" parent="user-lane" vertex="1">
+          <mxGeometry x="30" y="130" width="300" height="130" as="geometry"/>
+        </mxCell>
+        <mxCell id="bl-title" value="BLOG LISTING PAGE" style="text;html=1;strokeColor=none;fillColor=#dae8fc;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;fontStyle=1;" parent="user-lane" vertex="1">
+          <mxGeometry x="40" y="138" width="280" height="15" as="geometry"/>
+        </mxCell>
+        <mxCell id="bl-search" value="🔍 Search" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=8;" parent="user-lane" vertex="1">
+          <mxGeometry x="50" y="163" width="60" height="25" as="geometry"/>
+        </mxCell>
+        <mxCell id="bl-category" value="📁 Categories" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=8;" parent="user-lane" vertex="1">
+          <mxGeometry x="125" y="163" width="75" height="25" as="geometry"/>
+        </mxCell>
+        <mxCell id="bl-recent" value="🕐 Recent" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=8;" parent="user-lane" vertex="1">
+          <mxGeometry x="215" y="163" width="60" height="25" as="geometry"/>
+        </mxCell>
+        <mxCell id="bl-card1" value="Blog Post 1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=8;" parent="user-lane" vertex="1">
+          <mxGeometry x="50" y="200" width="70" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="bl-card2" value="Blog Post 2" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=8;" parent="user-lane" vertex="1">
+          <mxGeometry x="140" y="200" width="70" height="40" as="geometry"/>
+        </mxCell>
+        <mxCell id="bl-card3" value="Blog Post 3" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=8;" parent="user-lane" vertex="1">
+          <mxGeometry x="230" y="200" width="70" height="40" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="select-post" value="Click on&#xa;Blog Post" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;" parent="user-lane" vertex="1">
+          <mxGeometry x="130" y="285" width="100" height="45" as="geometry"/>
+        </mxCell>
+        
+        <!-- Blog Detail View -->
+        <mxCell id="detail-view" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#9673a6;strokeWidth=2;dashed=1;" parent="user-lane" vertex="1">
+          <mxGeometry x="30" y="355" width="300" height="180" as="geometry"/>
+        </mxCell>
+        <mxCell id="dv-title" value="📖 BLOG DETAIL VIEW" style="text;html=1;strokeColor=none;fillColor=#e1d5e7;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontStyle=1;" parent="user-lane" vertex="1">
+          <mxGeometry x="40" y="363" width="280" height="18" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="dv-header" value="Post Title &amp; Author" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=9;" parent="user-lane" vertex="1">
+          <mxGeometry x="50" y="390" width="120" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="dv-date" value="Published Date" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=8;" parent="user-lane" vertex="1">
+          <mxGeometry x="185" y="390" width="85" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="dv-content" value="Full Blog Content" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;fontSize=9;" parent="user-lane" vertex="1">
+          <mxGeometry x="50" y="430" width="220" height="35" as="geometry"/>
+        </mxCell>
+        <mxCell id="dv-tags" value="Tags" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=8;" parent="user-lane" vertex="1">
+          <mxGeometry x="50" y="475" width="50" height="25" as="geometry"/>
+        </mxCell>
+        <mxCell id="dv-share" value="Share" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=8;" parent="user-lane" vertex="1">
+          <mxGeometry x="110" y="475" width="45" height="25" as="geometry"/>
+        </mxCell>
+        <mxCell id="dv-like" value="❤️ Like" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontSize=8;" parent="user-lane" vertex="1">
+          <mxGeometry x="165" y="475" width="50" height="25" as="geometry"/>
+        </mxCell>
+        <mxCell id="dv-save" value="🔖 Save" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=8;" parent="user-lane" vertex="1">
+          <mxGeometry x="225" y="475" width="50" height="25" as="geometry"/>
+        </mxCell>
+        
+        <!-- Comment Section -->
+        <mxCell id="comment-section" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#82b366;strokeWidth=2;dashed=1;" parent="user-lane" vertex="1">
+          <mxGeometry x="30" y="560" width="300" height="200" as="geometry"/>
+        </mxCell>
+        <mxCell id="cs-title" value="💬 COMMENTS SECTION" style="text;html=1;strokeColor=none;fillColor=#d5e8d4;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;fontStyle=1;" parent="user-lane" vertex="1">
+          <mxGeometry x="40" y="568" width="280" height="18" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="existing-comments" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;strokeWidth=1;" parent="user-lane" vertex="1">
+          <mxGeometry x="50" y="595" width="260" height="65" as="geometry"/>
+        </mxCell>
+        <mxCell id="ec-title" value="Existing Comments" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=8;fontStyle=1;" parent="user-lane" vertex="1">
+          <mxGeometry x="55" y="598" width="250" height="12" as="geometry"/>
+        </mxCell>
+        <mxCell id="ec-c1" value="User1: Great article!" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=7;" parent="user-lane" vertex="1">
+          <mxGeometry x="65" y="615" width="110" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="ec-c2" value="User2: Very helpful" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=7;" parent="user-lane" vertex="1">
+          <mxGeometry x="185" y="615" width="105" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="ec-reply" value="Reply" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=7;" parent="user-lane" vertex="1">
+          <mxGeometry x="65" y="640" width="35" height="15" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="add-comment" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#82b366;strokeWidth=1;dashed=1;" parent="user-lane" vertex="1">
+          <mxGeometry x="50" y="670" width="260" height="75" as="geometry"/>
+        </mxCell>
+        <mxCell id="ac-title" value="ADD COMMENT" style="text;html=1;strokeColor=none;fillColor=#d5e8d4;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=8;fontStyle=1;" parent="user-lane" vertex="1">
+          <mxGeometry x="55" y="675" width="250" height="12" as="geometry"/>
+        </mxCell>
+        <mxCell id="ac-input" value="Write your comment..." style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=8;" parent="user-lane" vertex="1">
+          <mxGeometry x="70" y="695" width="145" height="35" as="geometry"/>
+        </mxCell>
+        <mxCell id="ac-submit" value="Submit" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;fontSize=9;" parent="user-lane" vertex="1">
+          <mxGeometry x="230" y="700" width="60" height="25" as="geometry"/>
+        </mxCell>
+        
+        <!-- Related Posts -->
+        <mxCell id="related" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=none;strokeColor=#6c8ebf;strokeWidth=1;dashed=1;" parent="user-lane" vertex="1">
+          <mxGeometry x="50" y="780" width="260" height="75" as="geometry"/>
+        </mxCell>
+        <mxCell id="rel-title" value="📌 RELATED POSTS" style="text;html=1;strokeColor=none;fillColor=#dae8fc;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=9;fontStyle=1;" parent="user-lane" vertex="1">
+          <mxGeometry x="60" y="788" width="240" height="15" as="geometry"/>
+        </mxCell>
+        <mxCell id="rel-1" value="Related 1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=8;" parent="user-lane" vertex="1">
+          <mxGeometry x="75" y="815" width="60" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="rel-2" value="Related 2" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=8;" parent="user-lane" vertex="1">
+          <mxGeometry x="150" y="815" width="60" height="30" as="geometry"/>
+        </mxCell>
+        <mxCell id="rel-3" value="Related 3" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=8;" parent="user-lane" vertex="1">
+          <mxGeometry x="225" y="815" width="60" height="30" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="end-user" value="END" style="ellipse;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;fontStyle=1;fontSize=10;" parent="user-lane" vertex="1">
+          <mxGeometry x="145" y="880" width="70" height="35" as="geometry"/>
+        </mxCell>
+        
+        <!-- ============ SYSTEM FLOW ============ -->
+        <mxCell id="sys-save-post" value="💾 Save&#xa;Blog Post" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=9;" parent="system-lane" vertex="1">
+          <mxGeometry x="30" y="180" width="100" height="45" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="sys-publish" value="🌐 Publish to&#xa;Public Site" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=9;" parent="system-lane" vertex="1">
+          <mxGeometry x="30" y="260" width="100" height="45" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="sys-index" value="🔍 Index for&#xa;Search" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=9;" parent="system-lane" vertex="1">
+          <mxGeometry x="30" y="340" width="100" height="45" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="sys-track" value="📊 Track&#xa;Views/Clicks" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=9;" parent="system-lane" vertex="1">
+          <mxGeometry x="30" y="420" width="100" height="45" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="sys-comment" value="💬 Store&#xa;Comment" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=9;" parent="system-lane" vertex="1">
+          <mxGeometry x="30" y="500" width="100" height="45" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="sys-notify-mod" value="🔔 Notify Admin&#xa;for Moderation" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=9;" parent="system-lane" vertex="1">
+          <mxGeometry x="25" y="580" width="110" height="45" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="sys-update-comment" value="Update Comment&#xa;Status" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;fontSize=9;" parent="system-lane" vertex="1">
+          <mxGeometry x="30" y="720" width="100" height="45" as="geometry"/>
+        </mxCell>
+        
+        <!-- ============ ARROWS IN ADMIN LANE ============ -->
+        <mxCell id="a1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1;" parent="admin-lane" source="start" target="nav-blog" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1;" parent="admin-lane" source="nav-blog" target="action-choice" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#82b366;" parent="admin-lane" source="action-choice" target="click-create" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a3-label" value="Create" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=8;fontColor=#82b366;" parent="admin-lane" vertex="1">
+          <mxGeometry x="130" y="245" width="40" height="15" as="geometry"/>
+        </mxCell>
+        <mxCell id="a4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#6c8ebf;" parent="admin-lane" source="action-choice" target="view-list" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a4-label" value="Manage" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=8;fontColor=#6c8ebf;" parent="admin-lane" vertex="1">
+          <mxGeometry x="410" y="245" width="45" height="15" as="geometry"/>
+        </mxCell>
+        <mxCell id="a5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1;" parent="admin-lane" source="click-create" target="f-blog-title" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1;" parent="admin-lane" source="f-schedule" target="save-choice" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1;strokeColor=#d6b656;" parent="admin-lane" source="save-choice" target="save-draft" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1;strokeColor=#82b366;" parent="admin-lane" source="save-choice" target="publish" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1;" parent="admin-lane" source="view-list" target="f-published" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1;" parent="admin-lane" source="f-scheduled" target="select-blog" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a11" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1;" parent="admin-lane" source="select-blog" target="a-edit" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1;" parent="admin-lane" source="s-comments" target="mod-pending" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="a13" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1;" parent="admin-lane" source="mod-pending" target="mc-user" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        
+        <!-- ============ ARROWS IN USER LANE ============ -->
+        <mxCell id="u1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1;" parent="user-lane" source="user-start" target="bl-search" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="u2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1;" parent="user-lane" source="bl-card2" target="select-post" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="u3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1;" parent="user-lane" source="select-post" target="dv-header" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="u4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1;" parent="user-lane" source="dv-save" target="ec-c1" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="u5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1;" parent="user-lane" source="ac-submit" target="rel-title" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="u6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1;" parent="user-lane" source="rel-2" target="end-user" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        
+        <!-- ============ ARROWS IN SYSTEM LANE ============ -->
+        <mxCell id="s1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1;" parent="system-lane" source="sys-save-post" target="sys-publish" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="s2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1;" parent="system-lane" source="sys-publish" target="sys-index" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="s3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1;" parent="system-lane" source="sys-index" target="sys-track" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="s4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1;" parent="system-lane" source="sys-track" target="sys-comment" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="s5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1;" parent="system-lane" source="sys-comment" target="sys-notify-mod" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="s6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1;" parent="system-lane" source="sys-notify-mod" target="sys-update-comment" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        
+        <!-- ============ CROSS-LANE ARROWS ============ -->
+        <mxCell id="x1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=2;strokeColor=#666666;dashed=1;" parent="1" source="publish" target="sys-save-post" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="x2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1;strokeColor=#666666;dashed=1;" parent="1" source="sys-publish" target="user-start" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="x3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1;strokeColor=#666666;dashed=1;" parent="1" source="ac-submit" target="sys-comment" edge="1">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="1000" y="860"/><mxPoint x="1000" y="605"/><mxPoint x="1120" y="605"/></Array></mxGeometry>
+        </mxCell>
+        <mxCell id="x4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1;strokeColor=#d6b656;dashed=1;" parent="1" source="sys-notify-mod" target="mod-pending" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="x5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;strokeWidth=1;strokeColor=#666666;dashed=1;" parent="1" source="mc-approve" target="sys-update-comment" edge="1">
+          <mxGeometry relative="1" as="geometry"><Array as="points"><mxPoint x="272" y="1000"/><mxPoint x="620" y="1000"/><mxPoint x="620" y="870"/><mxPoint x="1120" y="870"/></Array></mxGeometry>
+        </mxCell>
+        
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>
