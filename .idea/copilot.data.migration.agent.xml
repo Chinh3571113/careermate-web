@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="AgentMigrationStateService">
+    <option name="pendingSessionIds">
+      <option value="348c609c-c178-49d6-9669-d9ef6002bf75" />
+    </option>
+    <option name="pendingTurns">
+      <map>
+        <entry key="348c609c-c178-49d6-9669-d9ef6002bf75">
+          <value>
+            <set>
+              <option value="43c87a3d-a63d-4e33-add6-cfa3baf658ee" />
+              <option value="af59e369-118b-44a4-9d25-274beea6c1d7" />
+              <option value="71f5beb4-e6cb-49f7-a392-3e6be6e42be8" />
+              <option value="31aae238-1a92-4882-857b-914264a7b08d" />
+            </set>
+          </value>
+        </entry>
+      </map>
+    </option>
+    <pendingWorkingSetItems>
+      <entry key="348c609c-c178-49d6-9669-d9ef6002bf75">
+        <set>
+          <option value="file://$PROJECT_DIR$/src/lib/export-job-store.ts" />
+          <option value="file://$PROJECT_DIR$/src/app/api/export-pdf/job/route.ts" />
+          <option value="file://$PROJECT_DIR$/src/app/api/export-pdf/job/[jobId]/route.ts" />
+          <option value="file://$PROJECT_DIR$/EXPORT_JOB_STORE_FIX.md" />
+          <option value="file://$PROJECT_DIR$/VERCEL_KV_SETUP_QUICKSTART.md" />
+          <option value="file://$PROJECT_DIR$/DOCS_INDEX.md" />
+          <option value="file://$PROJECT_DIR$/RAILWAY_REDIS_SETUP.md" />
+          <option value="file://$PROJECT_DIR$/MIGRATION_VERCEL_KV_TO_RAILWAY_REDIS.md" />
+        </set>
+      </entry>
+    </pendingWorkingSetItems>
+  </component>
+</project>

@@ -54,8 +54,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Create job in store
-    const job = exportJobStore.createJob(resumeId, templateId);
+    // Create job in store (now async for KV support)
+    const job = await exportJobStore.createJob(resumeId, templateId);
     const { jobId } = job;
 
     console.log(`[ExportJob] Created job ${jobId} for resume ${resumeId}`);
@@ -81,7 +81,7 @@ export async function POST(req: NextRequest) {
 
         if (!result.success) {
           console.error(`[ExportJob] PDF generation failed for job ${jobId}:`, result.error);
-          exportJobStore.failJob(jobId, result.error);
+          await exportJobStore.failJob(jobId, result.error);
           return;
         }
 
@@ -103,14 +103,14 @@ export async function POST(req: NextRequest) {
         console.log(`[ExportJob] Upload complete for job ${jobId}: ${downloadURL.substring(0, 60)}...`);
 
         // Step 3: Mark job as complete
-        exportJobStore.completeJob(jobId, downloadURL);
+        await exportJobStore.completeJob(jobId, downloadURL);
 
         const duration = ((Date.now() - startTime) / 1000).toFixed(2);
         console.log(`[ExportJob] Job ${jobId} completed successfully in ${duration}s`);
 
       } catch (error: any) {
         console.error(`[ExportJob] Background processing failed for job ${jobId}:`, error);
-        exportJobStore.failJob(jobId, error.message || "Unknown error during export");
+        await exportJobStore.failJob(jobId, error.message || "Unknown error during export");
       }
     });
 

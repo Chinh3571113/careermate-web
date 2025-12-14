@@ -34,8 +34,8 @@ export async function GET(
       );
     }
 
-    // Look up job in store
-    const job = exportJobStore.getJob(jobId);
+    // Look up job in store (now async for KV support)
+    const job = await exportJobStore.getJob(jobId);
 
     if (!job) {
       return NextResponse.json(
