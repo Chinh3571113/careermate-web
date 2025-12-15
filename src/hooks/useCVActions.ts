@@ -36,6 +36,9 @@ interface UseCVActionsReturn {
   // Draft conversion confirmation dialog (for untyped CVs)
   showDraftConversionConfirm: boolean;
   pendingAction: { type: 'sync' | 'edit'; cv: CV } | null;
+  // Delete confirmation dialog
+  showDeleteConfirm: boolean;
+  cvToDelete: CV | null;
   // Actions
   handleSetDefault: (cv: CV) => Promise<void>;
   handleSyncToProfile: (cv: CV) => Promise<void>;
@@ -55,6 +58,9 @@ interface UseCVActionsReturn {
   handleCloseDraftConversionConfirm: () => void;
   handleConfirmConvertToDraft: () => Promise<void>;
   handleSkipConvertToDraft: () => void;
+  // Delete confirmation handlers
+  handleCloseDeleteConfirm: () => void;
+  handleConfirmDelete: () => Promise<void>;
 }
 
 export const useCVActions = (
@@ -84,6 +90,10 @@ export const useCVActions = (
   const [showDraftConversionConfirm, setShowDraftConversionConfirm] = useState(false);
   const [showSwitchCVConfirm, setShowSwitchCVConfirm] = useState(false);
   const [pendingAction, setPendingAction] = useState<{ type: 'sync' | 'edit'; cv: CV } | null>(null);
+
+  // Delete confirmation dialog states
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [cvToDelete, setCvToDelete] = useState<CV | null>(null);
 
   // Extract Zustand store actions
   const setDefaultCvInStore = useCVStore((state) => state.setDefaultCv);
@@ -843,47 +853,72 @@ export const useCVActions = (
   }, []);
 
   const handleDelete = useCallback(async (cvId: string) => {
-    if (window.confirm("Are you sure you want to delete this CV?")) {
-      const resumeId = parseInt(cvId, 10);
-      
-      if (isNaN(resumeId)) {
-        console.error('❌ Invalid resume ID:', cvId);
-        toast.error('Invalid CV ID');
-        return;
-      }
-
-      try {
-        toast.loading('Deleting CV...', { id: 'delete-cv' });
-        
-        // Call API to delete resume
-        await resumeService.deleteResume(resumeId);
-        
-        // Update local state
-        setUploadedCVs(prev => prev.filter(cv => cv.id !== cvId));
-        setBuiltCVs(prev => prev.filter(cv => cv.id !== cvId));
-        setDraftCVs(prev => prev.filter(cv => cv.id !== cvId));
-
-        // Update default if deleted CV was default
-        if (defaultCV?.id === cvId) {
-          const remaining = [...uploadedCVs, ...builtCVs, ...draftCVs].filter(cv => cv.id !== cvId);
-          setDefaultCV(remaining[0] || null);
-        }
-
-        // Refresh data from API
-        if (refresh) {
-          await refresh();
-        }
-
-        toast.success("CV deleted successfully", { id: 'delete-cv' });
-      } catch (error: any) {
-        console.error('❌ Failed to delete CV:', error);
-        toast.error(
-          error.message || 'Failed to delete CV',
-          { id: 'delete-cv' }
-        );
-      }
+    // Find the CV to delete
+    const cvToDeleteItem = [...uploadedCVs, ...builtCVs, ...draftCVs].find(cv => cv.id === cvId);
+    
+    if (!cvToDeleteItem) {
+      toast.error('CV not found');
+      return;
     }
-  }, [defaultCV, uploadedCVs, builtCVs, draftCVs, setUploadedCVs, setBuiltCVs, setDraftCVs, setDefaultCV, refresh]);
+
+    // Show confirmation dialog instead of window.confirm
+    setCvToDelete(cvToDeleteItem);
+    setShowDeleteConfirm(true);
+  }, [uploadedCVs, builtCVs, draftCVs]);
+
+  // Handle close delete confirmation dialog
+  const handleCloseDeleteConfirm = useCallback(() => {
+    setShowDeleteConfirm(false);
+    setCvToDelete(null);
+  }, []);
+
+  // Handle confirm delete
+  const handleConfirmDelete = useCallback(async () => {
+    if (!cvToDelete) return;
+
+    const cvId = cvToDelete.id;
+    const resumeId = parseInt(cvId, 10);
+    
+    if (isNaN(resumeId)) {
+      console.error('❌ Invalid resume ID:', cvId);
+      toast.error('Invalid CV ID');
+      handleCloseDeleteConfirm();
+      return;
+    }
+
+    try {
+      toast.loading('Deleting CV...', { id: 'delete-cv' });
+      
+      // Call API to delete resume
+      await resumeService.deleteResume(resumeId);
+      
+      // Update local state
+      setUploadedCVs(prev => prev.filter(cv => cv.id !== cvId));
+      setBuiltCVs(prev => prev.filter(cv => cv.id !== cvId));
+      setDraftCVs(prev => prev.filter(cv => cv.id !== cvId));
+
+      // Update default if deleted CV was default
+      if (defaultCV?.id === cvId) {
+        const remaining = [...uploadedCVs, ...builtCVs, ...draftCVs].filter(cv => cv.id !== cvId);
+        setDefaultCV(remaining[0] || null);
+      }
+
+      // Refresh data from API
+      if (refresh) {
+        await refresh();
+      }
+
+      toast.success("CV deleted successfully", { id: 'delete-cv' });
+      handleCloseDeleteConfirm();
+    } catch (error: any) {
+      console.error('❌ Failed to delete CV:', error);
+      toast.error(
+        error.message || 'Failed to delete CV',
+        { id: 'delete-cv' }
+      );
+      handleCloseDeleteConfirm();
+    }
+  }, [cvToDelete, defaultCV, uploadedCVs, builtCVs, draftCVs, setUploadedCVs, setBuiltCVs, setDraftCVs, setDefaultCV, refresh, handleCloseDeleteConfirm]);
 
   return {
     showPreview,
@@ -900,6 +935,9 @@ export const useCVActions = (
     // Draft conversion confirmation dialog (for untyped CVs)
     showDraftConversionConfirm,
     pendingAction,
+    // Delete confirmation dialog
+    showDeleteConfirm,
+    cvToDelete,
     // Actions
     handleSetDefault,
     handleSyncToProfile,
@@ -919,5 +957,8 @@ export const useCVActions = (
     handleCloseDraftConversionConfirm,
     handleConfirmConvertToDraft,
     handleSkipConvertToDraft,
+    // Delete confirmation handlers
+    handleCloseDeleteConfirm,
+    handleConfirmDelete,
   };
 };

@@ -12,3 +12,4 @@ export { default as SyncCVSummaryDialog } from "./SyncCVSummaryDialog";
 export { default as SyncConfirmDialog } from "./SyncConfirmDialog";
 export { default as DraftConversionDialog } from "./DraftConversionDialog";
 export { default as SwitchCVConfirmDialog } from "./SwitchCVConfirmDialog";
+export { DeleteConfirmDialog } from "./DeleteConfirmDialog";

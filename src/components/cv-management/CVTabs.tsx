@@ -63,17 +63,17 @@ export const CVTabs: React.FC<CVTabsProps> = ({
         {/* Action Buttons - Always visible on the right */}
         <div className="py-2 flex items-center gap-3">
           {/* Recommendation hint for Upload tab */}
-          {activeTab === "uploaded" && (
+          {/* {activeTab === "uploaded" && (
             <div className="hidden lg:flex items-center gap-1.5 text-xs text-blue-600 bg-blue-50 px-3 py-1.5 rounded-md border border-blue-200">
               <FiInfo className="w-3.5 h-3.5" />
               <span>Tip: Use a <strong>CareerMate template</strong> for best results</span>
             </div>
-          )}
+          )} */}
 
           {/* Create CV Builder Button */}
           <button
             onClick={onCreateCVClick}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium shadow-md hover:shadow-xl transition-all text-sm"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#3a4660] to-gray-400 hover:from-[#3a4660] hover:to-[#3a4660] text-white rounded-lg font-medium shadow-md hover:shadow-xl transition-all text-sm"
             title="Build new CV from scratch"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

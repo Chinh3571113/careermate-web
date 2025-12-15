@@ -11,7 +11,6 @@ import { useResumeData } from "@/hooks/useResumeData";
 import { resumesToCVsSync } from "@/utils/resumeConverter";
 import { useAuthStore } from "@/store/use-auth-store";
 import { useCVStore } from "@/stores/cvStore"; // Import CV Store for Redux DevTools
-import { checkCVBuilderAccess } from "@/lib/entitlement-api";
 import { getMyInvoice, type Invoice } from "@/lib/invoice-api";
 import { Lock, X, Sparkles } from "lucide-react";
 import toast from "react-hot-toast";
@@ -26,7 +25,8 @@ import {
   SyncCVSummaryDialog,
   SyncConfirmDialog,
   DraftConversionDialog,
-  SwitchCVConfirmDialog
+  SwitchCVConfirmDialog,
+  DeleteConfirmDialog
 } from "@/components/cv-management";
 
 type TabType = "built" | "uploaded" | "draft";
@@ -502,6 +502,15 @@ const CVManagementPage = () => {
         onOpenChange={actionsHook.handleCloseSwitchCVConfirm}
         onConfirm={actionsHook.handleConfirmSwitchCV}
         isLoading={actionsHook.isSyncing}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <DeleteConfirmDialog
+        open={actionsHook.showDeleteConfirm}
+        onOpenChange={actionsHook.handleCloseDeleteConfirm}
+        cv={actionsHook.cvToDelete}
+        onConfirm={actionsHook.handleConfirmDelete}
+        isDeleting={actionsHook.isSyncing}
       />
     </>
   );

@@ -45,7 +45,7 @@ export function ClientFooter() {
                         <h3 className="text-lg font-semibold mb-4">For Candidates</h3>
                         <ul className="space-y-2">
                             <li>
-                                <Link href="/jobs-list" className="text-gray-400 hover:text-white transition-colors">
+                                <Link href="/jobs-detail" className="text-gray-400 hover:text-white transition-colors">
                                     Find Jobs
                                 </Link>
                             </li>

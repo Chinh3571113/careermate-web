@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, CircleDollarSign } from "lucide-react";
 import toast from "react-hot-toast";
-import { type SavedJobFeedback, unsaveJob } from "@/lib/job-api";
+import { type SavedJobFeedback, type JobPosting, unsaveJob, fetchJobPostingById } from "@/lib/job-api";
 import { getDaysDiff } from "@/lib/my-jobs-utils";
 import { InfoIcon, CompanyLogoPlaceholder, BookmarkIcon } from "@/components/ui/icons";
 import { AiFillStar } from "react-icons/ai";
@@ -15,8 +15,33 @@ interface SavedJobsTabProps {
     onJobUnsaved: (jobId: number) => void;
 }
 
+interface EnrichedSavedJob extends SavedJobFeedback {
+    jobDetails?: JobPosting | null;
+}
+
 const SavedJobsTab = ({ savedJobs, candidateId, onJobUnsaved }: SavedJobsTabProps) => {
-    const [localSavedJobs, setLocalSavedJobs] = useState(savedJobs);
+    const [localSavedJobs, setLocalSavedJobs] = useState<EnrichedSavedJob[]>(savedJobs);
+    const [loading, setLoading] = useState(true);
+
+    // Fetch job details for all saved jobs
+    useEffect(() => {
+        const fetchJobDetails = async () => {
+            setLoading(true);
+            const enrichedJobs = await Promise.all(
+                savedJobs.map(async (job) => {
+                    const jobDetails = await fetchJobPostingById(job.jobId);
+                    return {
+                        ...job,
+                        jobDetails
+                    };
+                })
+            );
+            setLocalSavedJobs(enrichedJobs);
+            setLoading(false);
+        };
+
+        fetchJobDetails();
+    }, [savedJobs]);
 
     const handleUnsaveJob = async (jobId: number) => {
         if (!candidateId) {
@@ -54,67 +79,85 @@ const SavedJobsTab = ({ savedJobs, candidateId, onJobUnsaved }: SavedJobsTabProp
             {/* Saved Jobs List */}
             {localSavedJobs.length > 0 && (
                 <div className="space-y-4">
-                    {localSavedJobs.map((job) => {
-                        const postedDays = getDaysDiff(job.createdAt);
+                    {loading ? (
+                        <div className="text-center py-8 text-gray-500">Loading job details...</div>
+                    ) : (
+                        localSavedJobs.map((job) => {
+                            const jobDetails = job.jobDetails;
+                            const postedDays = getDaysDiff(jobDetails?.postTime || job.createdAt);
+                            
+                            // Calculate expiry days from actual expirationDate
+                            let expiresInDays = 0;
+                            if (jobDetails?.expirationDate) {
+                                const expiryDate = new Date(jobDetails.expirationDate);
+                                expiresInDays = Math.max(0, Math.ceil((expiryDate.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)));
+                            }
 
-                        return (
-                            <div
-                                key={job.id}
-                                className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-sm transition-shadow"
-                            >
-                                <div className="flex items-start gap-4">
-                                    {/* Company Logo */}
-                                    <CompanyLogoPlaceholder />
+                            const companyName = jobDetails?.recruiterInfo?.companyName || "Company";
+                            const location = jobDetails?.address || "Location not available";
+                            const salaryRange = jobDetails?.salaryRange || "Negotiable";
 
-                                    {/* Job Info */}
-                                    <div className="flex-1 min-w-0">
-                                        <Link
-                                            href={`/jobs-detail?id=${job.jobId}`}
-                                            className="text-lg font-semibold text-gray-900 hover:text-blue-600 transition-colors block mb-2"
-                                        >
-                                            {job.jobTitle}
-                                        </Link>
+                            return (
+                                <div
+                                    key={job.id}
+                                    className="bg-white rounded-lg border border-gray-200 p-6 hover:shadow-sm transition-shadow"
+                                >
+                                    <div className="flex items-start gap-4">
+                                        {/* Company Logo */}
+                                        <CompanyLogoPlaceholder />
 
-                                        <p className="text-gray-700 mb-2">{job.candidateName}</p>
+                                        {/* Job Info */}
+                                        <div className="flex-1 min-w-0">
+                                            <div className="flex items-center gap-3 mb-2 flex-wrap">
+                                                <Link
+                                                    href={`/jobs-detail?id=${job.jobId}`}
+                                                    className="text-lg font-semibold text-gray-900 hover:text-blue-600 transition-colors"
+                                                >
+                                                    {job.jobTitle}
+                                                </Link>
+                                                <div className="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-700 rounded-md text-sm font-medium border border-emerald-200">
+                                                    <CircleDollarSign className="w-4 h-4" />
+                                                    <span>{salaryRange}</span>
+                                                </div>
+                                            </div>
 
-                                        <div className="flex flex-wrap items-center gap-3 text-sm text-gray-600 mb-3">
-                                            <span>{job.candidateName}</span>
-                                            <span>•</span>
-                                            <span>At office</span>
+                                            <p className="text-gray-700 font-medium mb-2">{companyName}</p>
+
+                                            <div className="flex flex-wrap items-center gap-2 text-sm text-gray-600">
+                                                <span>{location}</span>
+                                            </div>
                                         </div>
 
-                                        <div className="salary-badge">
-                                            💰 1,500 - 4,000 USD
-                                        </div>
-                                    </div>
+                                        {/* Right Side - Posted Info and Actions */}
+                                        <div className="flex flex-col items-end justify-between gap-3 flex-shrink-0">
+                                            <div className="text-right text-sm">
+                                                <p className="text-gray-600">Posted {postedDays} {postedDays === 1 ? 'day' : 'days'} ago</p>
+                                                {jobDetails?.expirationDate && (
+                                                    <p className="text-orange-500">(Expires in {expiresInDays} {expiresInDays === 1 ? 'day' : 'days'})</p>
+                                                )}
+                                            </div>
 
-                                    {/* Right Side - Posted Info and Actions */}
-                                    <div className="flex flex-col items-end gap-3 flex-shrink-0">
-                                        <div className="text-right text-sm">
-                                            <p className="text-gray-600">Posted {postedDays} days ago</p>
-                                            <p className="text-orange-500">(Expires in 19 days)</p>
-                                        </div>
-
-                                        <div className="flex items-center gap-2">
-                                            <Link
-                                                href={`/jobs-detail/${job.jobId}/apply`}
-                                                className="px-6 py-2 bg-gradient-to-r from-[#3a4660] to-gray-400 text-white rounded-md font-medium hover:from-[#3a4660] hover:to-[#3a4660] transition-colors"
-                                            >
-                                                Apply Now
-                                            </Link>
-                                            <button
-                                                onClick={() => handleUnsaveJob(job.jobId)}
-                                                className="p-3 border-2 border-yellow-500 bg-yellow-50 rounded-md hover:bg-yellow-100 transition-colors"
-                                                title="Remove from saved"
-                                            >
-                                                <AiFillStar className="w-6 h-6 text-yellow-500" />
-                                            </button>
+                                            <div className="flex items-center gap-2">
+                                                <Link
+                                                    href={`/jobs-detail/${job.jobId}/apply`}
+                                                    className="px-6 py-2.5 bg-gradient-to-r from-[#3a4660] to-gray-400 text-white rounded-md font-medium hover:from-[#3a4660] hover:to-[#3a4660] transition-colors"
+                                                >
+                                                    Apply Now
+                                                </Link>
+                                                <button
+                                                    onClick={() => handleUnsaveJob(job.jobId)}
+                                                    className="p-2.5 border-2 border-yellow-500 bg-yellow-50 rounded-md hover:bg-yellow-100 transition-colors"
+                                                    title="Remove from saved"
+                                                >
+                                                    <AiFillStar className="w-6 h-6 text-yellow-500" />
+                                                </button>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                        );
-                    })}
+                            );
+                        })
+                    )}
                 </div>
             )}
 
@@ -128,7 +171,7 @@ const SavedJobsTab = ({ savedJobs, candidateId, onJobUnsaved }: SavedJobsTabProp
                         You haven't saved any jobs yet.
                     </p>
                     <Link
-                        href="/jobs-list"
+                        href="/jobs-detail"
                         className="px-6 py-3 bg-gray-500 hover:bg-gray-600 text-white rounded-md font-medium"
                     >
                         Explore jobs

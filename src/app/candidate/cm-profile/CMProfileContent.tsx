@@ -797,18 +797,27 @@ export default function CMProfile() {
 
     setIsAnalyzing(true);
     try {
-      // ✅ Lưu ý: Thay đổi API_BASE thành endpoint thực tế của bạn nếu khác
+      // ✅ Get Python API URL from environment variable
       const API_BASE = process.env.NEXT_PUBLIC_PYTHON_API_URL || 'http://localhost:8000';
+      
+      // ✅ Add timeout to prevent hanging requests
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+
       const response = await fetch(`${API_BASE}/api/cv-creation/recommend-roles/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ text: inputText })
+        body: JSON.stringify({ text: inputText }),
+        signal: controller.signal
       });
 
+      clearTimeout(timeoutId);
+
       if (!response.ok) {
-        throw new Error('Failed to analyze text');
+        const errorText = await response.text().catch(() => '');
+        throw new Error(`API Error: ${response.status} ${response.statusText}${errorText ? ' - ' + errorText : ''}`);
       }
 
       const data = await response.json();
@@ -822,9 +831,17 @@ export default function CMProfile() {
       } else {
         toast.success(`Found ${sortedResults.length} role recommendations!`);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error analyzing text:', error);
-      toast.error("Failed to analyze text. Please try again.");
+      
+      // ✅ Better error messages
+      if (error.name === 'AbortError') {
+        toast.error("Request timed out. Please try again.");
+      } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+        toast.error("Cannot connect to AI service. Please check if the service is running or try again later.");
+      } else {
+        toast.error(error.message || "Failed to analyze text. Please try again.");
+      }
     } finally {
       setIsAnalyzing(false);
     }

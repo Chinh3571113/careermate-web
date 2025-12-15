@@ -29,19 +29,19 @@ import "./zoom-slider.css";
  * CVPhoto component - handles Firebase Storage paths/URLs for CV photos
  * Includes crossOrigin="anonymous" for CORS support when exporting to PDF
  */
-function CVPhoto({ 
-  photoUrl, 
-  alt = "profile", 
-  className 
-}: { 
-  photoUrl?: string; 
-  alt?: string; 
+function CVPhoto({
+  photoUrl,
+  alt = "profile",
+  className
+}: {
+  photoUrl?: string;
+  alt?: string;
   className?: string;
 }) {
   const resolvedUrl = useFileUrl(photoUrl);
-  
+
   if (!photoUrl || !resolvedUrl) return null;
-  
+
   return (
     <img
       src={resolvedUrl}
@@ -396,9 +396,8 @@ const handleDirectPDF = (cvData: CVData) => {
     // Generate filename
     const fullName = toPrintableText(cvData.personalInfo.fullName) || "CV";
     const cleanName = fullName.replace(/[^a-zA-Z0-9]/g, "_");
-    const fileName = `CV_${cleanName}_${
-      new Date().toISOString().split("T")[0]
-    }.pdf`;
+    const fileName = `CV_${cleanName}_${new Date().toISOString().split("T")[0]
+      }.pdf`;
 
     // Save the PDF
     pdf.save(fileName);
@@ -432,10 +431,10 @@ export default function CVPreview({
   const [zoom, setZoom] = useState(zoomLevel);
   const [isMounted, setIsMounted] = useState(false);
   const router = useRouter();
-  
+
   // Get user from auth store
   const { user, candidateId } = useAuthStore();
-  
+
   // Get resumeId from store if not passed as prop
   const storeResumeId = useCVStore((state) => state.currentEditingResumeId);
   const resumeId = propResumeId ?? (storeResumeId ? Number(storeResumeId) : undefined);
@@ -452,12 +451,12 @@ export default function CVPreview({
   }, [resumeId, propResumeId, storeResumeId, isMounted, user]);
 
   // Job-based PDF export hook (replaces retry-based approach)
-  const { 
-    isExporting: isJobExporting, 
-    progressMessage, 
+  const {
+    isExporting: isJobExporting,
+    progressMessage,
     error: exportError,
     startExport,
-    reset: resetExport 
+    reset: resetExport
   } = useExportPDFJob();
 
   // Fix hydration mismatch
@@ -524,9 +523,9 @@ export default function CVPreview({
       // This ensures avatar/photos appear in the PDF
       // ========================================
       console.log("Waiting for images to load...");
-      
+
       const imgs = Array.from(tempContainer.getElementsByTagName("img"));
-      
+
       // Process images: add crossOrigin and convert Firebase URLs to blob if needed
       await Promise.all(
         imgs.map(async (img) => {
@@ -535,12 +534,12 @@ export default function CVPreview({
             console.log("Image already loaded:", img.src.substring(0, 50) + "...");
             return;
           }
-          
+
           // Set crossOrigin for CORS support
           img.crossOrigin = "anonymous";
-          
+
           const originalSrc = img.src;
-          
+
           // Try to load normally first
           try {
             await new Promise<void>((resolve, reject) => {
@@ -548,17 +547,17 @@ export default function CVPreview({
                 console.warn("Image load timeout:", originalSrc.substring(0, 50) + "...");
                 resolve(); // Don't reject, just continue
               }, 5000);
-              
+
               img.onload = () => {
                 clearTimeout(timeout);
                 console.log("Image loaded successfully:", originalSrc.substring(0, 50) + "...");
                 resolve();
               };
-              
+
               img.onerror = async () => {
                 clearTimeout(timeout);
                 console.warn("Image load error, trying blob fallback:", originalSrc.substring(0, 50) + "...");
-                
+
                 // Fallback: Fetch image as blob to bypass CORS
                 try {
                   const response = await fetch(originalSrc, { mode: 'cors' });
@@ -566,13 +565,13 @@ export default function CVPreview({
                     const blob = await response.blob();
                     const blobUrl = URL.createObjectURL(blob);
                     img.src = blobUrl;
-                    
+
                     // Wait for blob URL to load
                     await new Promise<void>((res) => {
                       img.onload = () => res();
                       img.onerror = () => res(); // Still resolve even on error
                     });
-                    
+
                     console.log("Image loaded via blob fallback");
                   }
                   resolve();
@@ -581,7 +580,7 @@ export default function CVPreview({
                   resolve(); // Don't block PDF generation
                 }
               };
-              
+
               // Force reload if needed
               if (!img.complete) {
                 img.src = originalSrc;
@@ -593,7 +592,7 @@ export default function CVPreview({
           }
         })
       );
-      
+
       console.log("All images processed, proceeding with capture...");
 
       // Additional wait for rendering
@@ -670,11 +669,11 @@ export default function CVPreview({
       });
 
       document.querySelectorAll('*').forEach(el => {
-  const color = getComputedStyle(el).color;
-  if (color.includes('oklch')) {
-    (el as HTMLElement).style.color = '#000'; // fallback an toàn
-  }
-});
+        const color = getComputedStyle(el).color;
+        if (color.includes('oklch')) {
+          (el as HTMLElement).style.color = '#000'; // fallback an toàn
+        }
+      });
 
       const canvas = await html2canvas(tempContainer, {
         scale: 2,
@@ -731,9 +730,8 @@ export default function CVPreview({
       // Generate filename with current date and CV owner name
       const fullName = cvData.personalInfo.fullName || "CV";
       const cleanName = fullName.replace(/[^a-zA-Z0-9]/g, "_");
-      const fileName = `CV_${cleanName}_${
-        new Date().toISOString().split("T")[0]
-      }.pdf`;
+      const fileName = `CV_${cleanName}_${new Date().toISOString().split("T")[0]
+        }.pdf`;
 
       console.log("Saving PDF...", fileName);
 
@@ -791,7 +789,7 @@ export default function CVPreview({
         resumeId,
         cvDataFullName: cvData.personalInfo?.fullName
       });
-      
+
       toast.error(
         "Cannot export CV: Resume ID is missing. Please save your CV first, then try exporting again.",
         { duration: 5000 }
@@ -880,7 +878,7 @@ export default function CVPreview({
         })) || [],
         skills: cvData.skills?.map(skill => ({
           category: skill.category || "",
-          items: (skill.items || []).map((item: any) => 
+          items: (skill.items || []).map((item: any) =>
             typeof item === 'string' ? item : (item.skill || item.name || String(item))
           )
         })) || [],
@@ -927,7 +925,7 @@ export default function CVPreview({
       // The job handles PDF generation and Firebase upload on the server
       // ========================================
       console.log("🚀 Starting job-based PDF export with resumeId:", resumeId);
-      
+
       const downloadURL = await startExport({
         resumeId: resumeId, // No fallback - already validated above
         templateId: templateId,
@@ -951,10 +949,10 @@ export default function CVPreview({
       // Update resume with Firebase URL if resumeId is available
       if (resumeId) {
         toast.loading("Updating CV information...", { id: loadingToast });
-        
+
         try {
           let currentAboutMe = cvData.personalInfo?.summary || "";
-          
+
           try {
             const currentResumeRes = await api.get(`/api/resume`);
             const resumes = currentResumeRes.data?.result || [];
@@ -984,48 +982,48 @@ export default function CVPreview({
       // Firebase URLs need to be fetched as blob first before triggering download
       // ========================================
       console.log("📥 Downloading PDF from Firebase:", downloadURL);
-      
+
       try {
         // Fetch the PDF as blob
         const response = await fetch(downloadURL);
         if (!response.ok) {
           throw new Error(`Failed to fetch PDF: ${response.status} ${response.statusText}`);
         }
-        
+
         const blob = await response.blob();
         console.log("✅ PDF blob fetched:", blob.size, "bytes");
-        
+
         // Create object URL from blob
         const blobUrl = URL.createObjectURL(blob);
-        
+
         // Create download link with blob URL
         const link = document.createElement("a");
         link.href = blobUrl;
         link.download = `${fileName}.pdf`;
         document.body.appendChild(link);
-        
+
         // Trigger download
         link.click();
         console.log("✅ Download triggered successfully");
-        
+
         // Clean up
         document.body.removeChild(link);
-        
+
         // Revoke object URL after a delay to ensure download starts
         setTimeout(() => {
           URL.revokeObjectURL(blobUrl);
           console.log("✅ Blob URL cleaned up");
         }, 1000);
-        
+
         // Show success message with manual download option as fallback
         toast.success(
           <div>
             <p>CV đã tải xuống thành công!</p>
             <p className="text-xs mt-1">
               Không thấy file?{" "}
-              <a 
-                href={downloadURL} 
-                target="_blank" 
+              <a
+                href={downloadURL}
+                target="_blank"
                 rel="noopener noreferrer"
                 className="underline font-semibold"
               >
@@ -1035,16 +1033,16 @@ export default function CVPreview({
           </div>,
           { duration: 6000 }
         );
-        
+
       } catch (downloadError) {
         console.error("❌ Download trigger failed:", downloadError);
         toast.error(
           <div>
             <p>PDF đã lưu lên cloud nhưng không thể tải xuống tự động.</p>
             <p className="text-xs mt-1">
-              <a 
-                href={downloadURL} 
-                target="_blank" 
+              <a
+                href={downloadURL}
+                target="_blank"
                 rel="noopener noreferrer"
                 className="underline font-semibold"
               >
@@ -1059,12 +1057,12 @@ export default function CVPreview({
       return downloadURL;
     } catch (error) {
       console.error("❌ Error exporting and saving PDF:", error);
-      
+
       // Extract meaningful error message
       let errorMessage = "Could not export CV. Please try again.";
       if (error instanceof Error) {
         errorMessage = error.message;
-        
+
         // Provide more user-friendly messages for known errors
         if (error.message.includes("chromium") || error.message.includes("Chromium")) {
           errorMessage = "PDF service temporarily unavailable. Please try again in a few minutes.";
@@ -1074,10 +1072,10 @@ export default function CVPreview({
           errorMessage = "Export timed out. Please try again with a simpler CV or fewer images.";
         }
       }
-      
-      toast.error(errorMessage, { 
+
+      toast.error(errorMessage, {
         id: loadingToast,
-        duration: 6000 
+        duration: 6000
       });
     } finally {
       setIsDownloading(false);
@@ -1152,27 +1150,24 @@ export default function CVPreview({
               <div className="flex items-center text-base space-x-2">
                 <button
                   onClick={() => handleZoomChange(50)}
-                  className={`px-2 py-1 rounded text-xs ${
-                    zoom === 50 ? "bg-gray-200" : "hover:bg-gray-100"
-                  }`}
+                  className={`px-2 py-1 rounded text-xs ${zoom === 50 ? "bg-gray-200" : "hover:bg-gray-100"
+                    }`}
                 >
                   50%
                 </button>
                 <button
                   onClick={() => handleZoomChange(75)}
-                  className={`px-2 py-1 rounded text-xs ${
-                    zoom === 75 ? "bg-gray-200" : "hover:bg-gray-100"
-                  }`}
+                  className={`px-2 py-1 rounded text-xs ${zoom === 75 ? "bg-gray-200" : "hover:bg-gray-100"
+                    }`}
                 >
                   75%
                 </button>
                 <button
                   onClick={() => handleZoomChange(100)}
-                  className={`px-2 py-1 rounded text-xs ${
-                    zoom === 100
+                  className={`px-2 py-1 rounded text-xs ${zoom === 100
                       ? "bg-gray-100 text-gray-600"
                       : "hover:bg-gray-100"
-                  }`}
+                    }`}
                 >
                   100%
                 </button>
@@ -2299,21 +2294,21 @@ export default function CVPreview({
                           {skillItem.skill}
                         </div>
                       )) || (
-                        <>
-                          <div className="bg-gray-100 text-gray-800 px-3 py-1 rounded-sm text-sm">
-                            MySQL
-                          </div>
-                          <div className="bg-gray-100 text-gray-800 px-3 py-1 rounded-sm text-sm">
-                            MongoDB
-                          </div>
-                          <div className="bg-gray-100 text-gray-800 px-3 py-1 rounded-sm text-sm">
-                            UI/UX
-                          </div>
-                          <div className="bg-gray-100 text-gray-800 px-3 py-1 rounded-sm text-sm">
-                            Ruby
-                          </div>
-                        </>
-                      )}
+                          <>
+                            <div className="bg-gray-100 text-gray-800 px-3 py-1 rounded-sm text-sm">
+                              MySQL
+                            </div>
+                            <div className="bg-gray-100 text-gray-800 px-3 py-1 rounded-sm text-sm">
+                              MongoDB
+                            </div>
+                            <div className="bg-gray-100 text-gray-800 px-3 py-1 rounded-sm text-sm">
+                              UI/UX
+                            </div>
+                            <div className="bg-gray-100 text-gray-800 px-3 py-1 rounded-sm text-sm">
+                              Ruby
+                            </div>
+                          </>
+                        )}
                     </div>
                   </div>
                 </div>
@@ -2463,7 +2458,7 @@ export default function CVPreview({
                   </h2>
                   <div className="space-y-3">
                     {cvData.certifications &&
-                    cvData.certifications.length > 0 ? (
+                      cvData.certifications.length > 0 ? (
                       cvData.certifications.map((cert, index) => (
                         <div key={index} className="flex">
                           <div className="w-40 text-gray-500 text-sm">
@@ -3260,7 +3255,7 @@ export default function CVPreview({
                   toast.error("Bạn cần đăng nhập để lưu CV");
                   return;
                 }
-                
+
                 // Check if resumeId exists before attempting export
                 if (!resumeId) {
                   toast.error(
@@ -3269,23 +3264,24 @@ export default function CVPreview({
                   );
                   return;
                 }
-                
+
                 handleExportAndSavePDF(userId);
               }}
               disabled={!isMounted || isDownloading || !user || !resumeId}
-              className="px-3 py-2 border border-green-400 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              // className="px-3 py-2 border border-green-400 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-3 py-2 rounded-md flex items-center gap-2 transition-colors disabled:opacity-80 disabled:cursor-not-allowed bg-gradient-to-r from-[#3a4660] to-gray-400 text-white font-medium rounded-lg hover:from-[#3a4660] hover:to-[#3a4660] transition-all duration-200"
               title={
-                !isMounted || !user 
-                  ? "Đăng nhập để lưu CV" 
-                  : !resumeId 
-                  ? "Please save your CV first before exporting" 
-                  : "Export PDF and save to Firebase Storage"
+                !isMounted || !user
+                  ? "Đăng nhập để lưu CV"
+                  : !resumeId
+                    ? "Please save your CV first before exporting"
+                    : "Export PDF and save to Firebase Storage"
               }
             >
               {isDownloading ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Đang lưu...
+                  Saving...
                 </>
               ) : (
                 <>
@@ -3327,7 +3323,7 @@ export default function CVPreview({
               </svg>
               Simple PDF
             </button> */}
-{/* 
+            {/* 
             <button
               onClick={handlePrintPDF}
               className="px-3 py-2 border border-gray-400 bg-white text-gray-700 rounded-md hover:bg-gray-50 transition-colors flex items-center gap-2"

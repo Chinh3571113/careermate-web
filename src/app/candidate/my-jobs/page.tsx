@@ -755,7 +755,7 @@ const MyJobsPage = () => {
                           You haven't applied to any jobs in the last 12 months.
                         </p>
                         <Link
-                          href="/jobs-list"
+                          href="/jobs-detail"
                           className="px-6 py-3 bg-gray-500 hover:bg-gray-600 text-white rounded-md font-medium"
                         >
                           Explore jobs
