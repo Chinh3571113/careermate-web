@@ -21,6 +21,12 @@ export interface EmploymentVerificationResponse {
   id: number;
   jobApplyId: number;
   companyName?: string;
+  candidateName?: string;
+  candidateEmail?: string;
+  candidatePhone?: string;
+  candidateImage?: string;
+  jobTitle?: string;
+  employmentStatus?: 'ACTIVE' | 'TERMINATED';
   startDate: string;
   endDate?: string;
   isActive?: boolean;
