@@ -663,10 +663,19 @@ export default function AIInterviewPracticePage() {
       listBuffer = [];
     };
 
+    const stripMarkdown = (text: string) =>
+      text
+        .replace(/\*\*(.+?)\*\*/g, '$1') // inline bold
+        .replace(/^\*+|\*+$/g, '') // surrounding asterisks
+        .replace(/^#+\s*/, '') // markdown headings
+        .replace(/^[-*•]\s+/, '') // bullet markers
+        .replace(/^\d+\.\s+/, '') // numbered bullets
+        .trim();
+
     lines.forEach((line) => {
-      const clean = line.replace(/^\*\*|\*\*$/g, '');
-      const isHeading = line.startsWith('**') && line.endsWith('**') && line.length > 4;
-      const isBullet = line.startsWith('- ') || line.startsWith('• ');
+      const isHeading = (/^\*\*.+\*\*$/.test(line) || /^#+\s+/.test(line)) && line.length > 4;
+      const isBullet = /^[-*•]\s+/.test(line) || /^\d+\.\s+/.test(line);
+      const clean = stripMarkdown(line);
 
       if (isHeading) {
         flushList();
@@ -680,7 +689,7 @@ export default function AIInterviewPracticePage() {
       }
 
       if (isBullet) {
-        listBuffer.push(clean.replace(/^(-|•)\s*/, ''));
+        listBuffer.push(clean);
         return;
       }
 

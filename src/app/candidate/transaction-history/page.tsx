@@ -4,15 +4,20 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import CVSidebar from "@/components/layout/CVSidebar";
 import { useLayout } from "@/contexts/LayoutContext";
-import { getMyInvoice, formatDate, formatInvoicePrice, type Invoice } from "@/lib/invoice-api";
-import { FiArrowLeft, FiFileText, FiCalendar, FiPackage, FiCheckCircle } from "react-icons/fi"; // Bỏ FiDollarSign nếu không dùng
+import {
+  getCandidateInvoiceHistory,
+  formatDate,
+  formatInvoicePrice,
+  type InvoiceListItem,
+} from "@/lib/invoice-api";
+import { FiArrowLeft, FiFileText, FiPackage } from "react-icons/fi";
 import toast from "react-hot-toast";
 
 export default function TransactionHistoryPage() {
   const router = useRouter();
   const { headerHeight } = useLayout();
   const [headerH, setHeaderH] = useState(headerHeight || 0);
-  const [invoice, setInvoice] = useState<Invoice | null>(null);
+  const [invoices, setInvoices] = useState<InvoiceListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -28,26 +33,26 @@ export default function TransactionHistoryPage() {
   }, [headerHeight]);
 
   useEffect(() => {
-    const fetchInvoice = async () => {
+    const fetchInvoices = async () => {
       try {
         setIsLoading(true);
-        const data = await getMyInvoice();
-        setInvoice(data);
-      } catch (error: any) {
-        console.error('Failed to fetch invoice:', error);
-        
-        if (error.message === 'NO_INVOICE_FOUND') {
-          setError('No transaction history found. You haven\'t purchased any package yet.');
-        } else {
-          setError('Failed to load transaction history. Please try again later.');
-          toast.error('Failed to load transaction history');
+        const page = await getCandidateInvoiceHistory(0, 20);
+        setInvoices(page.content || []);
+        if (!page.content || page.content.length === 0) {
+          setError(
+            "No payment history found. You haven't purchased any package yet."
+          );
         }
+      } catch (error: any) {
+        console.error("Failed to fetch invoice history:", error);
+        setError("Failed to load payment history. Please try again later.");
+        toast.error("Failed to load payment history");
       } finally {
         setIsLoading(false);
       }
     };
 
-    fetchInvoice();
+    fetchInvoices();
   }, []);
 
   const handleBack = () => {
@@ -90,10 +95,10 @@ export default function TransactionHistoryPage() {
                   </div>
                   <div>
                     <h1 className="text-2xl font-bold text-gray-900 tracking-tight">
-                      Transaction History
+                      Payment History
                     </h1>
                     <p className="text-sm text-gray-500 mt-1">
-                      View your package purchase history details
+                      View your invoices and open details
                     </p>
                   </div>
                 </div>
@@ -136,7 +141,7 @@ export default function TransactionHistoryPage() {
                     <FiFileText className="w-8 h-8 text-gray-400" />
                   </div>
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                    No Transaction Found
+                    No Payment Found
                   </h3>
                   <p className="text-gray-500 mb-6 max-w-md mx-auto">
                     {error}
@@ -151,128 +156,38 @@ export default function TransactionHistoryPage() {
               </div>
             )}
 
-            {/* Invoice Display */}
-            {!isLoading && !error && invoice && (
+            {/* List Display */}
+            {!isLoading && !error && invoices.length > 0 && (
               <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
-                {/* Invoice Header: Dùng màu tối (Dark Slate/Gray 900) thay vì xanh sáng */}
-                <div className="bg-gray-900 p-8 text-white">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h2 className="text-xl md:text-2xl font-bold mb-2 tracking-tight">Invoice Receipt</h2>
-                      <p className="text-gray-400 text-sm">Thank you for your purchase</p>
-                    </div>
-                    <div className="w-12 h-12 md:w-16 md:h-16 bg-white/10 rounded-full flex items-center justify-center backdrop-blur-sm">
-                      <FiCheckCircle className="w-6 h-6 md:w-8 md:h-8 text-emerald-400" />
-                    </div>
-                  </div>
-                </div>
-
-                {/* Invoice Details */}
                 <div className="p-6 md:p-8">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 mb-8">
-                    {/* Package Information */}
-                    <div className="space-y-6">
-                      <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4 flex items-center border-b border-gray-100 pb-2">
-                        <FiPackage className="w-4 h-4 mr-2" />
-                        Package Details
-                      </h3>
-                      
-                      <div className="space-y-5">
-                        <div className="flex items-start">
-                          {/* Dot indicator màu trung tính */}
-                          <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 mr-3"></div>
-                          <div className="flex-1">
-                            <p className="text-xs text-gray-500 mb-1">Package Name</p>
-                            <p className="text-lg font-semibold text-gray-900">
-                              {invoice.packageName}
+                  <div className="space-y-4">
+                    {invoices.map((inv) => (
+                      <button
+                        key={inv.id}
+                        onClick={() => router.push(`/candidate/transaction-history/${inv.id}`)}
+                        className="w-full text-left rounded-lg border border-gray-200 hover:border-gray-300 hover:bg-gray-50 transition-colors p-4"
+                      >
+                        <div className="flex items-start justify-between gap-4">
+                          <div className="min-w-0">
+                            <p className="text-sm text-gray-500">Package</p>
+                            <p className="text-base font-semibold text-gray-900 truncate">
+                              {inv.packageName}
+                            </p>
+                            <p className="text-sm text-gray-500 mt-1">
+                              {formatDate(inv.startDate)} → {formatDate(inv.endDate)}
                             </p>
                           </div>
-                        </div>
-
-                        <div className="flex items-start">
-                          <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 mr-3"></div>
-                          <div className="flex-1">
-                            <p className="text-xs text-gray-500 mb-1">Amount Paid</p>
-                            {/* Giá tiền dùng màu Emerald (xanh ngọc) trầm */}
-                            <p className="text-2xl font-bold text-emerald-600">
-                              {formatInvoicePrice(invoice.amount)}
+                          <div className="text-right shrink-0">
+                            <p className="text-sm text-gray-500">Amount</p>
+                            <p className="text-lg font-bold text-gray-900">
+                              {formatInvoicePrice(inv.amount)}
                             </p>
+                            <p className="text-xs text-gray-500 mt-1">{inv.status}</p>
                           </div>
                         </div>
-                      </div>
-                    </div>
-
-                    {/* Subscription Period */}
-                    <div className="space-y-6">
-                      <h3 className="text-sm font-semibold text-gray-500 uppercase tracking-wider mb-4 flex items-center border-b border-gray-100 pb-2">
-                        <FiCalendar className="w-4 h-4 mr-2" />
-                        Subscription Period
-                      </h3>
-                      
-                      <div className="space-y-5">
-                        <div className="flex items-start">
-                          <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 mr-3"></div>
-                          <div className="flex-1">
-                            <p className="text-xs text-gray-500 mb-1">Start Date</p>
-                            <p className="text-base font-medium text-gray-800">
-                              {formatDate(invoice.startDate)}
-                            </p>
-                          </div>
-                        </div>
-
-                        <div className="flex items-start">
-                          <div className="w-1.5 h-1.5 bg-gray-400 rounded-full mt-2 mr-3"></div>
-                          <div className="flex-1">
-                            <p className="text-xs text-gray-500 mb-1">End Date</p>
-                            <p className="text-base font-medium text-gray-800">
-                              {formatDate(invoice.endDate)}
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
+                      </button>
+                    ))}
                   </div>
-
-                  {/* Summary Box: Màu nền xám rất nhạt, viền mỏng */}
-                  <div className="bg-gray-50 border border-gray-200 rounded-lg p-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-                    <div className="flex flex-col">
-                        <span className="text-gray-500 text-sm font-medium">Total Amount</span>
-                        <span className="text-3xl font-bold text-gray-900 mt-1">
-                            {formatInvoicePrice(invoice.amount)}
-                        </span>
-                    </div>
-                    
-                    <div className="flex items-center px-4 py-2 bg-white border border-gray-200 rounded-full shadow-sm">
-                        <span className="text-gray-500 text-xs uppercase font-bold mr-3 tracking-wide">Status</span>
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-100">
-                            <FiCheckCircle className="w-3.5 h-3.5 mr-1" />
-                            Paid Successfully
-                        </span>
-                    </div>
-                  </div>
-
-                  {/* Action Buttons: Nút chính màu đen/xám đậm, nút phụ màu trắng */}
-                  <div className="mt-8 flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-100">
-                    <button
-                      onClick={() => router.push('/candidate/dashboard')}
-                      className="flex-1 px-6 py-3 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 font-medium rounded-lg transition-colors shadow-sm"
-                    >
-                      Back to Dashboard
-                    </button>
-                    <button
-                      onClick={() => router.push('/candidate/pricing')}
-                      className="flex-1 px-6 py-3 bg-gray-900 hover:bg-gray-800 text-white font-medium rounded-lg transition-colors shadow-md"
-                    >
-                      View Other Packages
-                    </button>
-                  </div>
-                </div>
-
-                {/* Footer Note */}
-                <div className="bg-gray-50 px-8 py-4 border-t border-gray-200">
-                  <p className="text-xs text-gray-500 text-center">
-                    If you have any questions about this transaction, please contact our support team.
-                  </p>
                 </div>
               </div>
             )}
