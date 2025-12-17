@@ -325,7 +325,8 @@ function MonthView({ currentDate, monthlyCalendar, setCurrentDate, setViewMode }
     const isPast = cellDate < today;
     const isToday = cellDate.toDateString() === today.toDateString();
     const dateStr = `${year}-${String(month + 1).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-    const interviews = monthlyCalendar?.interviewCountByDate?.[dateStr] || 0;
+    // Don't show interview count for past days
+    const interviews = isPast ? 0 : (monthlyCalendar?.interviewCountByDate?.[dateStr] || 0);
 
     cells.push(
       <div
@@ -418,6 +419,15 @@ function WeekView({ currentDate, weeklyCalendar }: any) {
 
   // Get all interviews for a specific day
   const getInterviewsForDay = (date: Date) => {
+    // Don't show interviews for past days
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const checkDate = new Date(date);
+    checkDate.setHours(0, 0, 0, 0);
+    if (checkDate < today) {
+      return [];
+    }
+
     const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
     let interviews: any[] = [];
     
@@ -623,7 +633,9 @@ function DayView({ currentDate, dailyCalendar }: any) {
   const hours = Array.from({ length: 14 }, (_, i) => i + 7); // 7am to 8pm
   const startHour = 7;
   const now = new Date();
-  const interviews = dailyCalendar?.interviews || [];
+  // Don't show interviews for past days
+  const isPastDay = currentDate < new Date(new Date().setHours(0, 0, 0, 0));
+  const interviews = isPastDay ? [] : (dailyCalendar?.interviews || []);
 
   return (
     <div className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-auto">

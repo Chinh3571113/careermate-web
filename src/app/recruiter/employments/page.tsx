@@ -5,6 +5,8 @@ import {
   Briefcase, 
   Clock, 
   Calendar,
+  Mail,
+  Phone,
   AlertTriangle,
   FileText,
   XCircle
@@ -191,6 +193,36 @@ export default function EmploymentsPage() {
                         </span>
                       </div>
                     </div>
+
+                    {(employment.candidateEmail || employment.candidatePhone) && (
+                      <div className="space-y-1">
+                        <p className="text-sm text-muted-foreground">Contact</p>
+                        <div className="space-y-1">
+                          {employment.candidateEmail && (
+                            <div className="flex items-center gap-2">
+                              <Mail className="h-4 w-4 text-muted-foreground" />
+                              <a
+                                className="text-sm font-medium underline-offset-4 hover:underline"
+                                href={`mailto:${employment.candidateEmail}`}
+                              >
+                                {employment.candidateEmail}
+                              </a>
+                            </div>
+                          )}
+                          {employment.candidatePhone && (
+                            <div className="flex items-center gap-2">
+                              <Phone className="h-4 w-4 text-muted-foreground" />
+                              <a
+                                className="text-sm font-medium underline-offset-4 hover:underline"
+                                href={`tel:${employment.candidatePhone}`}
+                              >
+                                {employment.candidatePhone}
+                              </a>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
 
                     {employment.salary && (
                       <div className="space-y-1">

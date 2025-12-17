@@ -1,5 +1,12 @@
 import React from "react";
-import { BriefcaseBusiness, FileText, IdCardLanyard, LayoutDashboard, Settings } from "lucide-react";
+import {
+  BriefcaseBusiness,
+  CreditCard,
+  FileText,
+  IdCardLanyard,
+  LayoutDashboard,
+  Settings,
+} from "lucide-react";
 
 export type MenuItem = {
   href: string;
@@ -183,6 +190,12 @@ export const candidateMenuItems: MenuItem[] = [
         <path d="M13.73 21a2 2 0 0 1-3.46 0" />
       </svg>
     ),
+  },
+  {
+    href: "/transaction-history",
+    label: "Payment History",
+    key: "transaction-history",
+    icon: <CreditCard className="w-5 h-5" />,
   },
   // {
   //   href: "/email-subscriptions",

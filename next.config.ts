@@ -52,6 +52,12 @@ const nextConfig = {
         port: "",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "ui-avatars.com",
+        port: "",
+        pathname: "/**",
+      },
     ],
     // Image optimization settings
     formats: ["image/webp", "image/avif"],

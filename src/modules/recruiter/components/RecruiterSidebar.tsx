@@ -32,6 +32,7 @@ const NAV_ITEMS: NavItem[] = [
             { label: "Organization profile", href: "/recruiter/recruiter-feature/profile/organization" },
             { label: "Update history", href: "/recruiter/recruiter-feature/profile/update-history" },
             { label: "Billing & plans", href: "/recruiter/recruiter-feature/profile/billing" },
+            { label: "Payment history", href: "/recruiter/transaction-history" },
         ],
     },
     {

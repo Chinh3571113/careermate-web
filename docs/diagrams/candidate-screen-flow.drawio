@@ -1,0 +1,337 @@
+<mxfile host="app.diagrams.net" modified="2025-12-11T00:00:00.000Z" agent="CareerMate" version="22.0.0">
+  <diagram name="Candidate Screen Flow" id="candidate-flow">
+    <mxGraphModel dx="1434" dy="780" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="1200" math="0" shadow="0">
+      <root>
+        <mxCell id="0"/>
+        <mxCell id="1" parent="0"/>
+        
+        <!-- Title -->
+        <mxCell id="title" value="CANDIDATE SCREEN FLOW - CareerMate" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=20;fontStyle=1;fontColor=#1a365d;" parent="1" vertex="1">
+          <mxGeometry x="500" y="20" width="400" height="40" as="geometry"/>
+        </mxCell>
+        
+        <!-- Entry Points -->
+        <mxCell id="start" value="Start" style="ellipse;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="40" y="100" width="80" height="40" as="geometry"/>
+        </mxCell>
+        
+        <!-- Public Screens (No Auth Required) -->
+        <mxCell id="public-header" value="PUBLIC SCREENS (No Login Required)" style="text;html=1;strokeColor=none;fillColor=#fff2cc;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="40" y="160" width="280" height="25" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="landing" value="Landing Page&#xa;(Home)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" parent="1" vertex="1">
+          <mxGeometry x="160" y="100" width="100" height="50" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="jobs-list-public" value="Jobs List&#xa;(Public)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" parent="1" vertex="1">
+          <mxGeometry x="40" y="200" width="100" height="50" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="job-detail-public" value="Job Detail&#xa;(Public)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" parent="1" vertex="1">
+          <mxGeometry x="160" y="200" width="100" height="50" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="blog-list-public" value="Blog List&#xa;(Public)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" parent="1" vertex="1">
+          <mxGeometry x="40" y="270" width="100" height="50" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="blog-detail-public" value="Blog Detail&#xa;(Public)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" parent="1" vertex="1">
+          <mxGeometry x="160" y="270" width="100" height="50" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="company-profile" value="Company&#xa;Profile" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" parent="1" vertex="1">
+          <mxGeometry x="280" y="200" width="100" height="50" as="geometry"/>
+        </mxCell>
+        
+        <!-- Authentication -->
+        <mxCell id="auth-header" value="AUTHENTICATION" style="text;html=1;strokeColor=none;fillColor=#f8cecc;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="300" y="80" width="140" height="25" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="sign-in" value="Sign In" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" parent="1" vertex="1">
+          <mxGeometry x="300" y="110" width="80" height="40" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="sign-up" value="Sign Up&#xa;Candidate" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" parent="1" vertex="1">
+          <mxGeometry x="400" y="110" width="80" height="40" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="oauth" value="OAuth&#xa;Google" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" parent="1" vertex="1">
+          <mxGeometry x="500" y="110" width="80" height="40" as="geometry"/>
+        </mxCell>
+        
+        <!-- Candidate Main Navigation -->
+        <mxCell id="candidate-header" value="CANDIDATE DASHBOARD &amp; NAVIGATION" style="text;html=1;strokeColor=none;fillColor=#dae8fc;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=12;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="420" y="180" width="280" height="25" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="dashboard" value="Candidate&#xa;Dashboard" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="520" y="220" width="120" height="60" as="geometry"/>
+        </mxCell>
+        
+        <!-- CV Management Section -->
+        <mxCell id="cv-header" value="CV MANAGEMENT" style="text;html=1;strokeColor=none;fillColor=#e1d5e7;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="40" y="350" width="200" height="20" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="cv-management" value="CV Management&#xa;List" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" parent="1" vertex="1">
+          <mxGeometry x="40" y="380" width="100" height="50" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="cv-create" value="Create/Edit&#xa;CV (Web)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" parent="1" vertex="1">
+          <mxGeometry x="160" y="380" width="100" height="50" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="cv-upload" value="Upload CV&#xa;(PDF/DOCX)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" parent="1" vertex="1">
+          <mxGeometry x="280" y="380" width="100" height="50" as="geometry"/>
+        </mxCell>
+        
+        <!-- Profile Section -->
+        <mxCell id="profile-header" value="PROFILE MANAGEMENT" style="text;html=1;strokeColor=none;fillColor=#d5e8d4;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="400" y="350" width="180" height="20" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="cm-profile" value="CM Profile&#xa;(Full Profile)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" parent="1" vertex="1">
+          <mxGeometry x="400" y="380" width="100" height="50" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="settings" value="Settings" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" parent="1" vertex="1">
+          <mxGeometry x="520" y="380" width="80" height="50" as="geometry"/>
+        </mxCell>
+        
+        <!-- Job Activities Section -->
+        <mxCell id="jobs-header" value="JOB ACTIVITIES" style="text;html=1;strokeColor=none;fillColor=#ffe6cc;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="620" y="350" width="200" height="20" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="my-jobs" value="My Jobs&#xa;(Applied/Saved)" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" parent="1" vertex="1">
+          <mxGeometry x="620" y="380" width="100" height="50" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="applied-jobs" value="Applied Jobs&#xa;Tab" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" parent="1" vertex="1">
+          <mxGeometry x="620" y="450" width="90" height="40" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="saved-jobs" value="Saved Jobs&#xa;Tab" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" parent="1" vertex="1">
+          <mxGeometry x="730" y="450" width="90" height="40" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="job-invitation" value="Job&#xa;Invitations" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" parent="1" vertex="1">
+          <mxGeometry x="740" y="380" width="80" height="50" as="geometry"/>
+        </mxCell>
+        
+        <!-- Interview Section -->
+        <mxCell id="interview-header" value="INTERVIEWS" style="text;html=1;strokeColor=none;fillColor=#f5f5f5;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="840" y="350" width="180" height="20" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="interviews-list" value="Interviews&#xa;List" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;" parent="1" vertex="1">
+          <mxGeometry x="840" y="380" width="80" height="50" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="interview-detail" value="Interview&#xa;Detail" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;" parent="1" vertex="1">
+          <mxGeometry x="940" y="380" width="80" height="50" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="calendar" value="Interview&#xa;Calendar" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#666666;" parent="1" vertex="1">
+          <mxGeometry x="840" y="450" width="80" height="50" as="geometry"/>
+        </mxCell>
+        
+        <!-- AI Features Section -->
+        <mxCell id="ai-header" value="AI FEATURES" style="text;html=1;strokeColor=none;fillColor=#d5e8d4;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="40" y="480" width="340" height="20" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="ai-cv-checker" value="AI CV&#xa;Checker" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" parent="1" vertex="1">
+          <mxGeometry x="40" y="510" width="80" height="50" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="ai-cv-result" value="AI CV&#xa;Result" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" parent="1" vertex="1">
+          <mxGeometry x="140" y="510" width="80" height="50" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="interview-practice" value="AI Interview&#xa;Practice" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" parent="1" vertex="1">
+          <mxGeometry x="240" y="510" width="90" height="50" as="geometry"/>
+        </mxCell>
+        
+        <!-- Career Development Section -->
+        <mxCell id="career-header" value="CAREER DEVELOPMENT" style="text;html=1;strokeColor=none;fillColor=#dae8fc;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="40" y="580" width="300" height="20" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="roadmap" value="Career&#xa;Roadmap" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
+          <mxGeometry x="40" y="610" width="80" height="50" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="roadmap-detail" value="Roadmap&#xa;Detail" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
+          <mxGeometry x="140" y="610" width="80" height="50" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="roadmap-courses" value="Roadmap&#xa;Courses" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
+          <mxGeometry x="240" y="610" width="80" height="50" as="geometry"/>
+        </mxCell>
+        
+        <!-- Employment & Reviews -->
+        <mxCell id="emp-header" value="EMPLOYMENT &amp; REVIEWS" style="text;html=1;strokeColor=none;fillColor=#e1d5e7;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="360" y="580" width="200" height="20" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="employments" value="My&#xa;Employments" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" parent="1" vertex="1">
+          <mxGeometry x="360" y="610" width="90" height="50" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="submit-review" value="Submit&#xa;Company Review" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" parent="1" vertex="1">
+          <mxGeometry x="470" y="610" width="90" height="50" as="geometry"/>
+        </mxCell>
+        
+        <!-- Payment Section -->
+        <mxCell id="payment-header" value="PREMIUM &amp; PAYMENT" style="text;html=1;strokeColor=none;fillColor=#f8cecc;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="600" y="580" width="220" height="20" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="pricing" value="Pricing&#xa;Packages" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" parent="1" vertex="1">
+          <mxGeometry x="600" y="610" width="80" height="50" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="payment-confirm" value="Payment&#xa;Confirm" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" parent="1" vertex="1">
+          <mxGeometry x="700" y="610" width="80" height="50" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="payment-success" value="Payment&#xa;Success" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" parent="1" vertex="1">
+          <mxGeometry x="700" y="680" width="80" height="40" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="payment-failure" value="Payment&#xa;Failure" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" parent="1" vertex="1">
+          <mxGeometry x="800" y="680" width="80" height="40" as="geometry"/>
+        </mxCell>
+        
+        <mxCell id="transaction-history" value="Transaction&#xa;History" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" parent="1" vertex="1">
+          <mxGeometry x="800" y="610" width="80" height="50" as="geometry"/>
+        </mxCell>
+        
+        <!-- Arrows/Connections -->
+        <mxCell id="e1" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="start" target="landing" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e2" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="landing" target="sign-in" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="sign-in" target="dashboard" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e4" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="landing" target="jobs-list-public" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="jobs-list-public" target="job-detail-public" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e6" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="landing" target="blog-list-public" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e7" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="blog-list-public" target="blog-detail-public" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e8" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="dashboard" target="cv-management" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e9" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="cv-management" target="cv-create" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="cv-management" target="cv-upload" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e11" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="dashboard" target="cm-profile" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="dashboard" target="my-jobs" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e13" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="my-jobs" target="applied-jobs" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e14" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="my-jobs" target="saved-jobs" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e15" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="dashboard" target="interviews-list" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e16" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="interviews-list" target="interview-detail" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e17" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="ai-cv-checker" target="ai-cv-result" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e18" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="roadmap" target="roadmap-detail" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e19" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="roadmap-detail" target="roadmap-courses" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e20" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="pricing" target="payment-confirm" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e21" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="payment-confirm" target="payment-success" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e22" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="payment-confirm" target="payment-failure" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e23" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="sign-in" target="sign-up" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e24" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="sign-in" target="oauth" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e25" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="job-detail-public" target="company-profile" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        <mxCell id="e26" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" parent="1" source="employments" target="submit-review" edge="1">
+          <mxGeometry relative="1" as="geometry"/>
+        </mxCell>
+        
+        <!-- Legend -->
+        <mxCell id="legend" value="LEGEND" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=11;fontStyle=1;" parent="1" vertex="1">
+          <mxGeometry x="1040" y="100" width="60" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="leg1" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;" parent="1" vertex="1">
+          <mxGeometry x="1040" y="130" width="20" height="15" as="geometry"/>
+        </mxCell>
+        <mxCell id="leg1t" value="Public (No Auth)" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" parent="1" vertex="1">
+          <mxGeometry x="1070" y="125" width="90" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="leg2" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f8cecc;strokeColor=#b85450;" parent="1" vertex="1">
+          <mxGeometry x="1040" y="155" width="20" height="15" as="geometry"/>
+        </mxCell>
+        <mxCell id="leg2t" value="Auth/Payment" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" parent="1" vertex="1">
+          <mxGeometry x="1070" y="150" width="90" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="leg3" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;" parent="1" vertex="1">
+          <mxGeometry x="1040" y="180" width="20" height="15" as="geometry"/>
+        </mxCell>
+        <mxCell id="leg3t" value="Dashboard/Career" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" parent="1" vertex="1">
+          <mxGeometry x="1070" y="175" width="100" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="leg4" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;" parent="1" vertex="1">
+          <mxGeometry x="1040" y="205" width="20" height="15" as="geometry"/>
+        </mxCell>
+        <mxCell id="leg4t" value="CV/Employment" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" parent="1" vertex="1">
+          <mxGeometry x="1070" y="200" width="90" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="leg5" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" parent="1" vertex="1">
+          <mxGeometry x="1040" y="230" width="20" height="15" as="geometry"/>
+        </mxCell>
+        <mxCell id="leg5t" value="AI/Profile/Success" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" parent="1" vertex="1">
+          <mxGeometry x="1070" y="225" width="100" height="20" as="geometry"/>
+        </mxCell>
+        <mxCell id="leg6" value="" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffe6cc;strokeColor=#d79b00;" parent="1" vertex="1">
+          <mxGeometry x="1040" y="255" width="20" height="15" as="geometry"/>
+        </mxCell>
+        <mxCell id="leg6t" value="Job Activities" style="text;html=1;strokeColor=none;fillColor=none;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=10;" parent="1" vertex="1">
+          <mxGeometry x="1070" y="250" width="90" height="20" as="geometry"/>
+        </mxCell>
+        
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

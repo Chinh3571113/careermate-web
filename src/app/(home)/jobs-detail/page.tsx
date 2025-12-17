@@ -1,6 +1,6 @@
 "use client";
 import { useState, useEffect, useMemo, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import JobCard from "../../../components/JobCard";
 import JobRecommendModal from "../../../components/JobRecommendModal";
 import { RiMoneyDollarCircleLine } from "react-icons/ri";
@@ -230,6 +230,9 @@ const jobs: JobListing[] = [
 
 export default function JobsDetailPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const urlJobId = searchParams.get("id");
+  
   const { isAuthenticated, candidateId, fetchCandidateProfile } =
     useAuthStore();
 
@@ -294,6 +297,39 @@ export default function JobsDetailPage() {
   }, [isAuthenticated, candidateId]);
   const jobsPerPage = 10;
 
+  // ✅ Handle URL job ID - fetch specific job if ID provided
+  useEffect(() => {
+    const loadSpecificJob = async () => {
+      if (!urlJobId) return;
+      
+      const jobIdNum = parseInt(urlJobId, 10);
+      if (isNaN(jobIdNum)) return;
+      
+      try {
+        // Fetch the specific job by ID
+        const response = await api.get(`/api/job-postings/${jobIdNum}`);
+        if (response.data?.result) {
+          const specificJob = transformJobPosting(response.data.result);
+          
+          // Add to jobs list if not already present
+          setJobs(prevJobs => {
+            const exists = prevJobs.some(j => j.id === jobIdNum);
+            if (exists) return prevJobs;
+            return [specificJob, ...prevJobs];
+          });
+          
+          // Select this job
+          setSelectedJobId(jobIdNum);
+        }
+      } catch (err) {
+        console.error("Failed to fetch specific job:", err);
+        // Job not found, will fall back to first job in list
+      }
+    };
+    
+    loadSpecificJob();
+  }, [urlJobId]);
+
   // Fetch jobs from API
   useEffect(() => {
     const loadJobs = async () => {
@@ -314,9 +350,20 @@ export default function JobsDetailPage() {
           setTotalPages(response.result.totalPages);
           setTotalElements(response.result.totalElements);
 
-          // Select first job if none selected
+          // Select job from URL if provided, otherwise first job
           if (!selectedJobId && transformedJobs.length > 0) {
-            setSelectedJobId(transformedJobs[0].id);
+            if (urlJobId) {
+              const jobIdNum = parseInt(urlJobId, 10);
+              const jobExists = transformedJobs.some(j => j.id === jobIdNum);
+              if (jobExists) {
+                setSelectedJobId(jobIdNum);
+              } else {
+                // Job not in current page, will be fetched by the other useEffect
+                setSelectedJobId(transformedJobs[0].id);
+              }
+            } else {
+              setSelectedJobId(transformedJobs[0].id);
+            }
           }
         }
       } catch (err) {
@@ -328,7 +375,7 @@ export default function JobsDetailPage() {
     };
 
     loadJobs();
-  }, [currentPage, searchKeyword]);
+  }, [currentPage, searchKeyword, urlJobId]);
 
   // ✅ Fetch saved and liked jobs when authenticated
   useEffect(() => {
