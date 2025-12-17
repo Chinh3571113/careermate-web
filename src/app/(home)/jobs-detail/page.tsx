@@ -438,6 +438,9 @@ export default function JobsDetailPage() {
 
   // ✅ Memoize handlers with useCallback
   const handleJobSelect = useCallback((jobId: number) => {
+    // Update URL to show the selected job
+    router.push(`/jobs-detail?id=${jobId}`);
+    
     setSelectedJobId(jobId);
 
     // Track job view
@@ -446,7 +449,7 @@ export default function JobsDetailPage() {
         console.error("Failed to track job view:", err);
       });
     }
-  }, [candidateId]);
+  }, [candidateId, router]);
 
   const handleApplyNow = useCallback(() => {
     if (!isAuthenticated) {
@@ -1566,7 +1569,7 @@ ${jobData.recruiterInfo?.about || 'N/A'}
                 <button
                   onClick={() => {
                     setShowCVAnalyseUpgradeModal(false);
-                    router.push("/candidate/subscription");
+                    router.push("/candidate/pricing");
                   }}
                   className="flex-1 px-6 py-3 bg-gradient-to-r from-indigo-600 to-purple-600 text-white rounded-md hover:from-indigo-700 hover:to-purple-700 transition-colors font-medium"
                 >

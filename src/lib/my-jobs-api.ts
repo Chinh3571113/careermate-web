@@ -80,17 +80,30 @@ export const getStatusText = (status: JobApplicationStatus | string): string => 
 
 /**
  * Format date to display format
+ * Handles timezone differences - backend sends LocalDateTime which needs to be treated as Vietnam time
  */
 export const formatApplicationDate = (dateString: string): string => {
   try {
-    const date = new Date(dateString);
+    // Backend sends LocalDateTime without timezone info
+    // We need to parse it as if it's already in Vietnam time (UTC+7)
+    // Example: "2024-12-16T10:30:00" should be treated as Vietnam time, not UTC
+    
+    // Remove any timezone indicators and parse as local time
+    const cleanDateString = dateString.replace('Z', '').replace(/[+-]\d{2}:\d{2}$/, '');
+    
+    // Create date object - this will parse as local browser time
+    const date = new Date(cleanDateString);
+    
+    // Calculate time difference
     const now = new Date();
     const diffMs = now.getTime() - date.getTime();
     const diffMins = Math.floor(diffMs / 60000);
     const diffHours = Math.floor(diffMs / 3600000);
     const diffDays = Math.floor(diffMs / 86400000);
     
-    if (diffMins < 60) {
+    if (diffMins < 1) {
+      return 'Just now';
+    } else if (diffMins < 60) {
       return `${diffMins} minute${diffMins !== 1 ? 's' : ''} ago`;
     } else if (diffHours < 24) {
       return `${diffHours} hour${diffHours !== 1 ? 's' : ''} ago`;
@@ -103,7 +116,8 @@ export const formatApplicationDate = (dateString: string): string => {
         year: 'numeric'
       });
     }
-  } catch {
+  } catch (error) {
+    console.error('Error formatting date:', dateString, error);
     return dateString;
   }
 };

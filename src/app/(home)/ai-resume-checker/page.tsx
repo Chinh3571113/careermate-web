@@ -230,15 +230,15 @@ export default function AIResumeCheckerPage() {
                                 <div className="flex gap-2 mb-4">
                                     <button className="flex items-center gap-2 px-4 py-2 bg-green-500 text-white rounded-lg font-medium">
                                         <FileText className="w-4 h-4" />
-                                        Dán văn bản
+                                        Paste Text
                                     </button>
                                     <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
                                         <Search className="w-4 h-4" />
-                                        Tìm kiếm việc làm trên Cake
+                                        Search Jobs on Cake
                                     </button>
                                     <button className="flex items-center gap-2 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
                                         <Upload className="w-4 h-4" />
-                                        Tải lên tệp
+                                        Upload File
                                     </button>
                                 </div>
 
@@ -432,10 +432,10 @@ export default function AIResumeCheckerPage() {
                                         <FileText className="w-12 h-12 text-gray-400" />
                                     </div>
                                     <h3 className="text-xl font-semibold text-gray-900 mb-2">
-                                        Chưa có kết quả phân tích
+                                        No Analysis Results Yet
                                     </h3>
                                     <p className="text-gray-600">
-                                        Tải lên CV và thêm mô tả công việc để bắt đầu phân tích
+                                        Upload CV and add job description to start analysis
                                     </p>
                                 </div>
                             )}

@@ -3,13 +3,12 @@ import { notFound } from 'next/navigation';
 // ========================================
 // ⚠️ FONT WARNING
 // ========================================
-// This page relies on Inter font files at /public/fonts/
-// If font files are missing (Inter-Regular.ttf, Inter-Medium.ttf, etc.),
-// the page will automatically fallback to system fonts via font-display: swap.
-// 
-// To add fonts: Download Inter from Google Fonts and place in /public/fonts/
-// Fallback CSS stack: Inter, system-ui, -apple-system, sans-serif
-// ========================================
+// Inter font files are missing from /public/fonts/.
+// The print.css uses fallback fonts: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif
+// To use Inter font:
+// 1. Download Inter font from https://fonts.google.com/specimen/Inter
+// 2. Place .ttf files in /public/fonts/ (Inter-Regular.ttf, Inter-Medium.ttf, etc.)
+// 3. The fonts.css already has @font-face rules configured
 
 // ========================================
 // TYPES
@@ -147,16 +146,22 @@ function normalizeCVData(rawData: any): CVData {
   
   const personalInfo = hasPersonalInfo ? rawData.personalInfo : rawData;
   
+  // ========================================
+  // ✅ FIX: Handle photoUrl from multiple sources
+  // Priority: rawData.photoUrl (ExportCVData flat) > personalInfo.photoUrl (nested)
+  // ========================================
+  const resolvedPhotoUrl = rawData.photoUrl || personalInfo.photoUrl || '';
+  
   return {
     // Personal Info - handle both flat and nested structures
-    fullName: personalInfo.fullName || rawData.fullName || '',
+    fullName: personalInfo.fullName || rawData.name || rawData.fullName || '',
     title: personalInfo.position || personalInfo.title || rawData.title || '',
     email: personalInfo.email || rawData.email || '',
     phone: personalInfo.phone || rawData.phone || '',
     address: personalInfo.location || personalInfo.address || rawData.address || '',
     website: personalInfo.website || personalInfo.link || rawData.website || '',
     linkedin: personalInfo.linkedin || rawData.linkedin || '', // Personal link from CVPreview
-    photoUrl: personalInfo.photoUrl || rawData.photoUrl || '',
+    photoUrl: resolvedPhotoUrl,
     dob: personalInfo.dob || rawData.dob || '',
     gender: personalInfo.gender || rawData.gender || '',
     summary: personalInfo.summary || rawData.summary || '',
@@ -955,10 +960,6 @@ function ProfessionalTemplate({ data, showWatermark }: TemplateProps) {
 // MAIN PAGE COMPONENT
 // ========================================
 
-// 🔧 Next.js 15+ Fix: params and searchParams are now Promises
-// They must be awaited before accessing their properties
-// Otherwise, SSR crashes with "params/searchParams should be awaited before being accessed"
-
 export default async function PrintPage({
   params,
   searchParams,
@@ -966,7 +967,7 @@ export default async function PrintPage({
   params: Promise<{ templateId: string }>;
   searchParams: Promise<{ id?: string; data?: string; package?: string }>;
 }) {
-  // ✅ Await both params and searchParams (Next.js 15+ requirement)
+  // ✅ Next.js 15+: Await params and searchParams
   const { templateId } = await params;
   const { id: cvId, data: encodedData, package: userPackage } = await searchParams;
 
@@ -1034,7 +1035,6 @@ export default async function PrintPage({
 // METADATA
 // ========================================
 
-// 🔧 Next.js 15+ Fix: params and searchParams are Promises in generateMetadata too
 export async function generateMetadata({
   params,
   searchParams,
@@ -1042,10 +1042,8 @@ export async function generateMetadata({
   params: Promise<{ templateId: string }>;
   searchParams: Promise<{ id?: string }>;
 }) {
-  // ✅ Await params before accessing (Next.js 15+ requirement)
+  // ✅ Next.js 15+: Await params
   const { templateId } = await params;
-  // Note: searchParams is awaited even if not used to avoid future issues
-  await searchParams;
   
   return {
     title: `CV Print - ${templateId}`,

@@ -137,7 +137,13 @@ const MyJobsPage = () => {
       setIsLoading(true);
       try {
         const applications = await fetchMyJobApplications(candidateId);
-        setJobApplications(applications);
+        // Sort by createAt descending (newest first)
+        const sortedApplications = applications.sort((a, b) => {
+          const dateA = new Date(a.createAt).getTime();
+          const dateB = new Date(b.createAt).getTime();
+          return dateB - dateA; // Descending order (newest first)
+        });
+        setJobApplications(sortedApplications);
       } catch (error: any) {
         toast.error('Failed to load job applications');
       } finally {
@@ -147,7 +153,13 @@ const MyJobsPage = () => {
       // Load saved jobs in background (don't block UI)
       fetchSavedJobs(candidateId)
         .then(jobs => {
-          setSavedJobs(jobs);
+          // Sort by createdAt descending (most recently saved first)
+          const sortedJobs = jobs.sort((a, b) => {
+            const dateA = new Date(a.createdAt).getTime();
+            const dateB = new Date(b.createdAt).getTime();
+            return dateB - dateA; // Descending order (newest first)
+          });
+          setSavedJobs(sortedJobs);
           setSavedLoaded(true);
         })
         .catch(error => {
@@ -789,7 +801,7 @@ const MyJobsPage = () => {
                           You haven't applied to any jobs in the last 12 months.
                         </p>
                         <Link
-                          href="/jobs-list"
+                          href="/jobs-detail"
                           className="px-6 py-3 bg-gray-500 hover:bg-gray-600 text-white rounded-md font-medium"
                         >
                           Explore jobs
@@ -826,7 +838,7 @@ const MyJobsPage = () => {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Calendar className="h-5 w-5 text-blue-500" />
-              Chi tiết lịch phỏng vấn
+              Interview Details
             </DialogTitle>
           </DialogHeader>
           {selectedInterviewDetail && (
@@ -837,13 +849,13 @@ const MyJobsPage = () => {
                   <Calendar className="h-4 w-4 text-blue-600" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Thời gian</p>
+                  <p className="text-sm font-medium text-gray-600">Time</p>
                   <p className="text-base font-semibold">
-                    {formatInterviewDateTime(selectedInterviewDetail.scheduledTime)}
+                    {formatInterviewDateTime(selectedInterviewDetail.scheduledDate)}
                   </p>
-                  {selectedInterviewDetail.duration && (
+                  {selectedInterviewDetail.durationMinutes && (
                     <p className="text-sm text-gray-500">
-                      Thời lượng: {selectedInterviewDetail.duration} phút
+                      Duration: {selectedInterviewDetail.durationMinutes} minutes
                     </p>
                   )}
                 </div>
@@ -855,21 +867,21 @@ const MyJobsPage = () => {
                   <Video className="h-4 w-4 text-purple-600" />
                 </div>
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Hình thức</p>
-                  <Badge variant={selectedInterviewDetail.interviewType === 0 ? "default" : "secondary"}>
+                  <p className="text-sm font-medium text-gray-600">Interview Type</p>
+                  <Badge variant={selectedInterviewDetail.interviewType === 'VIDEO_CALL' || selectedInterviewDetail.interviewType === 'ONLINE' ? "default" : "secondary"}>
                     {getInterviewTypeText(selectedInterviewDetail.interviewType)}
                   </Badge>
                 </div>
               </div>
 
               {/* Location/Meeting Link */}
-              {selectedInterviewDetail.interviewType === 0 && selectedInterviewDetail.meetingLink && (
+              {(selectedInterviewDetail.interviewType === 'VIDEO_CALL' || selectedInterviewDetail.interviewType === 'ONLINE' || selectedInterviewDetail.interviewType === 'ONLINE_ASSESSMENT') && selectedInterviewDetail.meetingLink && (
                 <div className="flex items-start gap-3">
                   <div className="rounded-full bg-green-100 p-2">
                     <ExternalLink className="h-4 w-4 text-green-600" />
                   </div>
                   <div className="flex-1">
-                    <p className="text-sm font-medium text-gray-600">Link phỏng vấn</p>
+                    <p className="text-sm font-medium text-gray-600">Meeting Link</p>
                     <a
                       href={selectedInterviewDetail.meetingLink}
                       target="_blank"
@@ -882,24 +894,24 @@ const MyJobsPage = () => {
                 </div>
               )}
 
-              {selectedInterviewDetail.interviewType === 1 && selectedInterviewDetail.location && (
+              {selectedInterviewDetail.interviewType === 'IN_PERSON' && selectedInterviewDetail.location && (
                 <div className="flex items-start gap-3">
                   <div className="rounded-full bg-orange-100 p-2">
                     <MapPin className="h-4 w-4 text-orange-600" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-gray-600">Địa điểm</p>
+                    <p className="text-sm font-medium text-gray-600">Location</p>
                     <p className="text-sm">{selectedInterviewDetail.location}</p>
                   </div>
                 </div>
               )}
 
               {/* Notes */}
-              {selectedInterviewDetail.notes && (
+              {selectedInterviewDetail.preparationNotes && (
                 <div className="border-t pt-4 mt-4">
-                  <p className="text-sm font-medium text-gray-600 mb-2">Ghi chú</p>
+                  <p className="text-sm font-medium text-gray-600 mb-2">Notes</p>
                   <p className="text-sm text-gray-700 bg-gray-50 p-3 rounded-lg">
-                    {selectedInterviewDetail.notes}
+                    {selectedInterviewDetail.preparationNotes}
                   </p>
                 </div>
               )}
@@ -907,9 +919,9 @@ const MyJobsPage = () => {
               {/* Status */}
               <div className="border-t pt-4 mt-4">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm font-medium text-gray-600">Trạng thái xác nhận</span>
-                  <Badge variant={selectedInterviewDetail.isConfirmed ? "default" : "outline"}>
-                    {selectedInterviewDetail.isConfirmed ? "Đã xác nhận" : "Chờ xác nhận"}
+                  <span className="text-sm font-medium text-gray-600">Confirmation Status</span>
+                  <Badge variant={selectedInterviewDetail.candidateConfirmed ? "default" : "outline"}>
+                    {selectedInterviewDetail.candidateConfirmed ? "Confirmed" : "Pending Confirmation"}
                   </Badge>
                 </div>
               </div>
@@ -920,7 +932,7 @@ const MyJobsPage = () => {
                   href="/candidate/interviews"
                   className="block w-full text-center bg-blue-600 text-white py-2 px-4 rounded-lg hover:bg-blue-700 transition-colors"
                 >
-                  Quản lý lịch phỏng vấn
+                  Manage Interviews
                 </a>
               </div>
             </div>

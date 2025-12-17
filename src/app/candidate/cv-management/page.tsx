@@ -11,7 +11,6 @@ import { useResumeData } from "@/hooks/useResumeData";
 import { resumesToCVsSync } from "@/utils/resumeConverter";
 import { useAuthStore } from "@/store/use-auth-store";
 import { useCVStore } from "@/stores/cvStore"; // Import CV Store for Redux DevTools
-import { checkCVBuilderAccess } from "@/lib/entitlement-api";
 import { getMyInvoice, type Invoice } from "@/lib/invoice-api";
 import { Lock, X, Sparkles } from "lucide-react";
 import toast from "react-hot-toast";
@@ -26,7 +25,8 @@ import {
   SyncCVSummaryDialog,
   SyncConfirmDialog,
   DraftConversionDialog,
-  SwitchCVConfirmDialog
+  SwitchCVConfirmDialog,
+  DeleteConfirmDialog
 } from "@/components/cv-management";
 
 type TabType = "built" | "uploaded" | "draft";
@@ -207,9 +207,26 @@ const CVManagementPage = () => {
       return;
     }
 
-    // If can create, navigate to CV builder with clean slate
-    // The cv-templates page will use SAMPLE_CV_DATA as default when no data is provided
-    router.push('/cv-templates');
+    // Create new resume via API
+    try {
+      toast.loading('Creating new CV...', { id: 'create-cv' });
+      
+      const { createResume } = await import('@/services/resumeService');
+      
+      // Call API to create resume - backend will set default type
+      const newResume = await createResume({
+        aboutMe: "",
+        isActive: false
+      });
+
+      toast.success('CV created successfully!', { id: 'create-cv' });
+      
+      // Navigate to cm-profile with resumeId
+      router.push(`/candidate/cm-profile?resumeId=${newResume.resumeId}`);
+    } catch (error: any) {
+      console.error('Failed to create CV:', error);
+      toast.error(error?.message || 'Failed to create CV. Please try again.', { id: 'create-cv' });
+    }
   }, [builtCVs.length, currentPackage, router]);
 
   // Loading state - use skeleton
@@ -271,9 +288,9 @@ const CVManagementPage = () => {
                 <div className="flex items-start justify-between mb-4">
                   <div>
                     <h2 className="text-lg font-semibold text-white mb-1 flex items-center gap-2">
-                      Active CV
+                      Default CV
                       <span className="text-xs bg-white/20 backdrop-blur-sm text-white px-2 py-0.5 rounded-full">
-                        Active
+                        Default
                       </span>
                     </h2>
                     <p className="text-sm text-white/90">
@@ -483,6 +500,15 @@ const CVManagementPage = () => {
         onOpenChange={actionsHook.handleCloseSwitchCVConfirm}
         onConfirm={actionsHook.handleConfirmSwitchCV}
         isLoading={actionsHook.isSyncing}
+      />
+
+      {/* Delete Confirmation Dialog */}
+      <DeleteConfirmDialog
+        open={actionsHook.showDeleteConfirm}
+        onOpenChange={actionsHook.handleCloseDeleteConfirm}
+        cv={actionsHook.cvToDelete}
+        onConfirm={actionsHook.handleConfirmDelete}
+        isDeleting={actionsHook.isSyncing}
       />
     </>
   );

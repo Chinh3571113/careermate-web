@@ -5,19 +5,16 @@ const withBundleAnalyzer = require('@next/bundle-analyzer')({
   enabled: process.env.ANALYZE === 'true',
 });
 
-const nextConfig: NextConfig = {
+const nextConfig = {
   outputFileTracingRoot: __dirname,
 
   // ========================================
   // 🚀 PERFORMANCE OPTIMIZATIONS
   // ========================================
 
-  // Temporarily ignore TypeScript and ESLint errors during build
+  // Temporarily ignore TypeScript errors during build
   typescript: {
     ignoreBuildErrors: true,
-  },
-  eslint: {
-    ignoreDuringBuilds: true,
   },
 
   // Enable compiler optimizations
@@ -73,7 +70,7 @@ const nextConfig: NextConfig = {
   experimental: {
     // Enable optimized CSS
     optimizeCss: true,
-    // Optimize package imports
+    // Optimize package imports (exclude puppeteer packages)
     optimizePackageImports: [
       "lucide-react",
       "react-icons",
@@ -81,7 +78,25 @@ const nextConfig: NextConfig = {
       "@radix-ui/react-select",
       "@radix-ui/react-label",
       "@radix-ui/react-slot",
+      // ❗DO NOT add @sparticuz/chromium or puppeteer-core here
+      // They need to be external for serverless environments
     ],
+  },
+
+  // ========================================
+  // ✅ FIX: Mark packages as external for serverless (moved from experimental)
+  // ========================================
+  serverExternalPackages: ['@sparticuz/chromium', 'puppeteer-core'],
+
+  // ========================================
+  // ✅ FIX: Force include chromium binary files in Lambda
+  // ========================================
+  outputFileTracingIncludes: {
+    '/api/export-pdf': ['./node_modules/@sparticuz/chromium/bin/**'],
+    '/api/export-pdf/job': ['./node_modules/@sparticuz/chromium/bin/**'],
+    '/api/export-pdf/job/[jobId]': ['./node_modules/@sparticuz/chromium/bin/**'],
+    '/api/export-pdf-v2': ['./node_modules/@sparticuz/chromium/bin/**'],
+    '/candidate/cv/api/export-pdf': ['./node_modules/@sparticuz/chromium/bin/**'],
   },
 
   // Reduce bundle size
@@ -90,6 +105,6 @@ const nextConfig: NextConfig = {
       transform: "lucide-react/dist/esm/icons/{{kebabCase member}}",
     },
   },
-};
+} satisfies NextConfig;
 
 export default withBundleAnalyzer(nextConfig);

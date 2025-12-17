@@ -179,21 +179,21 @@ export default function CandidateRegistrationPage() {
                           onChange={handleInputChange}
                           className="w-full rounded-lg border border-gray-300 py-2 pl-10 pr-3 outline-none focus:border-[#6da9e9] focus:ring-2 focus:ring-[#6da9e9]"
                         >
-                          <option value="">Chọn trình độ học vấn</option>
+                          <option value="">Select education level</option>
                           <option value="highschool">
-                            Trung học phổ thông
+                            High School
                           </option>
-                          <option value="college">Cao đẳng</option>
-                          <option value="university">Đại học</option>
-                          <option value="master">Thạc sĩ</option>
-                          <option value="phd">Tiến sĩ</option>
+                          <option value="college">College</option>
+                          <option value="university">University</option>
+                          <option value="master">Master's Degree</option>
+                          <option value="phd">PhD</option>
                         </select>
                       </div>
                     </div>
 
                     <div>
                       <label className="mb-1 block text-sm font-medium text-gray-700">
-                        Kinh nghiệm làm việc
+                        Work Experience
                       </label>
                       <select
                         name="experience"
@@ -201,32 +201,32 @@ export default function CandidateRegistrationPage() {
                         onChange={handleInputChange}
                         className="w-full rounded-lg border border-gray-300 py-2 px-3 outline-none focus:border-[#6da9e9] focus:ring-2 focus:ring-[#6da9e9]"
                       >
-                        <option value="">Chọn kinh nghiệm</option>
-                        <option value="fresher">Chưa có kinh nghiệm</option>
-                        <option value="1-2">1-2 năm</option>
-                        <option value="3-5">3-5 năm</option>
-                        <option value="5-10">5-10 năm</option>
-                        <option value="10+">Trên 10 năm</option>
+                        <option value="">Select experience</option>
+                        <option value="fresher">No experience</option>
+                        <option value="1-2">1-2 years</option>
+                        <option value="3-5">3-5 years</option>
+                        <option value="5-10">5-10 years</option>
+                        <option value="10+">Over 10 years</option>
                       </select>
                     </div>
 
                     <div>
                       <label className="mb-1 block text-sm font-medium text-gray-700">
-                        Vị trí mong muốn
+                        Desired Position
                       </label>
                       <input
                         type="text"
                         name="desiredPosition"
                         value={formData.desiredPosition}
                         onChange={handleInputChange}
-                        placeholder="Ví dụ: Software Developer, Marketing Executive"
+                        placeholder="e.g: Software Developer, Marketing Executive"
                         className="w-full rounded-lg border border-gray-300 py-2 px-3 outline-none focus:border-[#6da9e9] focus:ring-2 focus:ring-[#6da9e9]"
                       />
                     </div>
 
                     <div>
                       <label className="mb-1 block text-sm font-medium text-gray-700">
-                        Mức lương mong muốn
+                        Desired Salary
                       </label>
                       <select
                         name="desiredSalary"
@@ -234,26 +234,26 @@ export default function CandidateRegistrationPage() {
                         onChange={handleInputChange}
                         className="w-full rounded-lg border border-gray-300 py-2 px-3 outline-none focus:border-[#6da9e9] focus:ring-2 focus:ring-[#6da9e9]"
                       >
-                        <option value="">Chọn mức lương</option>
-                        <option value="under-10">Dưới 10 triệu</option>
-                        <option value="10-15">10-15 triệu</option>
-                        <option value="15-20">15-20 triệu</option>
-                        <option value="20-30">20-30 triệu</option>
-                        <option value="30-50">30-50 triệu</option>
-                        <option value="over-50">Trên 50 triệu</option>
-                        <option value="negotiate">Thỏa thuận</option>
+                        <option value="">Select salary range</option>
+                        <option value="under-10">Under 10 million</option>
+                        <option value="10-15">10-15 million</option>
+                        <option value="15-20">15-20 million</option>
+                        <option value="20-30">20-30 million</option>
+                        <option value="30-50">30-50 million</option>
+                        <option value="over-50">Over 50 million</option>
+                        <option value="negotiate">Negotiable</option>
                       </select>
                     </div>
 
                     <div>
                       <label className="mb-1 block text-sm font-medium text-gray-700">
-                        Kỹ năng chuyên môn
+                        Professional Skills
                       </label>
                       <textarea
                         name="skills"
                         value={formData.skills}
                         onChange={handleInputChange}
-                        placeholder="Ví dụ: JavaScript, React, Node.js, MySQL..."
+                        placeholder="e.g: JavaScript, React, Node.js, MySQL..."
                         rows={3}
                         className="w-full rounded-lg border border-gray-300 py-2 px-3 outline-none focus:border-[#6da9e9] focus:ring-2 focus:ring-[#6da9e9]"
                       />

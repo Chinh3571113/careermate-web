@@ -23,7 +23,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import CVSidebar from "@/components/layout/CVSidebar";
@@ -48,6 +47,7 @@ function CandidateInterviewsContent() {
   const [loading, setLoading] = useState(true);
   const [upcomingInterviews, setUpcomingInterviews] = useState<InterviewScheduleResponse[]>([]);
   const [pastInterviews, setPastInterviews] = useState<InterviewScheduleResponse[]>([]);
+  const [activeTab, setActiveTab] = useState<"upcoming" | "past">("upcoming");
   
   // Dialog states
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
@@ -176,14 +176,66 @@ function CandidateInterviewsContent() {
     return <Badge variant={variant}>{label}</Badge>;
   };
 
+  // Skeleton loading component that matches the actual layout
+  const InterviewSkeleton = () => (
+    <main className="mx-auto max-w-7xl px-4 py-6 md:px-6">
+      <div
+        className="grid grid-cols-1 lg:grid-cols-[16rem_minmax(0,1fr)] gap-6 items-start transition-all duration-300"
+        style={{
+          ["--sticky-offset" as any]: `${headerHeight || 0}px`,
+          ["--content-pad" as any]: "24px",
+        }}
+      >
+        {/* Sidebar Skeleton */}
+        <aside className="hidden lg:block sticky [top:calc(var(--sticky-offset)+var(--content-pad))] self-start transition-all duration-300">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 space-y-2">
+            {[1, 2, 3, 4, 5].map((i) => (
+              <div key={i} className="h-10 bg-gray-200 rounded animate-pulse" />
+            ))}
+          </div>
+        </aside>
+
+        {/* Main Content Skeleton */}
+        <section className="space-y-6 min-w-0 transition-all duration-300">
+          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+            {/* Header */}
+            <div className="mb-6">
+              <div className="h-8 w-48 bg-gray-200 rounded animate-pulse mb-2" />
+              <div className="h-4 w-64 bg-gray-200 rounded animate-pulse" />
+            </div>
+
+            {/* Tabs */}
+            <div className="flex gap-2 mb-6">
+              <div className="h-10 w-32 bg-gray-200 rounded animate-pulse" />
+              <div className="h-10 w-32 bg-gray-200 rounded animate-pulse" />
+            </div>
+
+            {/* Interview Cards */}
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="border border-gray-200 rounded-lg p-6 animate-pulse">
+                  <div className="flex items-start justify-between mb-4">
+                    <div className="flex-1">
+                      <div className="h-6 w-3/4 bg-gray-200 rounded mb-2" />
+                      <div className="h-4 w-1/2 bg-gray-200 rounded" />
+                    </div>
+                    <div className="h-6 w-24 bg-gray-200 rounded" />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="h-4 w-full bg-gray-200 rounded" />
+                    <div className="h-4 w-full bg-gray-200 rounded" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      </div>
+    </main>
+  );
+
   if (loading) {
-    return (
-      <main className="mx-auto max-w-7xl px-4 py-6 md:px-6">
-        <div className="flex items-center justify-center py-16">
-          <RefreshCw className="h-8 w-8 text-primary animate-spin" />
-        </div>
-      </main>
-    );
+    return <InterviewSkeleton />;
   }
 
   return (
@@ -210,29 +262,53 @@ function CandidateInterviewsContent() {
                 </p>
               </div>
 
-      <Tabs defaultValue="upcoming" className="space-y-6">
-        <TabsList>
-          <TabsTrigger value="upcoming">
-            Upcoming ({upcomingInterviews.length})
-          </TabsTrigger>
-          <TabsTrigger value="past">
-            Past ({pastInterviews.length})
-          </TabsTrigger>
-        </TabsList>
+              {/* Tabs - Job Activities Style */}
+              <div className="border-b border-gray-200 mb-6">
+                <button
+                  onClick={() => setActiveTab("upcoming")}
+                  className={`pb-3 px-1 mr-8 relative ${
+                    activeTab === "upcoming"
+                      ? "text-gray-500 font-medium border-b-2 border-gray-500"
+                      : "text-gray-600 hover:text-gray-900"
+                  }`}
+                >
+                  Upcoming Interviews
+                  <span className="ml-2 px-2 py-0.5 text-xs bg-gray-500 text-white rounded-full">
+                    {upcomingInterviews.length}
+                  </span>
+                </button>
 
-        <TabsContent value="upcoming" className="space-y-4">
-          {upcomingInterviews.length === 0 ? (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <Calendar className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="text-lg font-semibold mb-2">No Upcoming Interviews</h3>
-                <p className="text-muted-foreground">
-                  You don't have any scheduled interviews at the moment.
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            upcomingInterviews.map((interview) => (
+                <button
+                  onClick={() => setActiveTab("past")}
+                  className={`pb-3 px-1 mr-8 relative ${
+                    activeTab === "past"
+                      ? "text-gray-500 font-medium border-b-2 border-gray-500"
+                      : "text-gray-600 hover:text-gray-900"
+                  }`}
+                >
+                  Past Interviews
+                  <span className="ml-2 px-2 py-0.5 text-xs bg-gray-500 text-white rounded-full">
+                    {pastInterviews.length}
+                  </span>
+                </button>
+              </div>
+
+              {/* Tab Content */}
+              <div className="py-4">
+                {activeTab === "upcoming" && (
+                  <div className="space-y-4">
+                    {upcomingInterviews.length === 0 ? (
+                      <Card>
+                        <CardContent className="py-12 text-center">
+                          <Calendar className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                          <h3 className="text-lg font-semibold mb-2">No Upcoming Interviews</h3>
+                          <p className="text-muted-foreground">
+                            You don't have any scheduled interviews at the moment.
+                          </p>
+                        </CardContent>
+                      </Card>
+                    ) : (
+                      upcomingInterviews.map((interview) => (
               <Card 
                 key={interview.id} 
                 className={`${isToday(interview) ? "border-primary" : ""} ${
@@ -350,7 +426,10 @@ function CandidateInterviewsContent() {
                       <div className="flex items-center gap-2 text-sm">
                         <Video className="h-4 w-4 text-muted-foreground" />
                         <a 
-                          href={interview.meetingLink} 
+                          href={interview.meetingLink.startsWith('http://') || interview.meetingLink.startsWith('https://') 
+                            ? interview.meetingLink 
+                            : `https://${interview.meetingLink}`
+                          } 
                           target="_blank" 
                           rel="noopener noreferrer"
                           className="text-primary hover:underline flex items-center gap-1"
@@ -451,21 +530,23 @@ function CandidateInterviewsContent() {
               </Card>
             ))
           )}
-        </TabsContent>
+                  </div>
+                )}
 
-        <TabsContent value="past" className="space-y-4">
-          {pastInterviews.length === 0 ? (
-            <Card>
-              <CardContent className="py-12 text-center">
-                <Calendar className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-                <h3 className="text-lg font-semibold mb-2">No Past Interviews</h3>
-                <p className="text-muted-foreground">
-                  Your completed interviews will appear here.
-                </p>
-              </CardContent>
-            </Card>
-          ) : (
-            pastInterviews.map((interview) => (
+                {activeTab === "past" && (
+                  <div className="space-y-4">
+                    {pastInterviews.length === 0 ? (
+                      <Card>
+                        <CardContent className="py-12 text-center">
+                          <Calendar className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
+                          <h3 className="text-lg font-semibold mb-2">No Past Interviews</h3>
+                          <p className="text-muted-foreground">
+                            Your completed interviews will appear here.
+                          </p>
+                        </CardContent>
+                      </Card>
+                    ) : (
+                      pastInterviews.map((interview) => (
               <Card key={interview.id}>
                 <CardHeader>
                   <div className="flex items-start justify-between">
@@ -555,8 +636,9 @@ function CandidateInterviewsContent() {
               </Card>
             ))
           )}
-        </TabsContent>
-      </Tabs>
+                  </div>
+                )}
+              </div>
             </div>
           </section>
         </div>

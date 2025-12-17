@@ -25,10 +25,12 @@ const CVSidebar: React.FC<CVSidebarProps> = memo(({ activePage }) => {
   const pathname = usePathname();
   const { user } = useAuthStore();
   const [realName, setRealName] = useState<string>("");
+  const [isLoadingName, setIsLoadingName] = useState(true);
 
   // Fetch real name from profile API
   useEffect(() => {
     const fetchRealName = async () => {
+      setIsLoadingName(true);
       try {
         const response = await api.get("/api/candidates/profiles/current");
         if (response.data?.result?.fullName) {
@@ -36,14 +38,16 @@ const CVSidebar: React.FC<CVSidebarProps> = memo(({ activePage }) => {
         }
       } catch (error) {
         console.error("Failed to fetch profile for sidebar:", error);
+      } finally {
+        setIsLoadingName(false);
       }
     };
 
     fetchRealName();
   }, []);
 
-  // Get display name: prioritize fetched realName, then user.fullName, then user.name, then user.email
-  const displayName = realName || user?.fullName || user?.name || user?.email?.split('@')[0] || 'User';
+  // Get display name: prioritize fetched realName, then user data, or empty while loading
+  const displayName = realName || user?.fullName || user?.name || user?.email?.split('@')[0] || '';
 
   const items: Item[] = candidateMenuItems;
 
@@ -64,7 +68,11 @@ const CVSidebar: React.FC<CVSidebarProps> = memo(({ activePage }) => {
           <p className="text-xs text-gray-500">Welcome</p>
         </div>
         <div>
-          <p className="font-medium">{displayName}</p>
+          {isLoadingName && !displayName ? (
+            <div className="h-5 w-32 bg-gray-200 rounded animate-pulse" />
+          ) : (
+            <p className="font-medium">{displayName}</p>
+          )}
         </div>
       </div>
 

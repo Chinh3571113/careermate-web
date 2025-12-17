@@ -31,6 +31,9 @@ export default function JobRecommendModal({ isOpen, onClose }: JobRecommendModal
   const [collaborativeJobs, setCollaborativeJobs] = useState<JobRecommendation[]>([]);
   const [hotJobs, setHotJobs] = useState<JobRecommendation[]>([]);
   const [activeTab, setActiveTab] = useState<'main' | 'recommended' | 'hot'>('main');
+  const [expandedJobId, setExpandedJobId] = useState<number | null>(null);
+  const [jobDetails, setJobDetails] = useState<Map<number, any>>(new Map());
+  const [loadingDetails, setLoadingDetails] = useState<Set<number>>(new Set());
   
   // New states for input form
   const [showInputForm, setShowInputForm] = useState(true);
@@ -183,11 +186,45 @@ export default function JobRecommendModal({ isOpen, onClose }: JobRecommendModal
     setContentBasedJobs([]);
     setCollaborativeJobs([]);
     setHotJobs([]);
+    setExpandedJobId(null);
+    setJobDetails(new Map());
   };
 
   const handleUpgrade = () => {
     onClose();
     router.push('/candidate/pricing');
+  };
+
+  const toggleJobDetails = async (jobId: number) => {
+    if (expandedJobId === jobId) {
+      setExpandedJobId(null);
+      return;
+    }
+
+    setExpandedJobId(jobId);
+
+    // If already loaded, don't fetch again
+    if (jobDetails.has(jobId)) {
+      return;
+    }
+
+    // Fetch job details
+    try {
+      setLoadingDetails(prev => new Set(prev).add(jobId));
+      const response = await api.get(`/api/job-postings/${jobId}`);
+      const details = response.data.result;
+      
+      setJobDetails(prev => new Map(prev).set(jobId, details));
+    } catch (error) {
+      console.error('Error fetching job details:', error);
+      toast.error('Failed to load job details');
+    } finally {
+      setLoadingDetails(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(jobId);
+        return newSet;
+      });
+    }
   };
 
   if (!isOpen) return null;
@@ -210,7 +247,7 @@ export default function JobRecommendModal({ isOpen, onClose }: JobRecommendModal
             </div>
             <div>
               <h2 className="text-2xl font-bold text-gray-900">Job Recommendations</h2>
-              <p className="text-sm text-gray-600">Gợi ý công việc phù hợp với hồ sơ của bạn</p>
+              <p className="text-sm text-gray-600">Job recommendations tailored to your profile</p>
             </div>
           </div>
         </div>
@@ -221,7 +258,7 @@ export default function JobRecommendModal({ isOpen, onClose }: JobRecommendModal
             <div className="flex flex-col items-center justify-center py-20">
               <Loader2 className="w-12 h-12 animate-spin text-blue-600 mb-4" />
               <p className="text-gray-600">
-                {loadingSkills ? "Đang tải skills từ CV..." : "Đang tìm kiếm công việc phù hợp..."}
+                {loadingSkills ? "Loading skills from CV..." : "Searching for matching jobs..."}
               </p>
             </div>
           ) : showUpgradePrompt ? (
@@ -232,7 +269,7 @@ export default function JobRecommendModal({ isOpen, onClose }: JobRecommendModal
                 </div>
                 <h3 className="text-xl font-bold text-gray-900 mb-2">Premium Feature</h3>
                 <p className="text-gray-600">
-                  Bạn cần nâng cấp gói Premium để sử dụng tính năng Job Recommendation
+                  You need to upgrade to Premium to use Job Recommendations
                 </p>
               </div>
 
@@ -263,13 +300,13 @@ export default function JobRecommendModal({ isOpen, onClose }: JobRecommendModal
                   onClick={onClose}
                   className="flex-1 px-4 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors font-medium"
                 >
-                  Đóng
+                  Close
                 </button>
                 <button
                   onClick={handleUpgrade}
                   className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl transition-all font-semibold shadow-lg hover:shadow-xl"
                 >
-                  Nâng cấp ngay
+                  Upgrade Now
                 </button>
               </div>
             </div>
@@ -277,16 +314,16 @@ export default function JobRecommendModal({ isOpen, onClose }: JobRecommendModal
             /* Input Form - Title và Skills */
             <div className="p-8">
               <div className="mb-6">
-                <h3 className="text-lg font-bold text-gray-900 mb-2">Tìm công việc phù hợp</h3>
+                <h3 className="text-lg font-bold text-gray-900 mb-2">Find Matching Jobs</h3>
                 <p className="text-gray-600 text-sm">
-                  Nhập tiêu đề công việc bạn mong muốn, hệ thống sẽ phân tích dựa trên skills trong CV của bạn
+                  Enter the job title you want; the system will analyze based on the skills in your CV
                 </p>
               </div>
 
               {/* Title Input */}
               <div className="mb-6">
                 <label className="block text-sm font-semibold text-gray-700 mb-2">
-                  Tiêu đề công việc <span className="text-red-500">*</span>
+                  Job Title <span className="text-red-500">*</span>
                 </label>
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
@@ -294,7 +331,7 @@ export default function JobRecommendModal({ isOpen, onClose }: JobRecommendModal
                     type="text"
                     value={titleInput}
                     onChange={(e) => setTitleInput(e.target.value)}
-                    placeholder="VD: Frontend Developer, Backend Engineer, Fullstack..."
+                    placeholder="e.g., Frontend Developer, Backend Engineer, Fullstack..."
                     className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-gray-900"
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
@@ -310,15 +347,15 @@ export default function JobRecommendModal({ isOpen, onClose }: JobRecommendModal
                 <div className="flex items-center gap-2 mb-3">
                   <Tag className="w-4 h-4 text-blue-600" />
                   <label className="text-sm font-semibold text-gray-700">
-                    Skills từ CV của bạn
+                    Skills from your CV
                   </label>
                 </div>
                 
                 {loadingSkills ? (
-                  <div className="flex items-center gap-2 text-gray-500">
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span className="text-sm">Đang tải skills...</span>
-                  </div>
+                    <div className="flex items-center gap-2 text-gray-500">
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      <span className="text-sm">Loading skills...</span>
+                    </div>
                 ) : resumeSkills.length > 0 ? (
                   <div className="flex flex-wrap gap-2">
                     {resumeSkills.map((skill, idx) => (
@@ -333,16 +370,16 @@ export default function JobRecommendModal({ isOpen, onClose }: JobRecommendModal
                 ) : (
                   <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
                     <p className="text-yellow-800 text-sm">
-                      ⚠️ Không tìm thấy skills trong CV. Vui lòng cập nhật CV trước khi tìm kiếm.
+                      ⚠️ No skills found in CV. Please update your CV before searching.
                     </p>
                     <button
                       onClick={() => {
                         onClose();
-                        router.push('/candidate/cv-manage');
+                        router.push('/candidate/cv-management');
                       }}
                       className="mt-2 text-sm text-blue-600 hover:text-blue-800 font-medium"
                     >
-                      Cập nhật CV ngay →
+                      Update CV now →
                     </button>
                   </div>
                 )}
@@ -351,12 +388,12 @@ export default function JobRecommendModal({ isOpen, onClose }: JobRecommendModal
               {/* Info Box */}
               <div className="bg-gradient-to-br from-indigo-50 to-purple-50 rounded-xl p-4 border border-indigo-200 mb-6">
                 <p className="text-sm text-indigo-800">
-                  <strong>💡 Mẹo:</strong> Hệ thống sẽ phân tích title và skills để tìm các công việc phù hợp nhất với bạn dựa trên:
+                  <strong>💡 Tip:</strong> The system analyzes the title and skills to find the best matches based on:
                 </p>
                 <ul className="mt-2 text-sm text-indigo-700 space-y-1 ml-4">
-                  <li>• Content-based: Dựa trên nội dung mô tả công việc</li>
-                  <li>• Collaborative: Dựa trên hành vi của ứng viên tương tự</li>
-                  <li>• Hybrid: Kết hợp cả hai phương pháp</li>
+                  <li>• Content-based: Based on the job description</li>
+                  <li>• Collaborative: Based on behavior of similar candidates</li>
+                  <li>• Hybrid: A combination of both methods</li>
                 </ul>
               </div>
 
@@ -366,7 +403,7 @@ export default function JobRecommendModal({ isOpen, onClose }: JobRecommendModal
                   onClick={onClose}
                   className="flex-1 px-4 py-3 border-2 border-gray-300 text-gray-700 rounded-xl hover:bg-gray-50 transition-colors font-medium"
                 >
-                  Đóng
+                  Close
                 </button>
                 <button
                   onClick={handleSearchRecommendations}
@@ -374,7 +411,7 @@ export default function JobRecommendModal({ isOpen, onClose }: JobRecommendModal
                   className="flex-1 px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl transition-all font-semibold shadow-lg hover:shadow-xl disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                   <Search className="w-5 h-5" />
-                  Tìm kiếm công việc
+                  Search Jobs
                 </button>
               </div>
             </div>
@@ -384,17 +421,17 @@ export default function JobRecommendModal({ isOpen, onClose }: JobRecommendModal
                 <Briefcase className="w-10 h-10 text-blue-600" />
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-2">
-                Không tìm thấy công việc phù hợp
+                No matching jobs found
               </h3>
               <p className="text-gray-600 mb-6">
-                Thử với tiêu đề công việc khác hoặc cập nhật thêm skills trong CV.
+                Try a different job title or add more skills to your CV.
               </p>
               <div className="flex gap-3 justify-center">
                 <button
                   onClick={handleBackToInput}
                   className="px-6 py-3 border-2 border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors font-medium"
                 >
-                  Thử lại
+                  Try again
                 </button>
                 <button
                   onClick={() => {
@@ -403,7 +440,7 @@ export default function JobRecommendModal({ isOpen, onClose }: JobRecommendModal
                   }}
                   className="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium"
                 >
-                  Cập nhật CV
+                  Update CV
                 </button>
               </div>
             </div>
@@ -414,14 +451,14 @@ export default function JobRecommendModal({ isOpen, onClose }: JobRecommendModal
                 <div className="flex items-center gap-2">
                   <Search className="w-4 h-4 text-blue-600" />
                   <span className="text-sm text-gray-700">
-                    Kết quả cho: <strong className="text-blue-700">{titleInput}</strong>
+                    Results for: <strong className="text-blue-700">{titleInput}</strong>
                   </span>
                 </div>
                 <button
                   onClick={handleBackToInput}
                   className="px-3 py-1.5 text-sm font-medium text-blue-600 hover:text-blue-800 hover:bg-blue-100 rounded-lg transition-colors"
                 >
-                  Tìm kiếm mới
+                  New search
                 </button>
               </div>
 
@@ -461,166 +498,436 @@ export default function JobRecommendModal({ isOpen, onClose }: JobRecommendModal
 
               {/* Job List */}
               <div className="space-y-4">
-                {activeTab === 'main' && contentBasedJobs.map((job) => (
-                  <div
-                    key={job.job_id}
-                    className="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition-shadow"
-                  >
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex-1">
-                        <h3 className="text-lg font-bold text-gray-900 mb-1">
-                          {job.title}
-                        </h3>
-                        {job.final_score && (
-                          <div className="flex items-center gap-1">
-                            <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                            <span className="text-sm font-medium text-gray-600">
-                              {(job.final_score * 100).toFixed(0)}% Match
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
+                {activeTab === 'main' && contentBasedJobs.map((job, index) => {
+                  const isExpanded = expandedJobId === job.job_id;
+                  const details = jobDetails.get(job.job_id);
+                  const isLoadingDetail = loadingDetails.has(job.job_id);
 
-                    <p className="text-gray-700 text-sm mb-3 line-clamp-2">
-                      {job.description}
-                    </p>
-
-                    {/* Skills */}
-                    {job.skills && (
-                      <div className="flex flex-wrap gap-2 mb-3">
-                        {job.skills.split(',').slice(0, 4).map((skill, idx) => (
-                          <span
-                            key={idx}
-                            className="px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium"
-                          >
-                            {skill.trim()}
-                          </span>
-                        ))}
-                        {job.skills.split(',').length > 4 && (
-                          <span className="px-2.5 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium">
-                            +{job.skills.split(',').length - 4} more
-                          </span>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Match Details */}
-                    {(job.semantic_similarity || job.skill_overlap !== undefined) && (
-                      <div className="flex items-center gap-4 text-xs text-gray-500 border-t border-gray-100 pt-3">
-                        {job.semantic_similarity && (
-                          <div>
-                            <span className="font-medium">Semantic:</span>{' '}
-                            {(job.semantic_similarity * 100).toFixed(0)}%
-                          </div>
-                        )}
-                        {job.skill_overlap !== undefined && (
-                          <div>
-                            <span className="font-medium">Skill:</span>{' '}
-                            {(job.skill_overlap * 100).toFixed(0)}%
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* View Button */}
-                    <button
-                      onClick={() => {
-                        toast.success('Xem chi tiết công việc #' + job.job_id);
-                        onClose();
-                      }}
-                      className="mt-3 w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium text-sm"
+                  return (
+                    <div
+                      key={`main-${job.job_id}-${index}`}
+                      className="bg-white rounded-xl border border-gray-200 hover:shadow-md transition-shadow overflow-hidden"
                     >
-                      Xem chi tiết
-                    </button>
-                  </div>
-                ))}
+                      {/* Job Summary */}
+                      <div className="p-5">
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex-1">
+                            <h3 className="text-lg font-bold text-gray-900 mb-1">
+                              {job.title}
+                            </h3>
+                            {job.final_score && (
+                              <div className="flex items-center gap-1">
+                                <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                                <span className="text-sm font-medium text-gray-600">
+                                  {(job.final_score * 100).toFixed(0)}% Match
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
 
-                {activeTab === 'recommended' && collaborativeJobs.map((job) => (
-                  <div
-                    key={job.job_id}
-                    className="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition-shadow"
-                  >
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex-1">
-                        <h3 className="text-lg font-bold text-gray-900 mb-1">
-                          {job.title}
-                        </h3>
-                        {job.final_score && (
-                          <div className="flex items-center gap-1">
-                            <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                            <span className="text-sm font-medium text-gray-600">
-                              {(job.final_score * 100).toFixed(0)}% Match
+                        <p className="text-gray-700 text-sm mb-3 line-clamp-2">
+                          {job.description}
+                        </p>
+
+                        {/* Skills */}
+                        {job.skills && (
+                          <div className="flex flex-wrap gap-2 mb-3">
+                            {job.skills.split(',').slice(0, 4).map((skill, idx) => (
+                              <span
+                                key={idx}
+                                className="px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium"
+                              >
+                                {skill.trim()}
+                              </span>
+                            ))}
+                            {job.skills.split(',').length > 4 && (
+                              <span className="px-2.5 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium">
+                                +{job.skills.split(',').length - 4} more
+                              </span>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Match Details */}
+                        {(job.semantic_similarity || job.skill_overlap !== undefined) && (
+                          <div className="flex items-center gap-4 text-xs text-gray-500 border-t border-gray-100 pt-3">
+                            {job.semantic_similarity && (
+                              <div>
+                                <span className="font-medium">Semantic:</span>{' '}
+                                {(job.semantic_similarity * 100).toFixed(0)}%
+                              </div>
+                            )}
+                            {job.skill_overlap !== undefined && (
+                              <div>
+                                <span className="font-medium">Skill:</span>{' '}
+                                {(job.skill_overlap * 100).toFixed(0)}%
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* View Button */}
+                        <button
+                          onClick={() => toggleJobDetails(job.job_id)}
+                          disabled={isLoadingDetail}
+                          className="mt-3 w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium text-sm disabled:opacity-50"
+                        >
+                          {isLoadingDetail ? (
+                            <span className="flex items-center justify-center gap-2">
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              Loading...
                             </span>
-                          </div>
-                        )}
+                          ) : isExpanded ? (
+                            'Hide details'
+                          ) : (
+                            'View details'
+                          )}
+                        </button>
                       </div>
-                    </div>
 
-                    <p className="text-gray-700 text-sm mb-3 line-clamp-2">
-                      {job.description}
-                    </p>
+                      {/* Expanded Job Details */}
+                      {isExpanded && details && (
+                        <div className="border-t border-gray-200 bg-gray-50 p-5 space-y-4 max-h-[600px] overflow-y-auto">
+                          {/* Company Info */}
+                          <div className="flex items-start gap-3 pb-4 border-b border-gray-200">
+                            {details.recruiterInfo?.companyLogo && (
+                              <img
+                                src={details.recruiterInfo.companyLogo}
+                                alt={details.recruiterInfo?.companyName}
+                                className="w-16 h-16 object-contain rounded-lg border border-gray-200 bg-white"
+                              />
+                            )}
+                            <div>
+                              <h4 className="font-semibold text-gray-900">
+                                {details.recruiterInfo?.companyName || 'Company'}
+                              </h4>
+                              <p className="text-sm text-gray-600">{details.address}</p>
+                            </div>
+                          </div>
 
-                    {/* Skills */}
-                    {job.skills && (
-                      <div className="flex flex-wrap gap-2 mb-3">
-                        {job.skills.split(',').slice(0, 4).map((skill, idx) => (
-                          <span
-                            key={idx}
-                            className="px-2.5 py-1 bg-green-50 text-green-700 rounded-full text-xs font-medium"
+                          {/* Key Info Grid */}
+                          <div className="grid grid-cols-2 gap-4 pb-4 border-b border-gray-200">
+                            <div>
+                              <p className="text-xs text-gray-500 mb-1">Salary Range</p>
+                              <p className="text-sm font-semibold text-emerald-600">
+                                {details.salaryRange || 'Negotiable'}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-500 mb-1">Working Mode</p>
+                              <p className="text-sm font-semibold text-gray-900">
+                                {details.workingMode || 'Full time'}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-500 mb-1">Experience</p>
+                              <p className="text-sm font-semibold text-gray-900">
+                                {details.experienceYears || 'Any'} years
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-500 mb-1">Positions</p>
+                              <p className="text-sm font-semibold text-gray-900">
+                                {details.numberOfRecruitment || 1} opening{details.numberOfRecruitment > 1 ? 's' : ''}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Skills */}
+                          {details.skills && details.skills.length > 0 && (
+                            <div>
+                              <h5 className="font-semibold text-gray-900 mb-2">Required Skills</h5>
+                              <div className="flex flex-wrap gap-2">
+                                {details.skills.map((skill: any, idx: number) => (
+                                  <span
+                                    key={idx}
+                                    className={`px-3 py-1 text-sm rounded-full ${
+                                      skill.mustToHave
+                                        ? 'bg-red-50 text-red-700 border border-red-200 font-medium'
+                                        : 'bg-gray-100 text-gray-700 border border-gray-200'
+                                    }`}
+                                  >
+                                    {skill.name}
+                                    {skill.mustToHave && ' *'}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Job Description */}
+                          {details.description && (
+                            <div>
+                              <h5 className="font-semibold text-gray-900 mb-2">Job Description</h5>
+                              <div 
+                                className="text-sm text-gray-700 prose prose-sm max-w-none leading-relaxed"
+                                dangerouslySetInnerHTML={{ __html: details.description }}
+                              />
+                            </div>
+                          )}
+
+                          {/* Requirements */}
+                          {details.requirement && (
+                            <div>
+                              <h5 className="font-semibold text-gray-900 mb-2">Requirements</h5>
+                              <div 
+                                className="text-sm text-gray-700 prose prose-sm max-w-none leading-relaxed"
+                                dangerouslySetInnerHTML={{ __html: details.requirement }}
+                              />
+                            </div>
+                          )}
+
+                          {/* Benefits */}
+                          {details.benefit && (
+                            <div>
+                              <h5 className="font-semibold text-gray-900 mb-2">Benefits & Compensation</h5>
+                              <div 
+                                className="text-sm text-gray-700 prose prose-sm max-w-none leading-relaxed"
+                                dangerouslySetInnerHTML={{ __html: details.benefit }}
+                              />
+                            </div>
+                          )}
+
+                          {/* Apply Button */}
+                          <button
+                            onClick={() => {
+                              router.push(`/jobs-detail?id=${job.job_id}`);
+                              onClose();
+                            }}
+                            className="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg transition-all font-semibold shadow-md hover:shadow-lg"
                           >
-                            {skill.trim()}
-                          </span>
-                        ))}
-                        {job.skills.split(',').length > 4 && (
-                          <span className="px-2.5 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium">
-                            +{job.skills.split(',').length - 4} more
-                          </span>
-                        )}
-                      </div>
-                    )}
+                            Apply Now
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
 
-                    {/* Match Details */}
-                    {(job.semantic_similarity || job.skill_overlap !== undefined) && (
-                      <div className="flex items-center gap-4 text-xs text-gray-500 border-t border-gray-100 pt-3">
-                        {job.semantic_similarity && (
-                          <div>
-                            <span className="font-medium">Semantic:</span>{' '}
-                            {(job.semantic_similarity * 100).toFixed(0)}%
-                          </div>
-                        )}
-                        {job.skill_overlap !== undefined && (
-                          <div>
-                            <span className="font-medium">Skill:</span>{' '}
-                            {(job.skill_overlap * 100).toFixed(0)}%
-                          </div>
-                        )}
-                      </div>
-                    )}
+                {activeTab === 'recommended' && collaborativeJobs.map((job, index) => {
+                  const isExpanded = expandedJobId === job.job_id;
+                  const details = jobDetails.get(job.job_id);
+                  const isLoadingDetail = loadingDetails.has(job.job_id);
 
-                    {/* View Button */}
-                    <button
-                      onClick={() => {
-                        toast.success('Xem chi tiết công việc #' + job.job_id);
-                        onClose();
-                      }}
-                      className="mt-3 w-full px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors font-medium text-sm"
+                  return (
+                    <div
+                      key={`recommended-${job.job_id}-${index}`}
+                      className="bg-white rounded-xl border border-gray-200 hover:shadow-md transition-shadow overflow-hidden"
                     >
-                      Xem chi tiết
-                    </button>
-                  </div>
-                ))}
+                      {/* Job Summary */}
+                      <div className="p-5">
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex-1">
+                            <h3 className="text-lg font-bold text-gray-900 mb-1">
+                              {job.title}
+                            </h3>
+                            {job.final_score && (
+                              <div className="flex items-center gap-1">
+                                <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                                <span className="text-sm font-medium text-gray-600">
+                                  {(job.final_score * 100).toFixed(0)}% Match
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
 
-                {activeTab === 'hot' && hotJobs.map((job) => (
+                        <p className="text-gray-700 text-sm mb-3 line-clamp-2">
+                          {job.description}
+                        </p>
+
+                        {/* Skills */}
+                        {job.skills && (
+                          <div className="flex flex-wrap gap-2 mb-3">
+                            {job.skills.split(',').slice(0, 4).map((skill, idx) => (
+                              <span
+                                key={idx}
+                                className="px-2.5 py-1 bg-green-50 text-green-700 rounded-full text-xs font-medium"
+                              >
+                                {skill.trim()}
+                              </span>
+                            ))}
+                            {job.skills.split(',').length > 4 && (
+                              <span className="px-2.5 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium">
+                                +{job.skills.split(',').length - 4} more
+                              </span>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Match Details */}
+                        {(job.semantic_similarity || job.skill_overlap !== undefined) && (
+                          <div className="flex items-center gap-4 text-xs text-gray-500 border-t border-gray-100 pt-3">
+                            {job.semantic_similarity && (
+                              <div>
+                                <span className="font-medium">Semantic:</span>{' '}
+                                {(job.semantic_similarity * 100).toFixed(0)}%
+                              </div>
+                            )}
+                            {job.skill_overlap !== undefined && (
+                              <div>
+                                <span className="font-medium">Skill:</span>{' '}
+                                {(job.skill_overlap * 100).toFixed(0)}%
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* View Button */}
+                        <button
+                          onClick={() => toggleJobDetails(job.job_id)}
+                          disabled={isLoadingDetail}
+                          className="mt-3 w-full px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors font-medium text-sm disabled:opacity-50"
+                        >
+                          {isLoadingDetail ? (
+                            <span className="flex items-center justify-center gap-2">
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              Loading...
+                            </span>
+                          ) : isExpanded ? (
+                            'Hide details'
+                          ) : (
+                            'View details'
+                          )}
+                        </button>
+                      </div>
+
+                      {/* Expanded Job Details */}
+                      {isExpanded && details && (
+                        <div className="border-t border-gray-200 bg-gray-50 p-5 space-y-4 max-h-[600px] overflow-y-auto">
+                          {/* Company Info */}
+                          <div className="flex items-start gap-3 pb-4 border-b border-gray-200">
+                            {details.recruiterInfo?.companyLogo && (
+                              <img
+                                src={details.recruiterInfo.companyLogo}
+                                alt={details.recruiterInfo?.companyName}
+                                className="w-16 h-16 object-contain rounded-lg border border-gray-200 bg-white"
+                              />
+                            )}
+                            <div>
+                              <h4 className="font-semibold text-gray-900">
+                                {details.recruiterInfo?.companyName || 'Company'}
+                              </h4>
+                              <p className="text-sm text-gray-600">{details.address}</p>
+                            </div>
+                          </div>
+
+                          {/* Key Info Grid */}
+                          <div className="grid grid-cols-2 gap-4 pb-4 border-b border-gray-200">
+                            <div>
+                              <p className="text-xs text-gray-500 mb-1">Salary Range</p>
+                              <p className="text-sm font-semibold text-emerald-600">
+                                {details.salaryRange || 'Negotiable'}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-500 mb-1">Working Mode</p>
+                              <p className="text-sm font-semibold text-gray-900">
+                                {details.workingMode || 'Full time'}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-500 mb-1">Experience</p>
+                              <p className="text-sm font-semibold text-gray-900">
+                                {details.experienceYears || 'Any'} years
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-500 mb-1">Positions</p>
+                              <p className="text-sm font-semibold text-gray-900">
+                                {details.numberOfRecruitment || 1} opening{details.numberOfRecruitment > 1 ? 's' : ''}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Skills */}
+                          {details.skills && details.skills.length > 0 && (
+                            <div>
+                              <h5 className="font-semibold text-gray-900 mb-2">Required Skills</h5>
+                              <div className="flex flex-wrap gap-2">
+                                {details.skills.map((skill: any, idx: number) => (
+                                  <span
+                                    key={idx}
+                                    className={`px-3 py-1 text-sm rounded-full ${
+                                      skill.mustToHave
+                                        ? 'bg-red-50 text-red-700 border border-red-200 font-medium'
+                                        : 'bg-gray-100 text-gray-700 border border-gray-200'
+                                    }`}
+                                  >
+                                    {skill.name}
+                                    {skill.mustToHave && ' *'}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Job Description */}
+                          {details.description && (
+                            <div>
+                              <h5 className="font-semibold text-gray-900 mb-2">Job Description</h5>
+                              <div 
+                                className="text-sm text-gray-700 prose prose-sm max-w-none leading-relaxed"
+                                dangerouslySetInnerHTML={{ __html: details.description }}
+                              />
+                            </div>
+                          )}
+
+                          {/* Requirements */}
+                          {details.requirement && (
+                            <div>
+                              <h5 className="font-semibold text-gray-900 mb-2">Requirements</h5>
+                              <div 
+                                className="text-sm text-gray-700 prose prose-sm max-w-none leading-relaxed"
+                                dangerouslySetInnerHTML={{ __html: details.requirement }}
+                              />
+                            </div>
+                          )}
+
+                          {/* Benefits */}
+                          {details.benefit && (
+                            <div>
+                              <h5 className="font-semibold text-gray-900 mb-2">Benefits & Compensation</h5>
+                              <div 
+                                className="text-sm text-gray-700 prose prose-sm max-w-none leading-relaxed"
+                                dangerouslySetInnerHTML={{ __html: details.benefit }}
+                              />
+                            </div>
+                          )}
+
+                          {/* Apply Button */}
+                          <button
+                            onClick={() => {
+                              router.push(`/jobs-detail?id=${job.job_id}`);
+                              onClose();
+                            }}
+                            className="w-full px-4 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-lg transition-all font-semibold shadow-md hover:shadow-lg"
+                          >
+                            Apply Now
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+
+                {activeTab === 'hot' && hotJobs.map((job, index) => {
+                  const isExpanded = expandedJobId === job.job_id;
+                  const details = jobDetails.get(job.job_id);
+                  const isLoadingDetail = loadingDetails.has(job.job_id);
+
+                  return (
                   <div
-                    key={job.job_id}
-                    className="bg-gradient-to-br from-orange-50 to-red-50 rounded-xl border-2 border-orange-200 p-5 hover:shadow-md transition-shadow relative"
+                    key={`hot-${job.job_id}-${index}`}
+                    className="bg-gradient-to-br from-orange-50 to-red-50 rounded-xl border-2 border-orange-300 hover:shadow-lg transition-shadow relative overflow-hidden"
                   >
                     {/* Hot Badge */}
-                    <div className="absolute top-3 right-3 px-2 py-1 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-full text-xs font-bold flex items-center gap-1">
+                    <div className="absolute top-3 right-3 px-3 py-1 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-full text-xs font-bold shadow-md">
                       🔥 HOT
                     </div>
 
+                    <div className="p-5">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1 pr-16">
                         <h3 className="text-lg font-bold text-gray-900 mb-1">
@@ -680,34 +987,160 @@ export default function JobRecommendModal({ isOpen, onClose }: JobRecommendModal
 
                     {/* View Button */}
                     <button
-                      onClick={() => {
-                        toast.success('Xem chi tiết công việc #' + job.job_id);
-                        onClose();
-                      }}
-                      className="mt-3 w-full px-4 py-2 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white rounded-lg transition-colors font-medium text-sm"
+                      onClick={() => toggleJobDetails(job.job_id)}
+                      disabled={isLoadingDetail}
+                      className="mt-3 w-full px-4 py-2 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white rounded-lg transition-colors font-medium text-sm shadow-md disabled:opacity-50"
                     >
-                      Xem chi tiết
+                      {isLoadingDetail ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Loading...
+                        </span>
+                      ) : isExpanded ? (
+                        'Hide details'
+                      ) : (
+                        'View details'
+                      )}
                     </button>
                   </div>
-                ))}
+
+                  {/* Expanded Job Details */}
+                  {isExpanded && details && (
+                    <div className="border-t border-orange-200 bg-white p-5 space-y-4 max-h-[600px] overflow-y-auto">
+                      {/* Company Info */}
+                      <div className="flex items-start gap-3 pb-4 border-b border-gray-200">
+                        {details.recruiterInfo?.companyLogo && (
+                          <img
+                            src={details.recruiterInfo.companyLogo}
+                            alt={details.recruiterInfo?.companyName}
+                            className="w-16 h-16 object-contain rounded-lg border border-gray-200 bg-white"
+                          />
+                        )}
+                        <div>
+                          <h4 className="font-semibold text-gray-900">
+                            {details.recruiterInfo?.companyName || 'Company'}
+                          </h4>
+                          <p className="text-sm text-gray-600">{details.address}</p>
+                        </div>
+                      </div>
+
+                      {/* Key Info Grid */}
+                      <div className="grid grid-cols-2 gap-4 pb-4 border-b border-gray-200">
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1">Salary Range</p>
+                          <p className="text-sm font-semibold text-emerald-600">
+                            {details.salaryRange || 'Negotiable'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1">Working Mode</p>
+                          <p className="text-sm font-semibold text-gray-900">
+                            {details.workingMode || 'Full time'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1">Experience</p>
+                          <p className="text-sm font-semibold text-gray-900">
+                            {details.experienceYears || 'Any'} years
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1">Positions</p>
+                          <p className="text-sm font-semibold text-gray-900">
+                            {details.numberOfRecruitment || 1} opening{details.numberOfRecruitment > 1 ? 's' : ''}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Skills */}
+                      {details.skills && details.skills.length > 0 && (
+                        <div>
+                          <h5 className="font-semibold text-gray-900 mb-2">Required Skills</h5>
+                          <div className="flex flex-wrap gap-2">
+                            {details.skills.map((skill: any, idx: number) => (
+                              <span
+                                key={idx}
+                                className={`px-3 py-1 text-sm rounded-full ${
+                                  skill.mustToHave
+                                    ? 'bg-red-50 text-red-700 border border-red-200 font-medium'
+                                    : 'bg-gray-100 text-gray-700 border border-gray-200'
+                                }`}
+                              >
+                                {skill.name}
+                                {skill.mustToHave && ' *'}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Job Description */}
+                      {details.description && (
+                        <div>
+                          <h5 className="font-semibold text-gray-900 mb-2">Job Description</h5>
+                          <div 
+                            className="text-sm text-gray-700 prose prose-sm max-w-none leading-relaxed"
+                            dangerouslySetInnerHTML={{ __html: details.description }}
+                          />
+                        </div>
+                      )}
+
+                      {/* Requirements */}
+                      {details.requirement && (
+                        <div>
+                          <h5 className="font-semibold text-gray-900 mb-2">Requirements</h5>
+                          <div 
+                            className="text-sm text-gray-700 prose prose-sm max-w-none leading-relaxed"
+                            dangerouslySetInnerHTML={{ __html: details.requirement }}
+                          />
+                        </div>
+                      )}
+
+                      {/* Benefits */}
+                      {details.benefit && (
+                        <div>
+                          <h5 className="font-semibold text-gray-900 mb-2">Benefits & Compensation</h5>
+                          <div 
+                            className="text-sm text-gray-700 prose prose-sm max-w-none leading-relaxed"
+                            dangerouslySetInnerHTML={{ __html: details.benefit }}
+                          />
+                        </div>
+                      )}
+
+                      {/* Apply Button */}
+                      <button
+                        onClick={() => {
+                          router.push(`/jobs-detail?id=${job.job_id}`);
+                          onClose();
+                        }}
+                        className="w-full px-4 py-3 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white rounded-lg transition-all font-semibold shadow-md hover:shadow-lg"
+                      >
+                        Apply Now
+                      </button>
+                    </div>
+                  )}
+                  </div>
+                );
+                })}
+
 
                 {/* Empty state for each tab */}
                 {activeTab === 'main' && contentBasedJobs.length === 0 && (
                   <div className="text-center py-12">
                     <Briefcase className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                    <p className="text-gray-600">Không có công việc phù hợp</p>
+                    <p className="text-gray-600">No matching jobs</p>
                   </div>
                 )}
                 {activeTab === 'recommended' && collaborativeJobs.length === 0 && (
                   <div className="text-center py-12">
                     <Briefcase className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                    <p className="text-gray-600">Không có công việc được đề xuất</p>
+                    <p className="text-gray-600">No recommended jobs</p>
                   </div>
                 )}
                 {activeTab === 'hot' && hotJobs.length === 0 && (
                   <div className="text-center py-12">
                     <Briefcase className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                    <p className="text-gray-600">Không có job hot</p>
+                    <p className="text-gray-600">No hot jobs</p>
                   </div>
                 )}
               </div>

@@ -49,18 +49,17 @@ export function calculateProfileCompletion(data: ProfileCompletionData): number 
   const workExpCount = Math.min(data.workExperiences?.length || 0, 3);
   completion += workExpCount * 10;
 
-  // 4. Core Skills: +2.5% per skill (max 8 = 20%)
+  // 4. Skills (Core + Soft combined): +2% per skill (max 10 = 20%)
+  // This matches cm-profile calculation exactly
   const coreSkillsCount = data.coreSkills?.length || 0;
-  const coreSkillsBonus = Math.min(coreSkillsCount, 8) * 2.5;
-  completion += coreSkillsBonus;
-
-  // 5. Soft Skills: +2.5% if at least 1 exists
   const softSkillsCount = data.softSkills?.length || 0;
-  if (softSkillsCount > 0) completion += 2.5;
+  const totalSkillsCount = coreSkillsCount + softSkillsCount;
+  const skillsBonus = Math.min(totalSkillsCount, 10) * 2;
+  completion += skillsBonus;
 
-  // 6. Profile Header fields (excluding image): distribute remaining % among filled fields
-  // Total possible from above: 5+5+5+5+10+10+30+20+2.5 = 92.5%
-  // Remaining for profile fields: 7.5%
+  // 5. Profile Header fields (excluding image): distribute remaining % among filled fields
+  // Total possible from above: 5+5+5+5+10+10+30+20 = 90%
+  // Remaining for profile fields: 10%
   const profileFields = [
     data.fullName,
     data.title,
@@ -71,7 +70,7 @@ export function calculateProfileCompletion(data: ProfileCompletionData): number 
     data.link
   ];
   const filledProfileFields = profileFields.filter(field => field && field.trim().length > 0).length;
-  const profileFieldBonus = (filledProfileFields / profileFields.length) * 7.5;
+  const profileFieldBonus = (filledProfileFields / profileFields.length) * 10;
   completion += profileFieldBonus;
 
   return Math.round(completion);

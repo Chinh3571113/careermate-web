@@ -129,7 +129,11 @@ export function useExportPDFJob(): UseExportPDFJobReturn {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || `Failed to create job: ${response.status}`);
+      const errorMsg = errorData.details
+        ? `${errorData.error}: ${errorData.details}`
+        : errorData.error || `Failed to create job: ${response.status}`;
+      console.error("[useExportPDFJob] Create job failed:", errorMsg, errorData);
+      throw new Error(errorMsg);
     }
 
     const data: CreateExportJobResponse = await response.json();

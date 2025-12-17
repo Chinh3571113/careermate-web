@@ -1,5 +1,7 @@
 /**
- * Export Job Store
+ * ⚠️⚠️⚠️ DEPRECATED - DO NOT USE ⚠️⚠️⚠️
+ * 
+ * This file is deprecated and has been replaced by export-job-store.kv.ts
  * 
  * HYBRID job store for managing PDF export jobs.
  * - Production (Railway): Uses Railway Redis for cross-instance persistence

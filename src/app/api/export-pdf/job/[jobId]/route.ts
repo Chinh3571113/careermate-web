@@ -3,10 +3,12 @@
  * 
  * Polls the status of an export job by job ID.
  * Returns the current status, and fileUrl when complete.
+ * 
+ * Now uses Vercel KV for persistent job storage across serverless functions.
  */
 
 import { NextRequest, NextResponse } from "next/server";
-import { exportJobStore } from "@/lib/export-job-store";
+import { exportJobStore } from "@/lib/export-job-store.kv";
 import type { GetExportJobResponse } from "@/types/export-job";
 
 // =============================================================================
