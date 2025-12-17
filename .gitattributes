@@ -1,8 +1,27 @@
-* text eol=lf
-# Treat image files as binary (never modify)
-*.png binary
-*.jpg binary
+# Auto-detect text files, normalize to LF
+* text=auto eol=lf
+
+# Source code
+*.ts   text
+*.tsx  text
+*.js   text
+*.jsx  text
+*.json text
+*.css  text
+*.md   text
+*.html text
+
+# Binary files (never touched)
+*.png  binary
+*.jpg  binary
 *.jpeg binary
-*.gif binary
-*.svg binary
+*.gif  binary
+*.svg  binary
 *.webp binary
+*.ico  binary
+*.pdf  binary
+*.zip  binary
+*.woff binary
+*.woff2 binary
+*.ttf  binary
+*.mp4  binary
