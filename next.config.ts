@@ -12,12 +12,9 @@ const nextConfig = {
   // 🚀 PERFORMANCE OPTIMIZATIONS
   // ========================================
 
-  // Temporarily ignore TypeScript and ESLint errors during build
+  // Temporarily ignore TypeScript errors during build
   typescript: {
     ignoreBuildErrors: true,
-  },
-  eslint: {
-    ignoreDuringBuilds: true,
   },
 
   // Enable compiler optimizations
@@ -78,11 +75,12 @@ const nextConfig = {
       // ❗DO NOT add @sparticuz/chromium or puppeteer-core here
       // They need to be external for serverless environments
     ],
-    // ========================================
-    // ✅ FIX: Mark packages as external for serverless
-    // ========================================
-    serverComponentsExternalPackages: ['@sparticuz/chromium', 'puppeteer-core'],
   },
+
+  // ========================================
+  // ✅ FIX: Mark packages as external for serverless (moved from experimental)
+  // ========================================
+  serverExternalPackages: ['@sparticuz/chromium', 'puppeteer-core'],
 
   // ========================================
   // ✅ FIX: Force include chromium binary files in Lambda

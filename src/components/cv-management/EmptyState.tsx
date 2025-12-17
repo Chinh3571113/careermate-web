@@ -55,16 +55,16 @@ export const EmptyState: React.FC<EmptyStateProps> = ({ activeTab, onFileInput }
       <p className="text-gray-600 mb-4">{content.description}</p>
 
       {/* Recommendation text for Upload tab */}
-      {content.showRecommendation && (
-        <div className="mb-6 mx-auto max-w-md">
-          <div className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700">
-            <FiInfo className="w-4 h-4 flex-shrink-0" />
-            <span>For the best results, we recommend using a <strong>CareerMate CV template</strong>.</span>
+        {/* {content.showRecommendation && (
+          <div className="mb-6 mx-auto max-w-md">
+            <div className="flex items-center justify-center gap-2 px-4 py-2 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700">
+              <FiInfo className="w-4 h-4 flex-shrink-0" />
+              <span>For the best results, we recommend using a <strong>CareerMate CV template</strong>.</span>
+            </div>
           </div>
-        </div>
-      )}
+        )} */}
 
-      {content.hasUpload && onFileInput ? (
+      {/* {content.hasUpload && onFileInput ? (
         <label className="cursor-pointer">
           <input type="file" className="hidden" accept=".pdf,.doc,.docx" onChange={onFileInput} />
           <span className="inline-flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-[#3a4660] to-gray-400 hover:from-[#3a4660] hover:to-[#3a4660] text-white rounded-lg font-medium shadow-md hover:shadow-xl transition-all">
@@ -86,7 +86,7 @@ export const EmptyState: React.FC<EmptyStateProps> = ({ activeTab, onFileInput }
           </svg>
           Create New CV
         </button>
-      )}
+      )} */}
     </div>
   );
 };

@@ -60,15 +60,17 @@ export async function POST(req: NextRequest) {
     const job = await exportJobStore.createJob(resumeId, templateId);
     const { jobId } = job;
 
-    console.log(`[ExportJob] Created job ${jobId} for resume ${resumeId}`);
+    console.log(`[ExportJob] ✅ Created job ${jobId} for resume ${resumeId}`);
+    console.log(`[ExportJob] Job details:`, { jobId, resumeId, templateId, status: job.status });
 
     // =======================================================================
     // Background Processing using setImmediate
     // This allows the response to return immediately while PDF generates
     // =======================================================================
     
+    console.log(`[ExportJob] 🚀 Scheduling background processing for job ${jobId}`);
     setImmediate(async () => {
-      console.log(`[ExportJob] Starting background processing for job ${jobId}`);
+      console.log(`[ExportJob] 🔄 Starting background processing for job ${jobId}`);
       const startTime = Date.now();
 
       try {

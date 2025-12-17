@@ -1,7 +1,7 @@
 import type { Config } from "tailwindcss";
 
 const config: Config = {
-  darkMode: ["class"],
+  darkMode: "class",
   content: [
     "./src/**/*.{ts,tsx,js,jsx,mdx}",
     "./app/**/*.{ts,tsx,js,jsx,mdx}",
@@ -10,7 +10,19 @@ const config: Config = {
   theme: {
     extend: {},
   },
-  plugins: [],
+  plugins: [
+    function ({ addUtilities }: any) {
+      addUtilities({
+        '.scrollbar-hide': {
+          '-ms-overflow-style': 'none',
+          'scrollbar-width': 'none',
+          '&::-webkit-scrollbar': {
+            display: 'none'
+          }
+        }
+      })
+    }
+  ],
 };
 
 export default config;

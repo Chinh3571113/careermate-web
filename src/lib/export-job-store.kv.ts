@@ -38,8 +38,19 @@ const isKVConfigured = Boolean(
   process.env.KV_REST_API_TOKEN !== "asd"
 );
 
-/** In-memory fallback store for development */
-const memoryStore = new Map<string, ExportJobState>();
+/** In-memory fallback store for development - Using globalThis for persistence */
+const getMemoryStore = (): Map<string, ExportJobState> => {
+  if (typeof globalThis !== 'undefined') {
+    if (!(globalThis as any).__exportJobMemoryStore) {
+      (globalThis as any).__exportJobMemoryStore = new Map<string, ExportJobState>();
+      console.log(`[ExportJobStore:Memory] Initialized global memory store`);
+    }
+    return (globalThis as any).__exportJobMemoryStore;
+  }
+  return new Map<string, ExportJobState>();
+};
+
+const memoryStore = getMemoryStore();
 
 console.log(`[ExportJobStore:KV] KV Configured: ${isKVConfigured}`);
 
@@ -108,6 +119,8 @@ export async function createJob(
   } else {
     memoryStore.set(jobId, job);
     console.log(`[ExportJobStore:Memory] Created job ${jobId} for resume ${resumeId} (KV not configured)`);
+    console.log(`[ExportJobStore:Memory] Current store size: ${memoryStore.size}`);
+    console.log(`[ExportJobStore:Memory] All job IDs:`, Array.from(memoryStore.keys()));
   }
 
   return job;
@@ -137,6 +150,8 @@ export async function getJob(jobId: string): Promise<ExportJobState | null> {
     }
   } else {
     job = memoryStore.get(jobId) || null;
+    console.log(`[ExportJobStore:Memory] Looking for job ${jobId} in store of size ${memoryStore.size}`);
+    console.log(`[ExportJobStore:Memory] Available job IDs:`, Array.from(memoryStore.keys()));
     if (job) {
       console.log(`[ExportJobStore:Memory] Retrieved job ${jobId}: ${job.status}`);
     } else {

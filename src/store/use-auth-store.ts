@@ -85,6 +85,11 @@ interface AuthState {
   user: any | null;
   role: string | null;
   candidateId: number | null; // ✅ Add candidateId from profile API
+  profile: {
+    fullName: string;
+    title: string;
+    image: string;
+  } | null; // ✅ Add profile for avatar sync
 
   // Actions
   setLoading: (v: boolean) => void;
@@ -98,6 +103,7 @@ interface AuthState {
   clearAuth: () => void;
   setCandidateId: (candidateId: number | null) => void; // ✅ Add setter for candidateId
   fetchCandidateProfile: () => Promise<void>; // ✅ Add method to fetch profile
+  setProfile: (profile: { fullName: string; title: string; image: string } | null) => void; // ✅ Add setter for profile
 
   // API
   login: (
@@ -244,6 +250,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   user: initial.user,
   role: initial.role,
   candidateId: null, // ✅ Initialize candidateId
+  profile: null, // ✅ Initialize profile (for avatar sync)
 
   // -------- Actions cơ bản để hook gọi --------
   setLoading: (v) => set({ isLoading: v }),
@@ -313,6 +320,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       role: null,
       user: null,
       candidateId: null, // ✅ Clear candidateId on logout
+      profile: null, // ✅ Clear profile on logout
     });
   },
 
@@ -321,13 +329,24 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ candidateId });
   },
 
-  // ✅ Fetch user profile from API to get real candidateId
+  // ✅ Set profile (for avatar sync)
+  setProfile: (profile) => {
+    set({ profile });
+  },
+
+  // ✅ Fetch user profile from API to get real candidateId and profile data
   fetchCandidateProfile: async () => {
     try {
-      const { isAuthenticated } = get();
+      const { isAuthenticated, role } = get();
       
       // Only fetch if user is authenticated
       if (!isAuthenticated) {
+        return;
+      }
+
+      // Only fetch for candidates (not recruiters)
+      const isCandidate = role?.toUpperCase().includes("CANDIDATE");
+      if (!isCandidate) {
         return;
       }
       
@@ -336,8 +355,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         const { fetchCurrentCandidateProfile } = await import('@/lib/candidate-profile-api');
         const candidateProfile = await fetchCurrentCandidateProfile();
         
-        // Update store with candidateId from the API response
-        set({ candidateId: candidateProfile.candidateId });
+        // ✅ Update store with candidateId AND profile data
+        set({ 
+          candidateId: candidateProfile.candidateId,
+          profile: {
+            fullName: candidateProfile.fullName || '',
+            title: candidateProfile.title || '',
+            image: candidateProfile.image || '',
+          }
+        });
         
       } catch (profileError: any) {
         // If profile doesn't exist (400/404), fallback to /api/users/current
@@ -354,6 +380,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       
     } catch (error) {
       // Don't throw - let the app continue even if profile fetch fails
+      console.error('Error fetching candidate profile:', error);
     }
   },
 

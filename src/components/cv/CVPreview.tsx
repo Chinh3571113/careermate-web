@@ -393,11 +393,12 @@ const handleDirectPDF = (cvData: CVData) => {
       });
     }
 
-    // Generate filename
-    const fullName = toPrintableText(cvData.personalInfo.fullName) || "CV";
-    const cleanName = fullName.replace(/[^a-zA-Z0-9]/g, "_");
-    const fileName = `CV_${cleanName}_${new Date().toISOString().split("T")[0]
-      }.pdf`;
+    // Generate filename with format: [JobTitle] CV_CM_[timestamp].pdf
+    // Priority: position > fullName > "CV"
+    const jobTitleForFile = cvData.personalInfo.position || cvData.personalInfo.fullName || "CV";
+    const cleanJobTitle = jobTitleForFile.replace(/[^a-zA-Z0-9\s]/g, "").trim().replace(/\s+/g, " ");
+    const timestamp = Date.now();
+    const fileName = `${cleanJobTitle} CV_CM_${timestamp}.pdf`;
 
     // Save the PDF
     pdf.save(fileName);
@@ -417,6 +418,8 @@ interface Props {
   onBackClick?: () => void;
   resumeId?: number; // Resume ID for updating after save
   userPackage?: string; // User's package (FREE, BASIC, PLUS, PREMIUM) - controls watermark
+  jobId?: number; // Job ID for fetching job title for filename
+  jobTitle?: string; // Job title for filename (if already fetched)
 }
 
 export default function CVPreview({
@@ -427,9 +430,12 @@ export default function CVPreview({
   onBackClick,
   resumeId: propResumeId,
   userPackage,
+  jobId,
+  jobTitle: propJobTitle,
 }: Props) {
   const [zoom, setZoom] = useState(zoomLevel);
   const [isMounted, setIsMounted] = useState(false);
+  const [jobTitle, setJobTitle] = useState(propJobTitle || "");
   const router = useRouter();
 
   // Get user from auth store
@@ -449,6 +455,24 @@ export default function CVPreview({
       user: user?.email,
     });
   }, [resumeId, propResumeId, storeResumeId, isMounted, user]);
+
+  // Fetch job title if jobId is provided but jobTitle is not
+  useEffect(() => {
+    const fetchJobTitle = async () => {
+      if (jobId && !propJobTitle) {
+        try {
+          const response = await api.get(`/api/job-postings/${jobId}`);
+          if (response.data?.result?.title) {
+            setJobTitle(response.data.result.title);
+            console.log("✅ Fetched job title:", response.data.result.title);
+          }
+        } catch (error) {
+          console.error("❌ Failed to fetch job title:", error);
+        }
+      }
+    };
+    fetchJobTitle();
+  }, [jobId, propJobTitle]);
 
   // Job-based PDF export hook (replaces retry-based approach)
   const {
@@ -727,11 +751,12 @@ export default function CVPreview({
         heightLeft -= pageHeight;
       }
 
-      // Generate filename with current date and CV owner name
-      const fullName = cvData.personalInfo.fullName || "CV";
-      const cleanName = fullName.replace(/[^a-zA-Z0-9]/g, "_");
-      const fileName = `CV_${cleanName}_${new Date().toISOString().split("T")[0]
-        }.pdf`;
+      // Generate filename with format: [JobTitle] CV_CM_[timestamp].pdf
+      // Priority: position > fullName > "CV"
+      const jobTitleForFile = cvData.personalInfo.position || cvData.personalInfo.fullName || "CV";
+      const cleanJobTitle = jobTitleForFile.replace(/[^a-zA-Z0-9\s]/g, "").trim().replace(/\s+/g, " ");
+      const timestamp = Date.now();
+      const fileName = `${cleanJobTitle} CV_CM_${timestamp}.pdf`;
 
       console.log("Saving PDF...", fileName);
 
@@ -831,10 +856,14 @@ export default function CVPreview({
     const loadingToast = toast.loading("Starting PDF export...");
 
     try {
-      // Generate filename
-      const fullName = cvData.personalInfo.fullName || "CV";
-      const cleanName = fullName.replace(/[^a-zA-Z0-9]/g, "_");
-      const fileName = `CV_${cleanName}_${new Date().toISOString().split("T")[0]}`;
+      // Generate filename with format: [JobTitle] CV_CM_[timestamp]
+      // Priority: position > fullName > template name
+      const jobTitleForFile = cvData.personalInfo.position || cvData.personalInfo.fullName || currentTemplate.name;
+      const cleanJobTitle = jobTitleForFile.replace(/[^a-zA-Z0-9\s]/g, "").trim().replace(/\s+/g, " ");
+      const timestamp = Date.now();
+      const fileName = `${cleanJobTitle} CV_CM_${timestamp}`;
+
+      console.log("📝 Generated filename:", fileName);
 
       // ========================================
       // Resolve photoUrl to valid Firebase download URL

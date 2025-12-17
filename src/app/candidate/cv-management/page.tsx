@@ -213,11 +213,9 @@ const CVManagementPage = () => {
       
       const { createResume } = await import('@/services/resumeService');
       
-      // Call API to create resume
+      // Call API to create resume - backend will set default type
       const newResume = await createResume({
         aboutMe: "",
-        resumeUrl: "",
-        type: "WEB",
         isActive: false
       });
 
@@ -290,9 +288,9 @@ const CVManagementPage = () => {
                 <div className="flex items-start justify-between mb-4">
                   <div>
                     <h2 className="text-lg font-semibold text-white mb-1 flex items-center gap-2">
-                      Active CV
+                      Default CV
                       <span className="text-xs bg-white/20 backdrop-blur-sm text-white px-2 py-0.5 rounded-full">
-                        Active
+                        Default
                       </span>
                     </h2>
                     <p className="text-sm text-white/90">

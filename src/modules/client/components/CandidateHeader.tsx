@@ -8,7 +8,6 @@ import { decodeJWT } from "@/lib/auth-admin";
 import toast from "react-hot-toast";
 import { ProfileDropdown } from "@/components/profile/ProfileDropdown";
 import UserTypeSelectionModal from "@/components/auth/UserTypeSelectionModal";
-import { useUserProfile } from "@/hooks/useUserProfile";
 import { getCurrentUser } from "@/lib/user-api";
 
 export default function CandidateHeader() {
@@ -21,23 +20,31 @@ export default function CandidateHeader() {
 
   // Lấy trạng thái auth đã chuẩn hoá từ hook client
   const { mounted, isAuthenticated, accessToken, role } = useClientAuth();
-  const { logout, user } = useAuthStore();
+  const { logout, user, profile, fetchCandidateProfile } = useAuthStore();
   
-  // Lấy username và avatar từ database
-  const { username, avatarUrl } = useUserProfile();
+  // ✅ Use profile from AuthStore (single source of truth for avatar)
+  // No longer need useUserProfile hook
 
   // Debug log
   useEffect(() => {
-    console.log('🔍 [CandidateHeader] Username state:', {
-      username,
+    console.log('🔍 [CandidateHeader] Profile state:', {
+      profileImage: profile?.image,
+      profileFullName: profile?.fullName,
       userUsername: user?.username,
       userEmail: user?.email,
       userInfoName: userInfo?.name,
     });
-  }, [username, user, userInfo]);
+  }, [profile, user, userInfo]);
 
   // Đánh dấu đã hydrate (tránh SSR mismatch)
   useEffect(() => setIsHydrated(true), []);
+
+  // ✅ Fetch candidate profile on mount (for avatar sync)
+  useEffect(() => {
+    if (isAuthenticated && mounted) {
+      fetchCandidateProfile();
+    }
+  }, [isAuthenticated, mounted, fetchCandidateProfile]);
 
   // Fetch current user info from API
   useEffect(() => {
@@ -198,10 +205,10 @@ export default function CandidateHeader() {
                 </span>
 
                 <ProfileDropdown
-                  userName={userInfo?.username || username || user?.username || userInfo?.name || user?.email || "User"}
+                  userName={profile?.fullName || userInfo?.username || user?.username || userInfo?.name || user?.email || "User"}
                   userEmail={userInfo?.email || user?.email}
                   role={role || undefined}
-                  userAvatar={avatarUrl || undefined}
+                  userAvatar={profile?.image || undefined}
                 />
               </>
             ) : (

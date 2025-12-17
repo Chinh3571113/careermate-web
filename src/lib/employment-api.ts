@@ -27,6 +27,11 @@ export interface EmploymentVerificationResponse {
   daysEmployed?: number;
   createdAt: string;
   updatedAt?: string;
+  // Verification checkpoints
+  verified30Days?: boolean;
+  verified90Days?: boolean;
+  // Review eligibility
+  reviewEligibility?: 'ELIGIBLE' | 'NOT_ELIGIBLE' | 'PENDING_VERIFICATION';
   // Computed fields from backend
   isEligibleForWorkReview?: boolean;
   isCurrentlyEmployed?: boolean;

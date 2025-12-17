@@ -191,19 +191,21 @@ class ResumeService {
    */
   async createResume(payload: {
     aboutMe: string;
-    resumeUrl: string;
-    type: string;
+    resumeUrl?: string; // Optional for WEB type
+    type?: string | null; // Optional - backend may have default
     isActive: boolean;
   }): Promise<Resume> {
     // 🛡️ Validate payload before sending to backend
-    if (!payload.resumeUrl) {
-      console.error("❌ CRITICAL: createResume called with empty resumeUrl!");
+    // For WEB type (CV Builder), resumeUrl is not required
+    // For UPLOAD type, resumeUrl must be provided
+    if (payload.type === "UPLOAD" && !payload.resumeUrl) {
+      console.error("❌ CRITICAL: createResume called with empty resumeUrl for UPLOAD type!");
       console.error("Invalid payload:", payload);
-      throw new Error("Cannot create resume: resumeUrl is required but was undefined or empty.");
+      throw new Error("Cannot create resume: resumeUrl is required for UPLOAD type.");
     }
 
-    // Validate URL format
-    if (!payload.resumeUrl.startsWith('http://') && !payload.resumeUrl.startsWith('https://')) {
+    // Validate URL format only if resumeUrl is provided
+    if (payload.resumeUrl && !payload.resumeUrl.startsWith('http://') && !payload.resumeUrl.startsWith('https://')) {
       console.error("❌ Invalid resumeUrl format:", payload.resumeUrl);
       throw new Error(`Invalid resumeUrl format. Expected http/https URL, got: ${payload.resumeUrl}`);
     }
@@ -211,7 +213,7 @@ class ResumeService {
     console.log("📤 Creating resume in backend...");
     console.log("Payload:", {
       ...payload,
-      resumeUrl: payload.resumeUrl.substring(0, 100) + '...', // Truncate for readability
+      resumeUrl: payload.resumeUrl ? payload.resumeUrl.substring(0, 100) + '...' : 'N/A (WEB type)', // Truncate for readability
     });
 
     try {
@@ -286,7 +288,7 @@ export const resumeService = new ResumeService();
 // Export createResume as a standalone function for convenience
 export const createResume = (payload: {
   aboutMe: string;
-  resumeUrl: string;
-  type: string;
+  resumeUrl?: string; // Optional for WEB type
+  type?: string | null; // Optional - backend may have default
   isActive: boolean;
 }) => resumeService.createResume(payload);

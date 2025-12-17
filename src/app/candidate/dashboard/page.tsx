@@ -14,6 +14,7 @@ import { getMyInvoice } from "@/lib/invoice-api";
 import { fetchMyJobApplications, type JobApplication } from "@/lib/my-jobs-api";
 import { fetchSavedJobs, type SavedJobFeedback } from "@/lib/job-api";
 import { getCurrentUser } from "@/lib/user-api";
+import { fetchCurrentCandidateProfile } from "@/lib/candidate-profile-api";
 import { useProfileCompletion } from "@/hooks/useProfileCompletion";
 import { ProfileProgressCircle } from "@/components/ui/profile-progress-circle";
 import { useCVStore } from "@/stores/cvStore";
@@ -24,23 +25,24 @@ export default function CandidateDashboard() {
   const [headerH, setHeaderH] = useState(headerHeight || 0);
   
   // Auth store
-  const { user, candidateId, fetchCandidateProfile } = useAuthStore();
+  const { user, candidateId, fetchCandidateProfile, setProfile } = useAuthStore();
   const userId = candidateId || user?.id;
 
   // Get current editing resume ID from Zustand (same as CM Profile)
   const currentEditingResumeId = useCVStore((s) => s.currentEditingResumeId);
   
-  // Resume ID state - will match CM Profile's selected resume
+  // Resume ID state - for CV completion tracking only
   const [resumeId, setResumeId] = useState<number | null>(null);
 
-  // Profile state
+  // ✅ Profile state (from Candidate Profile API - for user display)
   const [profileName, setProfileName] = useState("");
   const [profileTitle, setProfileTitle] = useState("");
   const [profileImage, setProfileImage] = useState("");
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [userEmail, setUserEmail] = useState("");
   const [isPremium, setIsPremium] = useState(false);
   
-  // Profile data for completion calculation (same as CM Profile)
+  // ✅ Resume data state (for CV completion calculation only, NOT for user display)
   const [profileData, setProfileData] = useState<{
     fullName?: string;
     title?: string;
@@ -60,7 +62,7 @@ export default function CandidateDashboard() {
     softSkillGroups?: Array<{ items?: any[] }>;
   }>({});
 
-  // Calculate profile completion using shared hook (same logic as CM Profile)
+  // Calculate profile completion (based on resume data)
   const profileCompletion = useProfileCompletion(profileData);
 
   // CV state
@@ -99,73 +101,99 @@ export default function CandidateDashboard() {
     }
   }, [headerHeight]);
 
-  // Fetch profile data from /api/resume (SAME as CM Profile)
+  // ✅ PRIMARY: Fetch profile data from Candidate Profile API (for user display)
   useEffect(() => {
-    const fetchProfileData = async () => {
+    const fetchProfile = async () => {
       try {
-        // Fetch from /api/resume like CM Profile does
-        const response = await api.get("/api/resume");
-        console.log('🔍 Dashboard /api/resume response:', response.data);
+        setIsLoadingProfile(true);
+        console.log('🔍 Dashboard: Fetching candidate profile...');
+        const profile = await fetchCurrentCandidateProfile();
         
-        // API returns array of resumes, need to select one (like CM Profile does)
+        console.log('✅ Dashboard: Candidate profile fetched:', {
+          fullName: profile.fullName,
+          title: profile.title,
+          hasImage: !!profile.image,
+        });
+        
+        // Set profile display data (for user card)
+        setProfileName(profile.fullName || "");
+        setProfileTitle(profile.title || "Update your title");
+        setProfileImage(profile.image || "");
+        
+        // ✅ SYNC with AuthStore (single source of truth)
+        setProfile({
+          fullName: profile.fullName || "",
+          title: profile.title || "",
+          image: profile.image || "",
+        });
+        
+      } catch (error) {
+        console.error("❌ Dashboard: Failed to fetch candidate profile:", error);
+        // Set defaults if profile not found
+        setProfileName("");
+        setProfileTitle("Update your title");
+        setProfileImage("");
+        setProfile(null);
+      } finally {
+        setIsLoadingProfile(false);
+      }
+    };
+
+    fetchProfile();
+
+    // Refresh profile data when page becomes visible (user returns from cm-profile)
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        console.log('📍 Page visible again, refreshing profile data...');
+        fetchProfile();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []); // Run once on mount and on visibility change
+
+  // ✅ SECONDARY: Fetch resume data (for CV completion calculation only)
+  useEffect(() => {
+    const fetchResumeData = async () => {
+      try {
+        console.log('� Dashboard: Fetching resume data for completion...');
+        const response = await api.get("/api/resume");
+        
         if (response.data?.result && response.data.result.length > 0) {
           const resumes = response.data.result;
           
-          // Select resume using SAME PRIORITY as CM Profile:
-          // Priority 0: currentEditingResumeId from Zustand (synced with CM Profile)
-          // Priority 1: Resume with isActive === true
-          // Priority 2: First resume in list
+          // Select resume using priority:
+          // 1. currentEditingResumeId from Zustand (synced with CM Profile)
+          // 2. Resume with isActive === true
+          // 3. First resume in list
           let selectedResume;
-          let selectionSource = '';
           
           if (currentEditingResumeId) {
             selectedResume = resumes.find((r: any) => 
               String(r.resumeId) === currentEditingResumeId
             );
-            if (selectedResume) {
-              selectionSource = `Zustand: ${currentEditingResumeId} (synced with CM Profile)`;
-            }
           }
           
           if (!selectedResume) {
             selectedResume = resumes.find((r: any) => r.isActive === true);
-            if (selectedResume) {
-              selectionSource = 'isActive=true';
-            }
           }
           
           if (!selectedResume) {
             selectedResume = resumes[0];
-            selectionSource = 'first resume (fallback)';
           }
           
           const resume = selectedResume;
           
-          console.log('📋 Dashboard selected resume:', {
+          console.log('✅ Dashboard: Resume selected for completion:', {
             resumeId: resume.resumeId,
-            source: selectionSource,
             isActive: resume.isActive
           });
           
-          // Set resumeId state (matches CM Profile's resumeId)
+          // Set resumeId state
           setResumeId(resume.resumeId);
           
-          // Debug: log resume data
-          console.log('📊 Dashboard Resume Data:', {
-            fullName: resume.fullName,
-            title: resume.title,
-            educations: resume.educations?.length || 0,
-            workExperiences: resume.workExperiences?.length || 0,
-            coreSkillGroups: resume.coreSkillGroups?.length || 0,
-            softSkillGroups: resume.softSkillGroups?.length || 0,
-            awards: resume.awards?.length || 0,
-            certificates: resume.certificates?.length || 0,
-            projects: resume.projects?.length || 0,
-            languages: resume.languages?.length || 0,
-            aboutMe: !!resume.aboutMe,
-          });
-          
-          // Set profile data for completion calculation
+          // Set profile data ONLY for completion calculation
           setProfileData({
             fullName: resume.fullName,
             title: resume.title,
@@ -184,65 +212,20 @@ export default function CandidateDashboard() {
             coreSkillGroups: resume.coreSkillGroups || [],
             softSkillGroups: resume.softSkillGroups || [],
           });
-
-          // Set display fields
-          setProfileName(resume.fullName || "");
-          setProfileTitle(resume.title || "");
-          setProfileImage(resume.image || "");
           
-          console.log('✅ Dashboard profile data set from /api/resume');
+          console.log('✅ Dashboard: Resume data set for completion calculation');
+        } else {
+          console.log('ℹ️ Dashboard: No resume found');
+          setProfileData({});
         }
       } catch (error) {
-        console.error("❌ Failed to fetch resume data:", error);
-        // Fallback: try /api/candidates/profiles/current
-        try {
-          console.log('🔄 Dashboard falling back to /api/candidates/profiles/current');
-          const response = await api.get("/api/candidates/profiles/current");
-          if (response.data?.result) {
-            const profile = response.data.result;
-            setProfileData({
-              fullName: profile.fullName,
-              title: profile.title,
-              phone: profile.phone,
-              dob: profile.dob,
-              gender: profile.gender,
-              address: profile.address,
-              link: profile.link,
-              aboutMe: profile.aboutMe,
-              awards: profile.awards || [],
-              certificates: profile.certificates || [],
-              projects: profile.projects || [],
-              languages: profile.languages || [],
-              educations: profile.educations || [],
-              workExperiences: profile.workExperiences || [],
-              coreSkillGroups: profile.coreSkillGroups || [],
-              softSkillGroups: profile.softSkillGroups || [],
-            });
-            setProfileName(profile.fullName || "");
-            setProfileTitle(profile.title || "");
-            setProfileImage(profile.image || "");
-            console.log('📊 Dashboard fallback to /api/candidates/profiles/current');
-          }
-        } catch (fallbackError) {
-          console.error("Failed to fetch profile data:", fallbackError);
-        }
+        console.error("❌ Dashboard: Failed to fetch resume data:", error);
+        setProfileData({});
       }
     };
 
-    // Fetch profile on mount
-    fetchProfileData();
-
-    // Refresh profile data when page becomes visible (user returns from cm-profile)
-    const handleVisibilityChange = () => {
-      if (!document.hidden) {
-        console.log('📍 Page visible again, refreshing profile data...');
-        fetchProfileData();
-      }
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, [currentEditingResumeId]); // Re-fetch when currentEditingResumeId changes (synced with CM Profile)
+    fetchResumeData();
+  }, [currentEditingResumeId]); // Re-fetch when currentEditingResumeId changes
 
   // Fetch current user info (including email) from API
   useEffect(() => {
@@ -325,7 +308,7 @@ export default function CandidateDashboard() {
   // using the same logic as cm-profile (calculateProfileCompletion)
 
   // Display name
-  const displayName = profileName || user?.fullName || user?.name || user?.email?.split('@')[0] || 'User';
+  const displayName = profileName || user?.fullName || user?.name || user?.email?.split('@')[0] || '';
   const initials = displayName.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase();
 
   return (
@@ -356,21 +339,31 @@ export default function CandidateDashboard() {
                     isPremium={isPremium}
                   />
                   <div>
-                    <h1 className="text-2xl font-semibold text-gray-900 mb-1">
-                      {displayName}
-                    </h1>
-                    <p className="text-sm text-gray-600 mb-1">
-                      💼 {profileTitle || 'Update your title'}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      ✉️ {userEmail || user?.email || 'No email'}
-                    </p>
-                    <Link
-                      href="/candidate/cm-profile"
-                      className="text-sm text-blue-600 hover:text-blue-700 font-medium mt-1 inline-block"
-                    >
-                      Update your profile →
-                    </Link>
+                    {isLoadingProfile && !displayName ? (
+                      <>
+                        <div className="h-8 w-48 bg-gray-200 rounded animate-pulse mb-2"></div>
+                        <div className="h-4 w-32 bg-gray-200 rounded animate-pulse mb-2"></div>
+                        <div className="h-4 w-40 bg-gray-200 rounded animate-pulse"></div>
+                      </>
+                    ) : (
+                      <>
+                        <h1 className="text-2xl font-semibold text-gray-900 mb-1">
+                          {displayName}
+                        </h1>
+                        <p className="text-sm text-gray-600 mb-1">
+                          💼 {profileTitle || 'Update your title'}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          ✉️ {userEmail || user?.email || 'No email'}
+                        </p>
+                        <Link
+                          href="/candidate/cm-profile"
+                          className="text-sm text-blue-600 hover:text-blue-700 font-medium mt-1 inline-block"
+                        >
+                          Update your profile →
+                        </Link>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
@@ -385,9 +378,9 @@ export default function CandidateDashboard() {
                 <div className="bg-gradient-to-r from-[#3a4660] to-gray-400 rounded-xl p-5">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
-                      <span className="text-white font-medium">Active CV</span>
+                      <span className="text-white font-medium">Default CV</span>
                       <span className="text-xs bg-white/20 backdrop-blur-sm text-white px-2 py-0.5 rounded-full">
-                        Active
+                        Default
                       </span>
                     </div>
                   </div>

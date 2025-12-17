@@ -31,6 +31,9 @@ export default function JobRecommendModal({ isOpen, onClose }: JobRecommendModal
   const [collaborativeJobs, setCollaborativeJobs] = useState<JobRecommendation[]>([]);
   const [hotJobs, setHotJobs] = useState<JobRecommendation[]>([]);
   const [activeTab, setActiveTab] = useState<'main' | 'recommended' | 'hot'>('main');
+  const [expandedJobId, setExpandedJobId] = useState<number | null>(null);
+  const [jobDetails, setJobDetails] = useState<Map<number, any>>(new Map());
+  const [loadingDetails, setLoadingDetails] = useState<Set<number>>(new Set());
   
   // New states for input form
   const [showInputForm, setShowInputForm] = useState(true);
@@ -183,11 +186,45 @@ export default function JobRecommendModal({ isOpen, onClose }: JobRecommendModal
     setContentBasedJobs([]);
     setCollaborativeJobs([]);
     setHotJobs([]);
+    setExpandedJobId(null);
+    setJobDetails(new Map());
   };
 
   const handleUpgrade = () => {
     onClose();
     router.push('/candidate/pricing');
+  };
+
+  const toggleJobDetails = async (jobId: number) => {
+    if (expandedJobId === jobId) {
+      setExpandedJobId(null);
+      return;
+    }
+
+    setExpandedJobId(jobId);
+
+    // If already loaded, don't fetch again
+    if (jobDetails.has(jobId)) {
+      return;
+    }
+
+    // Fetch job details
+    try {
+      setLoadingDetails(prev => new Set(prev).add(jobId));
+      const response = await api.get(`/api/job-postings/${jobId}`);
+      const details = response.data.result;
+      
+      setJobDetails(prev => new Map(prev).set(jobId, details));
+    } catch (error) {
+      console.error('Error fetching job details:', error);
+      toast.error('Failed to load job details');
+    } finally {
+      setLoadingDetails(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(jobId);
+        return newSet;
+      });
+    }
   };
 
   if (!isOpen) return null;
@@ -461,166 +498,436 @@ export default function JobRecommendModal({ isOpen, onClose }: JobRecommendModal
 
               {/* Job List */}
               <div className="space-y-4">
-                {activeTab === 'main' && contentBasedJobs.map((job) => (
-                  <div
-                    key={job.job_id}
-                    className="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition-shadow"
-                  >
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex-1">
-                        <h3 className="text-lg font-bold text-gray-900 mb-1">
-                          {job.title}
-                        </h3>
-                        {job.final_score && (
-                          <div className="flex items-center gap-1">
-                            <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                            <span className="text-sm font-medium text-gray-600">
-                              {(job.final_score * 100).toFixed(0)}% Match
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
+                {activeTab === 'main' && contentBasedJobs.map((job, index) => {
+                  const isExpanded = expandedJobId === job.job_id;
+                  const details = jobDetails.get(job.job_id);
+                  const isLoadingDetail = loadingDetails.has(job.job_id);
 
-                    <p className="text-gray-700 text-sm mb-3 line-clamp-2">
-                      {job.description}
-                    </p>
-
-                    {/* Skills */}
-                    {job.skills && (
-                      <div className="flex flex-wrap gap-2 mb-3">
-                        {job.skills.split(',').slice(0, 4).map((skill, idx) => (
-                          <span
-                            key={idx}
-                            className="px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium"
-                          >
-                            {skill.trim()}
-                          </span>
-                        ))}
-                        {job.skills.split(',').length > 4 && (
-                          <span className="px-2.5 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium">
-                            +{job.skills.split(',').length - 4} more
-                          </span>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Match Details */}
-                    {(job.semantic_similarity || job.skill_overlap !== undefined) && (
-                      <div className="flex items-center gap-4 text-xs text-gray-500 border-t border-gray-100 pt-3">
-                        {job.semantic_similarity && (
-                          <div>
-                            <span className="font-medium">Semantic:</span>{' '}
-                            {(job.semantic_similarity * 100).toFixed(0)}%
-                          </div>
-                        )}
-                        {job.skill_overlap !== undefined && (
-                          <div>
-                            <span className="font-medium">Skill:</span>{' '}
-                            {(job.skill_overlap * 100).toFixed(0)}%
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* View Button */}
-                    <button
-                          onClick={() => {
-                            toast.success('View job details #' + job.job_id);
-                            onClose();
-                          }}
-                          className="mt-3 w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium text-sm"
-                        >
-                          View details
-                        </button>
-                  </div>
-                ))}
-
-                {activeTab === 'recommended' && collaborativeJobs.map((job) => (
-                  <div
-                    key={job.job_id}
-                    className="bg-white rounded-xl border border-gray-200 p-5 hover:shadow-md transition-shadow"
-                  >
-                    <div className="flex items-start justify-between mb-3">
-                      <div className="flex-1">
-                        <h3 className="text-lg font-bold text-gray-900 mb-1">
-                          {job.title}
-                        </h3>
-                        {job.final_score && (
-                          <div className="flex items-center gap-1">
-                            <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                            <span className="text-sm font-medium text-gray-600">
-                              {(job.final_score * 100).toFixed(0)}% Match
-                            </span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    <p className="text-gray-700 text-sm mb-3 line-clamp-2">
-                      {job.description}
-                    </p>
-
-                    {/* Skills */}
-                    {job.skills && (
-                      <div className="flex flex-wrap gap-2 mb-3">
-                        {job.skills.split(',').slice(0, 4).map((skill, idx) => (
-                          <span
-                            key={idx}
-                            className="px-2.5 py-1 bg-green-50 text-green-700 rounded-full text-xs font-medium"
-                          >
-                            {skill.trim()}
-                          </span>
-                        ))}
-                        {job.skills.split(',').length > 4 && (
-                          <span className="px-2.5 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium">
-                            +{job.skills.split(',').length - 4} more
-                          </span>
-                        )}
-                      </div>
-                    )}
-
-                    {/* Match Details */}
-                    {(job.semantic_similarity || job.skill_overlap !== undefined) && (
-                      <div className="flex items-center gap-4 text-xs text-gray-500 border-t border-gray-100 pt-3">
-                        {job.semantic_similarity && (
-                          <div>
-                            <span className="font-medium">Semantic:</span>{' '}
-                            {(job.semantic_similarity * 100).toFixed(0)}%
-                          </div>
-                        )}
-                        {job.skill_overlap !== undefined && (
-                          <div>
-                            <span className="font-medium">Skill:</span>{' '}
-                            {(job.skill_overlap * 100).toFixed(0)}%
-                          </div>
-                        )}
-                      </div>
-                    )}
-
-                    {/* View Button */}
-                    <button
-                      onClick={() => {
-                        toast.success('View job details #' + job.job_id);
-                        onClose();
-                      }}
-                      className="mt-3 w-full px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors font-medium text-sm"
+                  return (
+                    <div
+                      key={`main-${job.job_id}-${index}`}
+                      className="bg-white rounded-xl border border-gray-200 hover:shadow-md transition-shadow overflow-hidden"
                     >
-                      View details
-                    </button>
-                  </div>
-                ))}
+                      {/* Job Summary */}
+                      <div className="p-5">
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex-1">
+                            <h3 className="text-lg font-bold text-gray-900 mb-1">
+                              {job.title}
+                            </h3>
+                            {job.final_score && (
+                              <div className="flex items-center gap-1">
+                                <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                                <span className="text-sm font-medium text-gray-600">
+                                  {(job.final_score * 100).toFixed(0)}% Match
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
 
-                {activeTab === 'hot' && hotJobs.map((job) => (
+                        <p className="text-gray-700 text-sm mb-3 line-clamp-2">
+                          {job.description}
+                        </p>
+
+                        {/* Skills */}
+                        {job.skills && (
+                          <div className="flex flex-wrap gap-2 mb-3">
+                            {job.skills.split(',').slice(0, 4).map((skill, idx) => (
+                              <span
+                                key={idx}
+                                className="px-2.5 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium"
+                              >
+                                {skill.trim()}
+                              </span>
+                            ))}
+                            {job.skills.split(',').length > 4 && (
+                              <span className="px-2.5 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium">
+                                +{job.skills.split(',').length - 4} more
+                              </span>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Match Details */}
+                        {(job.semantic_similarity || job.skill_overlap !== undefined) && (
+                          <div className="flex items-center gap-4 text-xs text-gray-500 border-t border-gray-100 pt-3">
+                            {job.semantic_similarity && (
+                              <div>
+                                <span className="font-medium">Semantic:</span>{' '}
+                                {(job.semantic_similarity * 100).toFixed(0)}%
+                              </div>
+                            )}
+                            {job.skill_overlap !== undefined && (
+                              <div>
+                                <span className="font-medium">Skill:</span>{' '}
+                                {(job.skill_overlap * 100).toFixed(0)}%
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* View Button */}
+                        <button
+                          onClick={() => toggleJobDetails(job.job_id)}
+                          disabled={isLoadingDetail}
+                          className="mt-3 w-full px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-colors font-medium text-sm disabled:opacity-50"
+                        >
+                          {isLoadingDetail ? (
+                            <span className="flex items-center justify-center gap-2">
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              Loading...
+                            </span>
+                          ) : isExpanded ? (
+                            'Hide details'
+                          ) : (
+                            'View details'
+                          )}
+                        </button>
+                      </div>
+
+                      {/* Expanded Job Details */}
+                      {isExpanded && details && (
+                        <div className="border-t border-gray-200 bg-gray-50 p-5 space-y-4 max-h-[600px] overflow-y-auto">
+                          {/* Company Info */}
+                          <div className="flex items-start gap-3 pb-4 border-b border-gray-200">
+                            {details.recruiterInfo?.companyLogo && (
+                              <img
+                                src={details.recruiterInfo.companyLogo}
+                                alt={details.recruiterInfo?.companyName}
+                                className="w-16 h-16 object-contain rounded-lg border border-gray-200 bg-white"
+                              />
+                            )}
+                            <div>
+                              <h4 className="font-semibold text-gray-900">
+                                {details.recruiterInfo?.companyName || 'Company'}
+                              </h4>
+                              <p className="text-sm text-gray-600">{details.address}</p>
+                            </div>
+                          </div>
+
+                          {/* Key Info Grid */}
+                          <div className="grid grid-cols-2 gap-4 pb-4 border-b border-gray-200">
+                            <div>
+                              <p className="text-xs text-gray-500 mb-1">Salary Range</p>
+                              <p className="text-sm font-semibold text-emerald-600">
+                                {details.salaryRange || 'Negotiable'}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-500 mb-1">Working Mode</p>
+                              <p className="text-sm font-semibold text-gray-900">
+                                {details.workingMode || 'Full time'}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-500 mb-1">Experience</p>
+                              <p className="text-sm font-semibold text-gray-900">
+                                {details.experienceYears || 'Any'} years
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-500 mb-1">Positions</p>
+                              <p className="text-sm font-semibold text-gray-900">
+                                {details.numberOfRecruitment || 1} opening{details.numberOfRecruitment > 1 ? 's' : ''}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Skills */}
+                          {details.skills && details.skills.length > 0 && (
+                            <div>
+                              <h5 className="font-semibold text-gray-900 mb-2">Required Skills</h5>
+                              <div className="flex flex-wrap gap-2">
+                                {details.skills.map((skill: any, idx: number) => (
+                                  <span
+                                    key={idx}
+                                    className={`px-3 py-1 text-sm rounded-full ${
+                                      skill.mustToHave
+                                        ? 'bg-red-50 text-red-700 border border-red-200 font-medium'
+                                        : 'bg-gray-100 text-gray-700 border border-gray-200'
+                                    }`}
+                                  >
+                                    {skill.name}
+                                    {skill.mustToHave && ' *'}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Job Description */}
+                          {details.description && (
+                            <div>
+                              <h5 className="font-semibold text-gray-900 mb-2">Job Description</h5>
+                              <div 
+                                className="text-sm text-gray-700 prose prose-sm max-w-none leading-relaxed"
+                                dangerouslySetInnerHTML={{ __html: details.description }}
+                              />
+                            </div>
+                          )}
+
+                          {/* Requirements */}
+                          {details.requirement && (
+                            <div>
+                              <h5 className="font-semibold text-gray-900 mb-2">Requirements</h5>
+                              <div 
+                                className="text-sm text-gray-700 prose prose-sm max-w-none leading-relaxed"
+                                dangerouslySetInnerHTML={{ __html: details.requirement }}
+                              />
+                            </div>
+                          )}
+
+                          {/* Benefits */}
+                          {details.benefit && (
+                            <div>
+                              <h5 className="font-semibold text-gray-900 mb-2">Benefits & Compensation</h5>
+                              <div 
+                                className="text-sm text-gray-700 prose prose-sm max-w-none leading-relaxed"
+                                dangerouslySetInnerHTML={{ __html: details.benefit }}
+                              />
+                            </div>
+                          )}
+
+                          {/* Apply Button */}
+                          <button
+                            onClick={() => {
+                              router.push(`/jobs-detail?id=${job.job_id}`);
+                              onClose();
+                            }}
+                            className="w-full px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-lg transition-all font-semibold shadow-md hover:shadow-lg"
+                          >
+                            Apply Now
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+
+                {activeTab === 'recommended' && collaborativeJobs.map((job, index) => {
+                  const isExpanded = expandedJobId === job.job_id;
+                  const details = jobDetails.get(job.job_id);
+                  const isLoadingDetail = loadingDetails.has(job.job_id);
+
+                  return (
+                    <div
+                      key={`recommended-${job.job_id}-${index}`}
+                      className="bg-white rounded-xl border border-gray-200 hover:shadow-md transition-shadow overflow-hidden"
+                    >
+                      {/* Job Summary */}
+                      <div className="p-5">
+                        <div className="flex items-start justify-between mb-3">
+                          <div className="flex-1">
+                            <h3 className="text-lg font-bold text-gray-900 mb-1">
+                              {job.title}
+                            </h3>
+                            {job.final_score && (
+                              <div className="flex items-center gap-1">
+                                <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                                <span className="text-sm font-medium text-gray-600">
+                                  {(job.final_score * 100).toFixed(0)}% Match
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        <p className="text-gray-700 text-sm mb-3 line-clamp-2">
+                          {job.description}
+                        </p>
+
+                        {/* Skills */}
+                        {job.skills && (
+                          <div className="flex flex-wrap gap-2 mb-3">
+                            {job.skills.split(',').slice(0, 4).map((skill, idx) => (
+                              <span
+                                key={idx}
+                                className="px-2.5 py-1 bg-green-50 text-green-700 rounded-full text-xs font-medium"
+                              >
+                                {skill.trim()}
+                              </span>
+                            ))}
+                            {job.skills.split(',').length > 4 && (
+                              <span className="px-2.5 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium">
+                                +{job.skills.split(',').length - 4} more
+                              </span>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Match Details */}
+                        {(job.semantic_similarity || job.skill_overlap !== undefined) && (
+                          <div className="flex items-center gap-4 text-xs text-gray-500 border-t border-gray-100 pt-3">
+                            {job.semantic_similarity && (
+                              <div>
+                                <span className="font-medium">Semantic:</span>{' '}
+                                {(job.semantic_similarity * 100).toFixed(0)}%
+                              </div>
+                            )}
+                            {job.skill_overlap !== undefined && (
+                              <div>
+                                <span className="font-medium">Skill:</span>{' '}
+                                {(job.skill_overlap * 100).toFixed(0)}%
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* View Button */}
+                        <button
+                          onClick={() => toggleJobDetails(job.job_id)}
+                          disabled={isLoadingDetail}
+                          className="mt-3 w-full px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors font-medium text-sm disabled:opacity-50"
+                        >
+                          {isLoadingDetail ? (
+                            <span className="flex items-center justify-center gap-2">
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                              Loading...
+                            </span>
+                          ) : isExpanded ? (
+                            'Hide details'
+                          ) : (
+                            'View details'
+                          )}
+                        </button>
+                      </div>
+
+                      {/* Expanded Job Details */}
+                      {isExpanded && details && (
+                        <div className="border-t border-gray-200 bg-gray-50 p-5 space-y-4 max-h-[600px] overflow-y-auto">
+                          {/* Company Info */}
+                          <div className="flex items-start gap-3 pb-4 border-b border-gray-200">
+                            {details.recruiterInfo?.companyLogo && (
+                              <img
+                                src={details.recruiterInfo.companyLogo}
+                                alt={details.recruiterInfo?.companyName}
+                                className="w-16 h-16 object-contain rounded-lg border border-gray-200 bg-white"
+                              />
+                            )}
+                            <div>
+                              <h4 className="font-semibold text-gray-900">
+                                {details.recruiterInfo?.companyName || 'Company'}
+                              </h4>
+                              <p className="text-sm text-gray-600">{details.address}</p>
+                            </div>
+                          </div>
+
+                          {/* Key Info Grid */}
+                          <div className="grid grid-cols-2 gap-4 pb-4 border-b border-gray-200">
+                            <div>
+                              <p className="text-xs text-gray-500 mb-1">Salary Range</p>
+                              <p className="text-sm font-semibold text-emerald-600">
+                                {details.salaryRange || 'Negotiable'}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-500 mb-1">Working Mode</p>
+                              <p className="text-sm font-semibold text-gray-900">
+                                {details.workingMode || 'Full time'}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-500 mb-1">Experience</p>
+                              <p className="text-sm font-semibold text-gray-900">
+                                {details.experienceYears || 'Any'} years
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-xs text-gray-500 mb-1">Positions</p>
+                              <p className="text-sm font-semibold text-gray-900">
+                                {details.numberOfRecruitment || 1} opening{details.numberOfRecruitment > 1 ? 's' : ''}
+                              </p>
+                            </div>
+                          </div>
+
+                          {/* Skills */}
+                          {details.skills && details.skills.length > 0 && (
+                            <div>
+                              <h5 className="font-semibold text-gray-900 mb-2">Required Skills</h5>
+                              <div className="flex flex-wrap gap-2">
+                                {details.skills.map((skill: any, idx: number) => (
+                                  <span
+                                    key={idx}
+                                    className={`px-3 py-1 text-sm rounded-full ${
+                                      skill.mustToHave
+                                        ? 'bg-red-50 text-red-700 border border-red-200 font-medium'
+                                        : 'bg-gray-100 text-gray-700 border border-gray-200'
+                                    }`}
+                                  >
+                                    {skill.name}
+                                    {skill.mustToHave && ' *'}
+                                  </span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* Job Description */}
+                          {details.description && (
+                            <div>
+                              <h5 className="font-semibold text-gray-900 mb-2">Job Description</h5>
+                              <div 
+                                className="text-sm text-gray-700 prose prose-sm max-w-none leading-relaxed"
+                                dangerouslySetInnerHTML={{ __html: details.description }}
+                              />
+                            </div>
+                          )}
+
+                          {/* Requirements */}
+                          {details.requirement && (
+                            <div>
+                              <h5 className="font-semibold text-gray-900 mb-2">Requirements</h5>
+                              <div 
+                                className="text-sm text-gray-700 prose prose-sm max-w-none leading-relaxed"
+                                dangerouslySetInnerHTML={{ __html: details.requirement }}
+                              />
+                            </div>
+                          )}
+
+                          {/* Benefits */}
+                          {details.benefit && (
+                            <div>
+                              <h5 className="font-semibold text-gray-900 mb-2">Benefits & Compensation</h5>
+                              <div 
+                                className="text-sm text-gray-700 prose prose-sm max-w-none leading-relaxed"
+                                dangerouslySetInnerHTML={{ __html: details.benefit }}
+                              />
+                            </div>
+                          )}
+
+                          {/* Apply Button */}
+                          <button
+                            onClick={() => {
+                              router.push(`/jobs-detail?id=${job.job_id}`);
+                              onClose();
+                            }}
+                            className="w-full px-4 py-3 bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white rounded-lg transition-all font-semibold shadow-md hover:shadow-lg"
+                          >
+                            Apply Now
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+
+                {activeTab === 'hot' && hotJobs.map((job, index) => {
+                  const isExpanded = expandedJobId === job.job_id;
+                  const details = jobDetails.get(job.job_id);
+                  const isLoadingDetail = loadingDetails.has(job.job_id);
+
+                  return (
                   <div
-                    key={job.job_id}
-                    className="bg-gradient-to-br from-orange-50 to-red-50 rounded-xl border-2 border-orange-200 p-5 hover:shadow-md transition-shadow relative"
+                    key={`hot-${job.job_id}-${index}`}
+                    className="bg-gradient-to-br from-orange-50 to-red-50 rounded-xl border-2 border-orange-300 hover:shadow-lg transition-shadow relative overflow-hidden"
                   >
                     {/* Hot Badge */}
-                    <div className="absolute top-3 right-3 px-2 py-1 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-full text-xs font-bold flex items-center gap-1">
+                    <div className="absolute top-3 right-3 px-3 py-1 bg-gradient-to-r from-orange-500 to-red-500 text-white rounded-full text-xs font-bold shadow-md">
                       🔥 HOT
                     </div>
 
+                    <div className="p-5">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex-1 pr-16">
                         <h3 className="text-lg font-bold text-gray-900 mb-1">
@@ -680,16 +987,142 @@ export default function JobRecommendModal({ isOpen, onClose }: JobRecommendModal
 
                     {/* View Button */}
                     <button
-                      onClick={() => {
-                        toast.success('View job details #' + job.job_id);
-                        onClose();
-                      }}
-                      className="mt-3 w-full px-4 py-2 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white rounded-lg transition-colors font-medium text-sm"
+                      onClick={() => toggleJobDetails(job.job_id)}
+                      disabled={isLoadingDetail}
+                      className="mt-3 w-full px-4 py-2 bg-gradient-to-r from-orange-500 to-red-500 hover:from-orange-600 hover:to-red-600 text-white rounded-lg transition-colors font-medium text-sm shadow-md disabled:opacity-50"
                     >
-                      View details
+                      {isLoadingDetail ? (
+                        <span className="flex items-center justify-center gap-2">
+                          <Loader2 className="w-4 h-4 animate-spin" />
+                          Loading...
+                        </span>
+                      ) : isExpanded ? (
+                        'Hide details'
+                      ) : (
+                        'View details'
+                      )}
                     </button>
                   </div>
-                ))}
+
+                  {/* Expanded Job Details */}
+                  {isExpanded && details && (
+                    <div className="border-t border-orange-200 bg-white p-5 space-y-4 max-h-[600px] overflow-y-auto">
+                      {/* Company Info */}
+                      <div className="flex items-start gap-3 pb-4 border-b border-gray-200">
+                        {details.recruiterInfo?.companyLogo && (
+                          <img
+                            src={details.recruiterInfo.companyLogo}
+                            alt={details.recruiterInfo?.companyName}
+                            className="w-16 h-16 object-contain rounded-lg border border-gray-200 bg-white"
+                          />
+                        )}
+                        <div>
+                          <h4 className="font-semibold text-gray-900">
+                            {details.recruiterInfo?.companyName || 'Company'}
+                          </h4>
+                          <p className="text-sm text-gray-600">{details.address}</p>
+                        </div>
+                      </div>
+
+                      {/* Key Info Grid */}
+                      <div className="grid grid-cols-2 gap-4 pb-4 border-b border-gray-200">
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1">Salary Range</p>
+                          <p className="text-sm font-semibold text-emerald-600">
+                            {details.salaryRange || 'Negotiable'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1">Working Mode</p>
+                          <p className="text-sm font-semibold text-gray-900">
+                            {details.workingMode || 'Full time'}
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1">Experience</p>
+                          <p className="text-sm font-semibold text-gray-900">
+                            {details.experienceYears || 'Any'} years
+                          </p>
+                        </div>
+                        <div>
+                          <p className="text-xs text-gray-500 mb-1">Positions</p>
+                          <p className="text-sm font-semibold text-gray-900">
+                            {details.numberOfRecruitment || 1} opening{details.numberOfRecruitment > 1 ? 's' : ''}
+                          </p>
+                        </div>
+                      </div>
+
+                      {/* Skills */}
+                      {details.skills && details.skills.length > 0 && (
+                        <div>
+                          <h5 className="font-semibold text-gray-900 mb-2">Required Skills</h5>
+                          <div className="flex flex-wrap gap-2">
+                            {details.skills.map((skill: any, idx: number) => (
+                              <span
+                                key={idx}
+                                className={`px-3 py-1 text-sm rounded-full ${
+                                  skill.mustToHave
+                                    ? 'bg-red-50 text-red-700 border border-red-200 font-medium'
+                                    : 'bg-gray-100 text-gray-700 border border-gray-200'
+                                }`}
+                              >
+                                {skill.name}
+                                {skill.mustToHave && ' *'}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      {/* Job Description */}
+                      {details.description && (
+                        <div>
+                          <h5 className="font-semibold text-gray-900 mb-2">Job Description</h5>
+                          <div 
+                            className="text-sm text-gray-700 prose prose-sm max-w-none leading-relaxed"
+                            dangerouslySetInnerHTML={{ __html: details.description }}
+                          />
+                        </div>
+                      )}
+
+                      {/* Requirements */}
+                      {details.requirement && (
+                        <div>
+                          <h5 className="font-semibold text-gray-900 mb-2">Requirements</h5>
+                          <div 
+                            className="text-sm text-gray-700 prose prose-sm max-w-none leading-relaxed"
+                            dangerouslySetInnerHTML={{ __html: details.requirement }}
+                          />
+                        </div>
+                      )}
+
+                      {/* Benefits */}
+                      {details.benefit && (
+                        <div>
+                          <h5 className="font-semibold text-gray-900 mb-2">Benefits & Compensation</h5>
+                          <div 
+                            className="text-sm text-gray-700 prose prose-sm max-w-none leading-relaxed"
+                            dangerouslySetInnerHTML={{ __html: details.benefit }}
+                          />
+                        </div>
+                      )}
+
+                      {/* Apply Button */}
+                      <button
+                        onClick={() => {
+                          router.push(`/jobs-detail?id=${job.job_id}`);
+                          onClose();
+                        }}
+                        className="w-full px-4 py-3 bg-gradient-to-r from-orange-600 to-red-600 hover:from-orange-700 hover:to-red-700 text-white rounded-lg transition-all font-semibold shadow-md hover:shadow-lg"
+                      >
+                        Apply Now
+                      </button>
+                    </div>
+                  )}
+                  </div>
+                );
+                })}
+
 
                 {/* Empty state for each tab */}
                 {activeTab === 'main' && contentBasedJobs.length === 0 && (

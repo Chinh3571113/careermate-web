@@ -305,7 +305,7 @@ export const useCVActions = (
       try {
         console.log("📝 Creating new resume with About Me:", normalizedData.summary);
         
-        // Create resume WITHOUT type - user will be prompted to convert to DRAFT later
+        // Create resume - backend will set default type
         const createResponse = await createResume({
           aboutMe: normalizedData.summary || "",
           isActive: false, // Don't set as active by default
