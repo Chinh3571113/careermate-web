@@ -18,6 +18,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -68,6 +69,7 @@ export default function CandidateEmploymentsPage() {
   
   const [loading, setLoading] = useState(true);
   const [employments, setEmployments] = useState<EmploymentWithVerification[]>([]);
+  const [activeTab, setActiveTab] = useState<"active" | "terminated">("active");
   
   // Confirmation dialog state
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
@@ -343,23 +345,43 @@ export default function CandidateEmploymentsPage() {
                 </Button>
               </div>
 
-              {employments.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-16">
-                  <div className="bg-gray-100 p-4 rounded-full mb-4">
-                    <Briefcase className="h-8 w-8 text-gray-400" />
-                  </div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No Employment Records</h3>
-                  <p className="text-gray-500 text-center mb-6">
-                    You don't have any active or past employment records yet.<br />
-                    Once you're hired, your employment will appear here.
-                  </p>
-                  <Link href="/candidate/my-jobs">
-                    <Button>View My Applications</Button>
-                  </Link>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {employments.map((employment) => {
+              {/* Filter employments by status */}
+              {(() => {
+                const activeEmployments = employments.filter(e => e.application.status === 'WORKING');
+                const terminatedEmployments = employments.filter(e => e.application.status === 'TERMINATED');
+                
+                return (
+                  <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "active" | "terminated")}>
+                    <TabsList className="grid w-full grid-cols-2 mb-6">
+                      <TabsTrigger value="active" className="gap-2">
+                        <CheckCircle className="h-4 w-4" />
+                        Current ({activeEmployments.length})
+                      </TabsTrigger>
+                      <TabsTrigger value="terminated" className="gap-2">
+                        <XCircle className="h-4 w-4" />
+                        Past ({terminatedEmployments.length})
+                      </TabsTrigger>
+                    </TabsList>
+
+                    {/* Active Employments Tab */}
+                    <TabsContent value="active" className="mt-0">
+                      {activeEmployments.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-16">
+                          <div className="bg-gray-100 p-4 rounded-full mb-4">
+                            <Briefcase className="h-8 w-8 text-gray-400" />
+                          </div>
+                          <h3 className="text-lg font-medium text-gray-900 mb-2">No Active Employment</h3>
+                          <p className="text-gray-500 text-center mb-6">
+                            You don't have any active employment records.<br />
+                            Once you're hired, your employment will appear here.
+                          </p>
+                          <Link href="/candidate/my-jobs">
+                            <Button>View My Applications</Button>
+                          </Link>
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          {activeEmployments.map((employment) => {
                     const verificationNeeded = getVerificationStatus(employment.verification);
                     const isActive = employment.application.status === 'WORKING';
                     
@@ -505,9 +527,113 @@ export default function CandidateEmploymentsPage() {
                         </CardContent>
                       </Card>
                     );
-                  })}
-                </div>
-              )}
+                          })}
+                        </div>
+                      )}
+                    </TabsContent>
+
+                    {/* Terminated Employments Tab */}
+                    <TabsContent value="terminated" className="mt-0">
+                      {terminatedEmployments.length === 0 ? (
+                        <div className="flex flex-col items-center justify-center py-16">
+                          <div className="bg-gray-100 p-4 rounded-full mb-4">
+                            <XCircle className="h-8 w-8 text-gray-400" />
+                          </div>
+                          <h3 className="text-lg font-medium text-gray-900 mb-2">No Past Employment</h3>
+                          <p className="text-gray-500 text-center">
+                            You don't have any terminated employment records.
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="space-y-4">
+                          {terminatedEmployments.map((employment) => {
+                            const { application, verification } = employment;
+                            const verificationStatus = getVerificationStatus(verification);
+                            const canTerminate = verification && !verification.terminated;
+                            
+                            return (
+                              <Card key={application.id} className="hover:shadow-md transition-shadow">
+                                <CardContent className="p-6">
+                                  {/* Company Header */}
+                                  <div className="flex items-start justify-between mb-4">
+                                    <div className="flex items-center gap-4">
+                                      {application.companyLogo ? (
+                                        <img
+                                          src={application.companyLogo}
+                                          alt={application.company}
+                                          className="w-12 h-12 rounded-lg object-contain bg-gray-50"
+                                        />
+                                      ) : (
+                                        <div className="w-12 h-12 rounded-lg bg-gray-100 flex items-center justify-center">
+                                          <Building2 className="h-6 w-6 text-gray-400" />
+                                        </div>
+                                      )}
+                                      <div>
+                                        <h3 className="font-semibold text-lg text-gray-900">
+                                          {application.jobTitle}
+                                        </h3>
+                                        <p className="text-sm text-gray-600">{application.company}</p>
+                                      </div>
+                                    </div>
+                                    <Badge variant="secondary" className="bg-gray-100 text-gray-800">
+                                      TERMINATED
+                                    </Badge>
+                                  </div>
+
+                                  {/* Employment Details */}
+                                  {verification && (
+                                    <div className="grid grid-cols-2 gap-4 mb-4">
+                                      <div className="flex items-center gap-2 text-sm">
+                                        <Calendar className="h-4 w-4 text-gray-400" />
+                                        <span className="text-gray-600">Started:</span>
+                                        <span className="font-medium">
+                                          {formatEmploymentDate(verification.startDate)}
+                                        </span>
+                                      </div>
+                                      {verification.terminationDate && (
+                                        <div className="flex items-center gap-2 text-sm">
+                                          <Calendar className="h-4 w-4 text-gray-400" />
+                                          <span className="text-gray-600">Ended:</span>
+                                          <span className="font-medium">
+                                            {formatEmploymentDate(verification.terminationDate)}
+                                          </span>
+                                        </div>
+                                      )}
+                                      <div className="flex items-center gap-2 text-sm">
+                                        <Clock className="h-4 w-4 text-gray-400" />
+                                        <span className="text-gray-600">Duration:</span>
+                                        <span className="font-medium">
+                                          {formatEmploymentDuration(verification.daysEmployed || 0)}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  )}
+
+                                  {/* Termination Details */}
+                                  {verification?.terminationType && (
+                                    <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+                                      <p className="text-sm text-gray-600 mb-1">
+                                        <span className="font-medium">Termination Type:</span>{' '}
+                                        {TERMINATION_TYPES.find(t => t.value === verification.terminationType)?.label || verification.terminationType}
+                                      </p>
+                                      {verification.reasonForLeaving && (
+                                        <p className="text-sm text-gray-600">
+                                          <span className="font-medium">Reason:</span>{' '}
+                                          {verification.reasonForLeaving}
+                                        </p>
+                                      )}
+                                    </div>
+                                  )}
+                                </CardContent>
+                              </Card>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </TabsContent>
+                  </Tabs>
+                );
+              })()}
             </div>
           </section>
         </div>

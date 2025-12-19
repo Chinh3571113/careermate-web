@@ -41,8 +41,13 @@ import {
   getInterviewTypeText,
   type InterviewScheduleResponse
 } from "@/lib/interview-api";
-import { Calendar, Video, MapPin, ExternalLink, BriefcaseBusiness } from "lucide-react";
+import { Calendar, Video, MapPin, ExternalLink, BriefcaseBusiness, Star } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+
+// Review components for inline review submission
+import { ReviewEligibilityBadge, QuickReviewDrawer } from "@/components/review";
+import { useBatchReviewEligibility } from "@/hooks/useReviewEligibility";
+import { type ReviewType } from "@/lib/review-api";
 
 // Lazy load tab components for better code splitting
 const SavedJobsTab = lazy(() => import("./SavedJobsTab"));
@@ -107,6 +112,43 @@ const MyJobsPage = () => {
   const [interviewsMap, setInterviewsMap] = useState<Record<number, InterviewScheduleResponse>>({});
   const [interviewDetailOpen, setInterviewDetailOpen] = useState(false);
   const [selectedInterviewDetail, setSelectedInterviewDetail] = useState<InterviewScheduleResponse | null>(null);
+
+  // Review drawer state
+  const [reviewDrawerOpen, setReviewDrawerOpen] = useState(false);
+  const [selectedReviewJob, setSelectedReviewJob] = useState<{
+    jobApplyId: number;
+    companyName: string;
+    jobTitle: string;
+    reviewType: ReviewType;
+  } | null>(null);
+
+  // Get job application IDs for batch eligibility check
+  const jobApplyIds = useMemo(() => jobApplications.map(app => app.id), [jobApplications]);
+  
+  // Batch check review eligibility for all applications
+  const { 
+    eligibilityMap, 
+    loading: eligibilityLoading, 
+    refetch: refetchEligibility 
+  } = useBatchReviewEligibility(candidateId, jobApplyIds, { enabled: !isLoading && jobApplyIds.length > 0 });
+
+  // Calculate days since application for each job
+  const getDaysSinceApplication = useCallback((createAt: string) => {
+    const created = new Date(createAt);
+    const now = new Date();
+    return Math.floor((now.getTime() - created.getTime()) / (1000 * 60 * 60 * 24));
+  }, []);
+
+  // Handle review button click
+  const handleReviewClick = useCallback((application: JobApplication, reviewType: ReviewType) => {
+    setSelectedReviewJob({
+      jobApplyId: application.id,
+      companyName: application.companyName || 'Company',
+      jobTitle: application.jobTitle,
+      reviewType,
+    });
+    setReviewDrawerOpen(true);
+  }, []);
 
   // Check and fetch candidateId if needed - run once on mount
   useEffect(() => {
@@ -456,11 +498,27 @@ const MyJobsPage = () => {
                                       </p>
                                     </div>
                                   </div>
-                                  <div className="flex items-center gap-2 mt-2">
+                                  <div className="flex flex-wrap items-center gap-2 mt-2">
                                     <StatusBadgeFull 
                                       status={application.status} 
                                       size="md"
                                     />
+                                    
+                                    {/* Review Eligibility Badge - shows for all eligible applications */}
+                                    {eligibilityMap.has(application.id) && (
+                                      <ReviewEligibilityBadge
+                                        eligible={eligibilityMap.get(application.id)!.eligible}
+                                        reviewTypes={eligibilityMap.get(application.id)!.reviewTypes}
+                                        qualification={eligibilityMap.get(application.id)!.qualification}
+                                        message={eligibilityMap.get(application.id)!.message}
+                                        loading={eligibilityLoading}
+                                        existingReviews={eligibilityMap.get(application.id)!.existingReviews}
+                                        daysSinceApplication={getDaysSinceApplication(application.createAt)}
+                                        onReviewClick={(reviewType) => handleReviewClick(application, reviewType)}
+                                        variant="inline"
+                                      />
+                                    )}
+                                    
                                     {/* Action Required badge - for INTERVIEW_SCHEDULED, only show if interview not confirmed */}
                                     {application.status === 'INTERVIEW_SCHEDULED' && interviewsMap[application.id] && !interviewsMap[application.id].candidateConfirmed && (
                                       <button
@@ -497,6 +555,7 @@ const MyJobsPage = () => {
                                     )}
                                   </div>
                                 </div>
+
 
                                 {/* Expand Button */}
                                 <button
@@ -905,6 +964,23 @@ const MyJobsPage = () => {
           )}
         </DialogContent>
       </Dialog>
+
+      {/* Quick Review Drawer */}
+      {selectedReviewJob && candidateId && (
+        <QuickReviewDrawer
+          open={reviewDrawerOpen}
+          onOpenChange={setReviewDrawerOpen}
+          candidateId={candidateId}
+          jobApplyId={selectedReviewJob.jobApplyId}
+          companyName={selectedReviewJob.companyName}
+          jobTitle={selectedReviewJob.jobTitle}
+          reviewType={selectedReviewJob.reviewType}
+          onSuccess={() => {
+            refetchEligibility();
+            toast.success('Thank you for your review!');
+          }}
+        />
+      )}
 
     </>
   );

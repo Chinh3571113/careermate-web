@@ -6,63 +6,17 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { 
   Star, 
-  ChevronLeft, 
   ChevronRight, 
   Briefcase, 
   MapPin, 
   Building2,
   BookOpen,
-  Users,
-  Quote,
   Calendar
 } from "lucide-react";
 import { publicBlogApi } from "@/lib/public-blog-api";
 import { fetchCompanies, type CompanyListItem } from "@/lib/company-api";
+import { getCompanyStatistics, type CompanyStatisticsResponse } from "@/lib/review-api";
 import type { BlogResponse } from "@/types/blog";
-
-// Mock data for user reviews (only this remains mock)
-const USER_REVIEWS = [
-  {
-    id: 1,
-    name: "Nguyen Van A",
-    role: "Software Engineer at FPT",
-    avatar: "https://randomuser.me/api/portraits/men/32.jpg",
-    rating: 5,
-    review: "CareerMate helped me land my dream job in just 2 weeks! The AI matching feature is incredibly accurate and saved me hours of searching.",
-  },
-  {
-    id: 2,
-    name: "Tran Thi B",
-    role: "Product Manager at Shopee",
-    avatar: "https://randomuser.me/api/portraits/women/44.jpg",
-    rating: 5,
-    review: "The CV analysis tool gave me insights I never thought of. After optimizing my resume, I got 3x more interview callbacks!",
-  },
-  {
-    id: 3,
-    name: "Le Minh C",
-    role: "Data Scientist at VNG",
-    avatar: "https://randomuser.me/api/portraits/men/67.jpg",
-    rating: 4,
-    review: "Great platform with quality job listings. The career insights feature helped me understand market trends and negotiate better.",
-  },
-  {
-    id: 4,
-    name: "Pham Hong D",
-    role: "UI/UX Designer at Grab",
-    avatar: "https://randomuser.me/api/portraits/women/28.jpg",
-    rating: 5,
-    review: "I love how easy it is to find remote opportunities. CareerMate's smart filtering saved me so much time in my job search.",
-  },
-  {
-    id: 5,
-    name: "Hoang Van E",
-    role: "DevOps Engineer at Momo",
-    avatar: "https://randomuser.me/api/portraits/men/52.jpg",
-    rating: 5,
-    review: "The interview preparation resources are top-notch. I felt so much more confident going into my interviews.",
-  },
-];
 
 // Animated Counter Component
 function AnimatedCounter({ end, duration = 2000, suffix = "" }: { end: number; duration?: number; suffix?: string }) {
@@ -121,121 +75,7 @@ function AnimatedCounter({ end, duration = 2000, suffix = "" }: { end: number; d
   );
 }
 
-// Review Carousel Component
-function ReviewCarousel() {
-  const [currentIndex, setCurrentIndex] = useState(0);
-  const [isAutoPlaying, setIsAutoPlaying] = useState(true);
 
-  useEffect(() => {
-    if (!isAutoPlaying) return;
-    
-    const interval = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % USER_REVIEWS.length);
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, [isAutoPlaying]);
-
-  const goToPrevious = () => {
-    setIsAutoPlaying(false);
-    setCurrentIndex((prev) => (prev - 1 + USER_REVIEWS.length) % USER_REVIEWS.length);
-  };
-
-  const goToNext = () => {
-    setIsAutoPlaying(false);
-    setCurrentIndex((prev) => (prev + 1) % USER_REVIEWS.length);
-  };
-
-  const renderStars = (rating: number) => {
-    return (
-      <div className="flex items-center gap-1">
-        {[...Array(5)].map((_, i) => (
-          <Star
-            key={i}
-            className={`h-5 w-5 ${
-              i < rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'
-            }`}
-          />
-        ))}
-      </div>
-    );
-  };
-
-  return (
-    <div className="relative">
-      <div className="overflow-hidden">
-        <div 
-          className="flex transition-transform duration-500 ease-in-out"
-          style={{ transform: `translateX(-${currentIndex * 100}%)` }}
-        >
-          {USER_REVIEWS.map((review) => (
-            <div key={review.id} className="w-full flex-shrink-0 px-2 sm:px-4">
-              <div className="bg-white rounded-xl sm:rounded-2xl p-6 sm:p-8 shadow-lg border border-gray-100 max-w-3xl mx-auto">
-                <Quote className="h-8 w-8 sm:h-10 sm:w-10 text-blue-100 mb-3 sm:mb-4" />
-                <p className="text-gray-700 text-base sm:text-lg mb-4 sm:mb-6 italic leading-relaxed">
-                  "{review.review}"
-                </p>
-                <div className="flex items-center gap-3 sm:gap-4">
-                  <img
-                    src={review.avatar}
-                    alt={review.name}
-                    className="w-12 h-12 sm:w-14 sm:h-14 rounded-full object-cover border-2 border-blue-100"
-                    onError={(e) => {
-                      e.currentTarget.src = `https://ui-avatars.com/api/?name=${encodeURIComponent(review.name)}&background=3b82f6&color=fff`;
-                    }}
-                  />
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-semibold text-gray-900 text-sm sm:text-base truncate">{review.name}</h4>
-                    <p className="text-gray-500 text-xs sm:text-sm truncate">{review.role}</p>
-                  </div>
-                  {renderStars(review.rating)}
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      {/* Navigation Buttons */}
-      <button
-        onClick={goToPrevious}
-        className="hidden sm:flex absolute left-0 sm:left-2 md:-translate-x-4 top-1/2 -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 bg-white rounded-full shadow-lg items-center justify-center hover:bg-gray-50 transition-colors border border-gray-200 z-10"
-      >
-        <ChevronLeft className="h-5 w-5 sm:h-6 sm:w-6 text-gray-600" />
-      </button>
-      <button
-        onClick={goToNext}
-        className="hidden sm:flex absolute right-0 sm:right-2 md:translate-x-4 top-1/2 -translate-y-1/2 w-10 h-10 sm:w-12 sm:h-12 bg-white rounded-full shadow-lg items-center justify-center hover:bg-gray-50 transition-colors border border-gray-200 z-10"
-      >
-        <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6 text-gray-600" />
-      </button>
-
-      {/* Dots Indicator */}
-      <div className="flex justify-center gap-2 mt-6">
-        {USER_REVIEWS.map((_, index) => (
-          <button
-            key={index}
-            onClick={() => {
-              setIsAutoPlaying(false);
-              setCurrentIndex(index);
-            }}
-            className={`w-3 h-3 rounded-full transition-colors ${
-              index === currentIndex ? 'bg-blue-600' : 'bg-gray-300 hover:bg-gray-400'
-            }`}
-          />
-        ))}
-      </div>
-    </div>
-  );
-}
-
-// Generate mock rating for companies (will be replaced with real data later)
-const getMockRating = (companyId: number) => {
-  const seed = companyId * 17;
-  const rating = 3.5 + (seed % 15) / 10;
-  const reviewCount = 50 + (seed % 200);
-  return { rating: Math.min(rating, 5).toFixed(1), reviewCount };
-};
 
 // Format date helper
 const formatDate = (dateString: string) => {
@@ -261,6 +101,7 @@ export function ClientHomePage() {
   const [companies, setCompanies] = useState<CompanyListItem[]>([]);
   const [isLoadingBlogs, setIsLoadingBlogs] = useState(true);
   const [isLoadingCompanies, setIsLoadingCompanies] = useState(true);
+  const [companyStats, setCompanyStats] = useState<Record<number, CompanyStatisticsResponse | null>>({});
 
   // Fetch blogs on mount
   useEffect(() => {
@@ -295,6 +136,35 @@ export function ClientHomePage() {
     };
     loadCompanies();
   }, []);
+
+  // Fetch real review statistics for companies displayed on home page
+  useEffect(() => {
+    if (!companies.length) return;
+
+    let cancelled = false;
+    const loadStats = async () => {
+      await Promise.all(
+        companies.map(async (c) => {
+          if (companyStats[c.id] !== undefined) return;
+          try {
+            const stats = await getCompanyStatistics(c.id);
+            if (!cancelled) {
+              setCompanyStats((prev) => ({ ...prev, [c.id]: stats }));
+            }
+          } catch {
+            if (!cancelled) {
+              setCompanyStats((prev) => ({ ...prev, [c.id]: null }));
+            }
+          }
+        })
+      );
+    };
+
+    loadStats();
+    return () => {
+      cancelled = true;
+    };
+  }, [companies, companyStats]);
   return (
     <div className="min-h-screen bg-gray-50">
       <style jsx global>{`
@@ -484,7 +354,9 @@ export function ClientHomePage() {
             ) : companies.length > 0 ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 {companies.map((company) => {
-                  const { rating, reviewCount } = getMockRating(company.id);
+                  const stats = companyStats[company.id];
+                  const avgRating = stats ? stats.averageOverallRating || 0 : 0;
+                  const totalReviews = stats ? stats.totalReviews || 0 : 0;
                   return (
                     <Link
                       key={company.id}
@@ -519,14 +391,14 @@ export function ClientHomePage() {
                             <Star
                               key={i}
                               className={`h-4 w-4 ${
-                                i < Math.floor(parseFloat(rating))
+                                i < Math.floor(avgRating)
                                   ? 'fill-yellow-400 text-yellow-400'
                                   : 'text-gray-600'
                               }`}
                             />
                           ))}
-                          <span className="ml-2 text-white font-semibold">{rating}</span>
-                          <span className="text-gray-400 text-sm">({reviewCount})</span>
+                          <span className="ml-2 text-white font-semibold">{avgRating.toFixed(1)}</span>
+                          <span className="text-gray-400 text-sm">({totalReviews})</span>
                         </div>
 
                         <div className="flex items-center gap-2 text-blue-400">
@@ -644,25 +516,6 @@ export function ClientHomePage() {
                 <p className="text-gray-500">No articles available at the moment.</p>
               </div>
             )}
-          </div>
-        </section>
-
-        {/* User Reviews Carousel */}
-        <section className="py-12 sm:py-16 bg-gradient-to-b from-blue-50 to-white">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-8 sm:mb-12">
-              <div className="flex items-center justify-center gap-2 sm:gap-3 mb-3 sm:mb-4">
-                <Users className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600" />
-                <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
-                  What Our Users Say
-                </h2>
-              </div>
-              <p className="text-gray-600 text-base sm:text-lg max-w-2xl mx-auto px-4">
-                Join thousands of professionals who found their dream careers with CareerMate
-              </p>
-            </div>
-
-            <ReviewCarousel />
           </div>
         </section>
 

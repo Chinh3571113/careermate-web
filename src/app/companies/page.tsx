@@ -2,23 +2,20 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { Search, MapPin, Briefcase, Building2, ChevronLeft, ChevronRight, Star, Users } from 'lucide-react';
-import { fetchCompanies, type CompanyListItem } from '@/lib/company-api';
+import { Search, MapPin, Briefcase, Building2, ChevronLeft, ChevronRight, Star } from 'lucide-react';
+import { fetchCompanies, fetchCompanyJobs, type CompanyListItem } from '@/lib/company-api';
+import { getCompanyStatistics, type CompanyStatisticsResponse } from '@/lib/review-api';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
-
-// Generate mock rating for display (will be replaced with real data later)
-const getMockRating = (companyId: number) => {
-  const seed = companyId * 17;
-  const rating = 3.5 + (seed % 15) / 10;
-  const reviewCount = 50 + (seed % 200);
-  return { rating: Math.min(rating, 5).toFixed(1), reviewCount };
-};
 
 export default function CompaniesPage() {
   const [companies, setCompanies] = useState<CompanyListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [companyStats, setCompanyStats] = useState<Record<number, CompanyStatisticsResponse | null>>({});
+  const [statsLoading, setStatsLoading] = useState<Record<number, boolean>>({});
+  const [openJobsCount, setOpenJobsCount] = useState<Record<number, number | null>>({});
+  const [openJobsLoading, setOpenJobsLoading] = useState<Record<number, boolean>>({});
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(0);
   const [totalPages, setTotalPages] = useState(0);
@@ -55,6 +52,56 @@ export default function CompaniesPage() {
   useEffect(() => {
     loadCompanies(0);
   }, []);
+
+  // Load real rating stats for companies on the page
+  useEffect(() => {
+    if (!companies.length) return;
+
+    companies.forEach((c) => {
+      if (companyStats[c.id] !== undefined || statsLoading[c.id]) return;
+
+      setStatsLoading((prev) => ({ ...prev, [c.id]: true }));
+      getCompanyStatistics(c.id)
+        .then((stats) => {
+          setCompanyStats((prev) => ({ ...prev, [c.id]: stats }));
+        })
+        .catch(() => {
+          setCompanyStats((prev) => ({ ...prev, [c.id]: null }));
+        })
+        .finally(() => {
+          setStatsLoading((prev) => ({ ...prev, [c.id]: false }));
+        });
+    });
+  }, [companies, companyStats, statsLoading]);
+
+  // Load real open positions count (public job postings) for companies on the page
+  useEffect(() => {
+    if (!companies.length) return;
+
+    companies.forEach((c) => {
+      if (openJobsCount[c.id] !== undefined || openJobsLoading[c.id]) return;
+
+      setOpenJobsLoading((prev) => ({ ...prev, [c.id]: true }));
+      fetchCompanyJobs({ recruiterId: c.id, page: 0, size: 1 })
+        .then((res: any) => {
+          const total =
+            typeof res?.result?.totalElements === 'number'
+              ? res.result.totalElements
+              : typeof res?.result?.totalElements === 'bigint'
+                ? Number(res.result.totalElements)
+                : typeof res?.result?.totalElements === 'string'
+                  ? Number(res.result.totalElements)
+                  : 0;
+          setOpenJobsCount((prev) => ({ ...prev, [c.id]: Number.isFinite(total) ? total : 0 }));
+        })
+        .catch(() => {
+          setOpenJobsCount((prev) => ({ ...prev, [c.id]: null }));
+        })
+        .finally(() => {
+          setOpenJobsLoading((prev) => ({ ...prev, [c.id]: false }));
+        });
+    });
+  }, [companies, openJobsCount, openJobsLoading]);
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -245,7 +292,12 @@ export default function CompaniesPage() {
           <>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {companies.map((company) => {
-                const { rating, reviewCount } = getMockRating(company.id);
+                const stats = companyStats[company.id];
+                const isStatsLoading = !!statsLoading[company.id] && stats === undefined;
+                const jobsCount = openJobsCount[company.id];
+                const isJobsLoading = !!openJobsLoading[company.id] && jobsCount === undefined;
+                const avgRating = stats ? stats.averageOverallRating || 0 : 0;
+                const totalReviews = stats ? stats.totalReviews || 0 : 0;
                 
                 return (
                   <Link
@@ -285,9 +337,25 @@ export default function CompaniesPage() {
 
                     {/* Rating Section */}
                     <div className="flex items-center gap-3 mb-5 p-3 bg-gray-50 rounded-xl">
-                      {renderStars(parseFloat(rating))}
-                      <span className="font-bold text-gray-900">{rating}</span>
-                      <span className="text-gray-500 text-sm">({reviewCount} reviews)</span>
+                      {isStatsLoading ? (
+                        <div className="flex items-center gap-3 w-full">
+                          <Skeleton className="h-4 w-24" />
+                          <Skeleton className="h-4 w-10" />
+                          <Skeleton className="h-4 w-20" />
+                        </div>
+                      ) : stats ? (
+                        <>
+                          {renderStars(avgRating)}
+                          <span className="font-bold text-gray-900">{avgRating.toFixed(1)}</span>
+                          <span className="text-gray-500 text-sm">({totalReviews} reviews)</span>
+                        </>
+                      ) : (
+                        <>
+                          {renderStars(0)}
+                          <span className="font-bold text-gray-900">0.0</span>
+                          <span className="text-gray-500 text-sm">(0 reviews)</span>
+                        </>
+                      )}
                     </div>
 
                     {/* Stats Row */}
@@ -295,17 +363,14 @@ export default function CompaniesPage() {
                       <div className="flex items-center gap-4">
                         <div className="flex items-center gap-2 text-sm">
                           <Briefcase className="h-4 w-4 text-blue-500" />
-                          <span className="text-gray-600">
-                            <span className="font-bold text-blue-600">{company.jobCount}</span>
-                            {' '}jobs
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2 text-sm">
-                          <Users className="h-4 w-4 text-green-500" />
-                          <span className="text-gray-600">
-                            <span className="font-bold text-green-600">{50 + (company.id * 7) % 200}+</span>
-                            {' '}employees
-                          </span>
+                          {isJobsLoading ? (
+                            <Skeleton className="h-4 w-20" />
+                          ) : (
+                            <span className="text-gray-600">
+                              <span className="font-bold text-blue-600">{jobsCount ?? 0}</span>
+                              {' '}open position{(jobsCount ?? 0) !== 1 ? 's' : ''}
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>
