@@ -1,4 +1,5 @@
 import { Plus, ChevronDown, ChevronUp } from "lucide-react";
+import { ProfileProgressCircle } from "@/components/ui/profile-progress-circle";
 
 interface SectionCompletion {
     workExperience: { count: number; maxCount: number }; // max 3
@@ -45,19 +46,6 @@ const getStatusMessage = (completion: number) => {
     }
 };
 
-// Helper function to get progress circle color based on completion
-const getProgressColor = (completion: number) => {
-    if (completion >= 100) {
-        return { start: "#16a34a", end: "#22c55e" }; // green-600 to green-500
-    } else if (completion >= 70) {
-        return { start: "#163988", end: "#3b82f6" }; // blue
-    } else if (completion >= 40) {
-        return { start: "#d97706", end: "#fbbf24" }; // amber-600 to amber-400
-    } else {
-        return { start: "#6b7280", end: "#9ca3af" }; // gray
-    }
-};
-
 export default function ProfileStrengthSidebar({
     profileCompletion,
     expandedSections,
@@ -72,7 +60,6 @@ export default function ProfileStrengthSidebar({
 }: ProfileStrengthSidebarProps) {
     const statusInfo = getStatusMessage(profileCompletion);
     const isEligible = profileCompletion >= 70;
-    const progressColor = getProgressColor(profileCompletion);
 
     // Calculate which sections are incomplete
     const incompleteSections = {
@@ -106,52 +93,12 @@ export default function ProfileStrengthSidebar({
                     Profile Strength
                 </h3>
 
-                {/* Progress Circle with Dynamic Color */}
+                {/* Progress Circle - Using shared component */}
                 <div className="flex justify-center mb-6">
-                    <div className="relative w-32 h-32">
-                        <svg className="w-full h-full" viewBox="0 0 36 36">
-                            <defs>
-                                <linearGradient
-                                    id="progressGradient"
-                                    x1="0%"
-                                    y1="0%"
-                                    x2="0%"
-                                    y2="100%"
-                                >
-                                    <stop offset="0%" stopColor={progressColor.start} />
-                                    <stop offset="100%" stopColor={progressColor.end} />
-                                </linearGradient>
-                            </defs>
-
-                            {/* Background Circle */}
-                            <path
-                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                                fill="none"
-                                stroke="#eeeeee"
-                                strokeWidth="3"
-                            />
-
-                            {/* Progress Circle */}
-                            <path
-                                d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831"
-                                fill="none"
-                                stroke="url(#progressGradient)"
-                                strokeWidth="3"
-                                strokeDasharray={`${profileCompletion}, 100`}
-                            />
-                        </svg>
-
-                        {/* Text Center */}
-                        <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 text-center">
-                            <div className={`text-2xl font-bold ${profileCompletion >= 100 ? "text-green-600" :
-                                    profileCompletion >= 70 ? "text-blue-600" :
-                                        profileCompletion >= 40 ? "text-amber-600" : "text-gray-600"
-                                }`}>
-                                {profileCompletion}%
-                            </div>
-                            <div className="text-xs text-gray-500">completed</div>
-                        </div>
-                    </div>
+                    <ProfileProgressCircle 
+                        completion={profileCompletion} 
+                        size="md"
+                    />
                 </div>
 
                 {/* Status Message Box */}

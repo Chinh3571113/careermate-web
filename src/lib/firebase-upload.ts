@@ -96,10 +96,11 @@ export async function uploadCVPDF(
   customFileName?: string
 ): Promise<string> {
   try {
-    const timestamp = Date.now();
+    // customFileName already includes format: [JobTitle] CV_CM_[timestamp]
+    // Just add .pdf extension if not present
     const fileName = customFileName 
-      ? `${timestamp}_${customFileName}.pdf`
-      : `cv_${timestamp}.pdf`;
+      ? (customFileName.endsWith('.pdf') ? customFileName : `${customFileName}.pdf`)
+      : `CV_CM_${Date.now()}.pdf`;
     
     const fileRef = ref(storage, `careermate-files/candidates/${userId}/cv/${fileName}`);
     

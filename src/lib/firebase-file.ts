@@ -83,7 +83,12 @@ export function isInvalidFirebaseUrl(url: string): boolean {
   
   const pathPart = match[1];
   // If path contains "/" instead of "%2F", it's invalid
-  return pathPart.includes("/") && !pathPart.includes("%2F");
+  // BUT: if it also contains %2F, it means some parts are encoded, so treat as valid
+  if (pathPart.includes("%2F")) {
+    return false; // URL has properly encoded slashes, it's valid
+  }
+  
+  return pathPart.includes("/"); // Only invalid if has unencoded slashes
 }
 
 /**
@@ -121,7 +126,9 @@ export async function resolveFileUrl(pathOrUrl: string): Promise<string> {
   
   // Check if it's an invalid Firebase URL that needs to be re-resolved
   if (isInvalidFirebaseUrl(pathOrUrl)) {
-    console.warn("⚠️ Invalid Firebase URL detected, re-resolving:", pathOrUrl);
+    if (process.env.NODE_ENV === 'development') {
+      console.warn("⚠️ Invalid Firebase URL detected, re-resolving:", pathOrUrl.substring(0, 100) + "...");
+    }
     const storagePath = extractPathFromInvalidUrl(pathOrUrl);
     if (storagePath) {
       return await getFileUrl(storagePath);

@@ -169,7 +169,7 @@ export default function NewJobPage() {
           {/* Description */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Mô tả công việc <span className="text-red-500">*</span>
+              Job Description <span className="text-red-500">*</span>
             </label>
             <textarea
               name="description"
@@ -177,7 +177,7 @@ export default function NewJobPage() {
               onChange={handleChange}
               required
               rows={6}
-              placeholder="Mô tả chi tiết về công việc..."
+              placeholder="Detailed job description..."
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
@@ -185,7 +185,7 @@ export default function NewJobPage() {
           {/* Requirements */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Yêu cầu <span className="text-red-500">*</span>
+              Requirements <span className="text-red-500">*</span>
             </label>
             <textarea
               name="requirements"
@@ -193,7 +193,7 @@ export default function NewJobPage() {
               onChange={handleChange}
               required
               rows={6}
-              placeholder="Các yêu cầu về kinh nghiệm, kỹ năng..."
+              placeholder="Experience and skill requirements..."
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
@@ -201,14 +201,14 @@ export default function NewJobPage() {
           {/* Benefits */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Quyền lợi
+              Benefits
             </label>
             <textarea
               name="benefits"
               value={formData.benefits}
               onChange={handleChange}
               rows={4}
-              placeholder="Các quyền lợi khi làm việc..."
+              placeholder="Benefits and perks..."
               className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
           </div>
@@ -216,7 +216,7 @@ export default function NewJobPage() {
           {/* Deadline */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">
-              Hạn nộp hồ sơ <span className="text-red-500">*</span>
+              Application Deadline <span className="text-red-500">*</span>
             </label>
             <input
               type="date"

@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, useCallback, lazy, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import CVSidebar from "@/components/layout/CVSidebar";
+import { useProfileCompletion } from "@/hooks/useProfileCompletion";
 import { useLayout } from "@/contexts/LayoutContext";
 import api from "@/lib/api";
 import { openCVTemplate } from "@/lib/cv-template-navigation";
@@ -152,72 +153,25 @@ export default function CMProfile() {
   const [selectedRole, setSelectedRole] = useState<string | null>(null);
   const [selectedRoleData, setSelectedRoleData] = useState<any>(null);
 
-  // Memoized profile completion calculation to avoid recalculation on every render
-  const profileCompletion = useMemo(() => {
-    let completion = 0;
-
-    // 1. Awards, Certificates, Projects, Languages: +5% each if at least 1 item exists
-    if (awardsHook.awards.length > 0) completion += 5;
-    if (certificatesHook.certificates.length > 0) completion += 5;
-    if (projectsHook.projects.length > 0) completion += 5;
-    if (languagesHook.languages.length > 0) completion += 5;
-
-    // 2. Education, About Me: +10% each if exists
-    if (educationHook.educations.length > 0) completion += 10;
-    if (aboutMeHook.aboutMeText.trim().length > 0) completion += 10;
-
-    // 3. Work Experience: +10% per item (max 3 = 30%)
-    const workExpCount = Math.min(workExpHook.workExperiences.length, 3);
-    completion += workExpCount * 10;
-
-    // 4. Skills (Core + Soft combined): +2% per skill (max 10 = 20%)
-    const coreSkillsCount = skillsHook.coreSkillGroups.reduce(
-      (total, group) => total + (group.items?.length || 0),
-      0
-    );
-    const softSkillsCount = skillsHook.softSkillGroups.reduce(
-      (total, group) => total + (group.items?.length || 0),
-      0
-    );
-    const totalSkillsCount = coreSkillsCount + softSkillsCount;
-    const skillsBonus = Math.min(totalSkillsCount, 10) * 2;
-    completion += skillsBonus;
-
-    // 5. Profile Header fields (excluding image): distribute remaining % among filled fields
-    // Total possible from above: 5+5+5+5+10+10+30+20 = 90%
-    // Remaining for profile fields: 10%
-    const profileFields = [
-      profileName,
-      profileTitle,
-      profilePhone,
-      profileDob,
-      profileGender,
-      profileAddress,
-      profileLink
-    ];
-    const filledProfileFields = profileFields.filter(field => field && field.trim().length > 0).length;
-    const profileFieldBonus = (filledProfileFields / profileFields.length) * 10;
-    completion += profileFieldBonus;
-
-    return Math.round(completion);
-  }, [
-    awardsHook.awards.length,
-    certificatesHook.certificates.length,
-    projectsHook.projects.length,
-    languagesHook.languages.length,
-    educationHook.educations.length,
-    aboutMeHook.aboutMeText,
-    workExpHook.workExperiences.length,
-    skillsHook.coreSkillGroups,
-    skillsHook.softSkillGroups,
-    profileName,
-    profileTitle,
-    profilePhone,
-    profileDob,
-    profileGender,
-    profileAddress,
-    profileLink
-  ]);
+  // Calculate profile completion using shared hook
+  const profileCompletion = useProfileCompletion({
+    fullName: profileName,
+    title: profileTitle,
+    phone: profilePhone,
+    dob: profileDob,
+    gender: profileGender,
+    address: profileAddress,
+    link: profileLink,
+    aboutMe: aboutMeHook.aboutMeText,
+    awards: awardsHook.awards,
+    certificates: certificatesHook.certificates,
+    projects: projectsHook.projects,
+    languages: languagesHook.languages,
+    educations: educationHook.educations,
+    workExperiences: workExpHook.workExperiences,
+    coreSkillGroups: skillsHook.coreSkillGroups,
+    softSkillGroups: skillsHook.softSkillGroups,
+  });
 
   // Section completion data for ProfileStrengthSidebar
   const sectionCompletion = useMemo(() => {
@@ -797,16 +751,24 @@ export default function CMProfile() {
 
     setIsAnalyzing(true);
     try {
+      // ✅ Get Python API URL from environment variable
       const API_BASE = process.env.NEXT_PUBLIC_PYTHON_API_URL || 'http://localhost:8000';
       console.log('🔗 Python API URL:', API_BASE);
+      
+      // ✅ Add timeout to prevent hanging requests
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
       
       const response = await fetch(`${API_BASE}/api/cv-creation/recommend-roles/`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ text: inputText })
+        body: JSON.stringify({ text: inputText }),
+        signal: controller.signal
       });
+
+      clearTimeout(timeoutId);
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => null);
@@ -825,9 +787,17 @@ export default function CMProfile() {
       } else {
         toast.success(`Found ${sortedResults.length} role recommendations!`);
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error analyzing text:', error);
-      toast.error("Failed to analyze text. Please try again.");
+      
+      // ✅ Better error messages
+      if (error.name === 'AbortError') {
+        toast.error("Request timed out. Please try again.");
+      } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+        toast.error("Cannot connect to AI service. Please check if the service is running or try again later.");
+      } else {
+        toast.error(error.message || "Failed to analyze text. Please try again.");
+      }
     } finally {
       setIsAnalyzing(false);
     }

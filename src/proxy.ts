@@ -74,8 +74,8 @@ function isCandidate(token: string): boolean {
   }
 }
 
-// 🧱 Middleware
-export function middleware(request: NextRequest) {
+// 🧱 Proxy (renamed from middleware for Next.js 16)
+export default function proxy(request: NextRequest) {
   const refreshToken = request.cookies.get('refreshToken')?.value;
 
   // Don't log on every request - only when needed

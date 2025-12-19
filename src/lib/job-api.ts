@@ -266,11 +266,21 @@ export const fetchJobPostings = async (params: JobQueryParams = {}): Promise<Job
 // Fetch single job posting by ID
 export const fetchJobPostingById = async (id: number): Promise<JobPosting | null> => {
   try {
-    const response = await fetchJobPostings({ page: 0, size: 100 });
-    const job = response.result.content.find(j => j.id === id);
-    return job || null;
-  } catch (error) {
-    console.error(`Error fetching job posting ${id}:`, error);
+    console.log('📡 Fetching job posting detail for ID:', id);
+    
+    const response = await api.get<any>(`/api/job-postings/${id}`);
+    
+    console.log('✅ Job posting detail response:', response.data);
+    
+    if (response.data.code === 200 || response.data.code === 1000) {
+      return response.data.result;
+    }
+    
+    console.warn('⚠️ Unexpected response code:', response.data.code);
+    return null;
+  } catch (error: any) {
+    console.error(`❌ Error fetching job posting ${id}:`, error);
+    console.error('Error details:', error.response?.data || error.message);
     return null;
   }
 };

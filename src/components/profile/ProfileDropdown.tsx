@@ -46,6 +46,14 @@ export function ProfileDropdown({
   const router = useRouter();
   const [isPremium, setIsPremium] = useState(false);
 
+  // Debug log for avatar
+  console.log("🖼️ ProfileDropdown - Avatar Debug:", {
+    userAvatar,
+    userName,
+    userEmail,
+    isPremium,
+  });
+
   // Normalize role - handle both "RECRUITER" and "ROLE_RECRUITER" formats
   // Must be defined before useEffect
   const normalizedRole =

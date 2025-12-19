@@ -8,7 +8,6 @@ import { decodeJWT } from "@/lib/auth-admin";
 import toast from "react-hot-toast";
 import { ProfileDropdown } from "@/components/profile/ProfileDropdown";
 import UserTypeSelectionModal from "@/components/auth/UserTypeSelectionModal";
-import { useUserProfile } from "@/hooks/useUserProfile";
 import { getCurrentUser } from "@/lib/user-api";
 
 export default function CandidateHeader() {
@@ -21,23 +20,31 @@ export default function CandidateHeader() {
 
   // Lấy trạng thái auth đã chuẩn hoá từ hook client
   const { mounted, isAuthenticated, accessToken, role } = useClientAuth();
-  const { logout, user } = useAuthStore();
+  const { logout, user, profile, fetchCandidateProfile } = useAuthStore();
   
-  // Lấy username và avatar từ database
-  const { username, avatarUrl } = useUserProfile();
+  // ✅ Use profile from AuthStore (single source of truth for avatar)
+  // No longer need useUserProfile hook
 
   // Debug log
   useEffect(() => {
-    console.log('🔍 [CandidateHeader] Username state:', {
-      username,
+    console.log('🔍 [CandidateHeader] Profile state:', {
+      profileImage: profile?.image,
+      profileFullName: profile?.fullName,
       userUsername: user?.username,
       userEmail: user?.email,
       userInfoName: userInfo?.name,
     });
-  }, [username, user, userInfo]);
+  }, [profile, user, userInfo]);
 
   // Đánh dấu đã hydrate (tránh SSR mismatch)
   useEffect(() => setIsHydrated(true), []);
+
+  // ✅ Fetch candidate profile on mount (for avatar sync)
+  useEffect(() => {
+    if (isAuthenticated && mounted) {
+      fetchCandidateProfile();
+    }
+  }, [isAuthenticated, mounted, fetchCandidateProfile]);
 
   // Fetch current user info from API
   useEffect(() => {
@@ -139,91 +146,154 @@ export default function CandidateHeader() {
 
   return (
     <header className="bg-[#1b1b20f5] sticky top-0 z-50">
-      <div className="container mx-auto px-4 py-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-8">
-            {/* Logo */}
-            <div className="flex items-center">
-              <Link href="/" className="flex items-center space-x-2">
-                <img
-                  src="/images/general/newlogo.png"
-                  alt="Logo"
-                  className="h-14 w-auto"
-                />
-                <span className="text-xl font-bold text-[#ffffff]">
-                  CareerMate
-                </span>
-              </Link>
-            </div>
+      <div className="container mx-auto px-3 sm:px-4 py-2 sm:py-2.5">
+        <div className="flex items-center justify-between gap-2 sm:gap-4">
+          {/* Logo */}
+          <div className="flex items-center flex-shrink-0">
+            <Link href="/" className="flex items-center gap-1.5 sm:gap-2">
+              <img
+                src="/images/general/newlogo.png"
+                alt="Logo"
+                className="h-8 sm:h-9 md:h-10 w-auto"
+              />
+              <span className="text-sm sm:text-base md:text-lg font-bold text-[#ffffff] whitespace-nowrap">
+                CareerMate
+              </span>
+            </Link>
           </div>
 
           {/* Desktop Navigation */}
-          <nav className="hidden lg:flex items-center space-x-8">
+          <nav className="hidden lg:flex items-center gap-3 xl:gap-6 flex-1 justify-center">
             <Link
               href="/jobs-detail"
-              className="text-[#ffffff] hover:text-[#c8c8c8]"
+              className="text-xs xl:text-sm text-[#ffffff] hover:text-[#c8c8c8] transition-colors whitespace-nowrap"
             >
               All Jobs
             </Link>
             <Link
               href="/companies"
-              className="text-[#ffffff] hover:text-[#c8c8c8]"
+              className="text-xs xl:text-sm text-[#ffffff] hover:text-[#c8c8c8] transition-colors whitespace-nowrap"
             >
               Companies
             </Link>
             <Link
               href="/blog"
-              className="text-[#ffffff] hover:text-[#c8c8c8]"
+              className="text-xs xl:text-sm text-[#ffffff] hover:text-[#c8c8c8] transition-colors whitespace-nowrap"
             >
               Blog
             </Link>
             <Link
               href="/cv-templates-introduction"
-              className="text-[#ffffff] hover:text-[#c8c8c8]"
+              className="text-xs xl:text-sm text-[#ffffff] hover:text-[#c8c8c8] transition-colors whitespace-nowrap"
             >
               CV Templates
             </Link>
             <Link
               href="/candidate/pricing"
-              className="text-[#ffffff] hover:text-[#c8c8c8]"
+              className="text-xs xl:text-sm text-[#ffffff] hover:text-[#c8c8c8] transition-colors whitespace-nowrap"
             >
-              Upgrade Package
+              Upgrade
             </Link>
           </nav>
 
-          {/* Bên phải header */}
-          <div className="flex items-center space-x-4">
+          {/* Right side - Auth buttons */}
+          <div className="flex items-center gap-1.5 sm:gap-3">
             {isAuthenticated && user ? (
               <>
-                <span className="sm:block text-gray-300 hover:text-white transition-colors hidden text-xs md:inline">
-                  For Candidate {userInfo?.username || username || user?.username || "abc"}
+                <span className="hidden xl:block text-gray-300 text-[11px] whitespace-nowrap">
+                  For Candidate
                 </span>
 
                 <ProfileDropdown
-                  userName={userInfo?.username || username || user?.username || userInfo?.name || user?.email || "User"}
+                  userName={profile?.fullName || userInfo?.username || user?.username || userInfo?.name || user?.email || "User"}
                   userEmail={userInfo?.email || user?.email}
                   role={role || undefined}
-                  userAvatar={avatarUrl || undefined}
+                  userAvatar={profile?.image || undefined}
                 />
               </>
             ) : (
               <>
                 <Link
                   href="/sign-in"
-                  className="px-4 py-2 text-white hover:text-gray-300 transition-colors"
+                  className="hidden sm:block px-2 md:px-3 py-1.5 text-xs md:text-sm text-white hover:text-gray-300 transition-colors whitespace-nowrap"
                 >
                   Sign In
                 </Link>
                 <button
                   onClick={() => setIsModalOpen(true)}
-                  className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  className="px-2.5 sm:px-3 md:px-4 py-1.5 text-xs md:text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap"
                 >
                   Sign Up
                 </button>
               </>
             )}
+
+            {/* Mobile menu button */}
+            <button
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+              className="lg:hidden p-1.5 text-white hover:text-gray-300 flex-shrink-0"
+              aria-label="Toggle mobile menu"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                {isMobileMenuOpen ? (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                ) : (
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                )}
+              </svg>
+            </button>
           </div>
         </div>
+
+        {/* Mobile Navigation Menu */}
+        {isMobileMenuOpen && (
+          <nav className="lg:hidden mt-3 pb-3 space-y-1 border-t border-gray-700 pt-3">
+            <Link
+              href="/jobs-detail"
+              className="block px-3 py-2 text-sm text-[#ffffff] hover:bg-gray-800 rounded transition-colors"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              All Jobs
+            </Link>
+            <Link
+              href="/companies"
+              className="block px-3 py-2 text-sm text-[#ffffff] hover:bg-gray-800 rounded transition-colors"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Companies
+            </Link>
+            <Link
+              href="/blog"
+              className="block px-3 py-2 text-sm text-[#ffffff] hover:bg-gray-800 rounded transition-colors"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Blog
+            </Link>
+            <Link
+              href="/cv-templates-introduction"
+              className="block px-3 py-2 text-sm text-[#ffffff] hover:bg-gray-800 rounded transition-colors"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              CV Templates
+            </Link>
+            <Link
+              href="/candidate/pricing"
+              className="block px-3 py-2 text-sm text-[#ffffff] hover:bg-gray-800 rounded transition-colors"
+              onClick={() => setIsMobileMenuOpen(false)}
+            >
+              Upgrade Package
+            </Link>
+            {!isAuthenticated && (
+              <Link
+                href="/sign-in"
+                className="sm:hidden block px-3 py-2 text-sm text-[#ffffff] hover:bg-gray-800 rounded transition-colors"
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                Sign In
+              </Link>
+            )}
+          </nav>
+        )}
       </div>
 
       {/* User Type Selection Modal */}

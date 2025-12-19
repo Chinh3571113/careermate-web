@@ -14,7 +14,10 @@ import { getMyInvoice } from "@/lib/invoice-api";
 import { fetchMyJobApplications, type JobApplication } from "@/lib/my-jobs-api";
 import { fetchSavedJobs, type SavedJobFeedback } from "@/lib/job-api";
 import { getCurrentUser } from "@/lib/user-api";
-import { calculateProfileCompletion } from "@/lib/profile-completion";
+import { fetchCurrentCandidateProfile } from "@/lib/candidate-profile-api";
+import { useProfileCompletion } from "@/hooks/useProfileCompletion";
+import { ProfileProgressCircle } from "@/components/ui/profile-progress-circle";
+import { useCVStore } from "@/stores/cvStore";
 import api from "@/lib/api";
 
 export default function CandidateDashboard() {
@@ -22,16 +25,45 @@ export default function CandidateDashboard() {
   const [headerH, setHeaderH] = useState(headerHeight || 0);
   
   // Auth store
-  const { user, candidateId, fetchCandidateProfile } = useAuthStore();
+  const { user, candidateId, fetchCandidateProfile, setProfile } = useAuthStore();
   const userId = candidateId || user?.id;
 
-  // Profile state
+  // Get current editing resume ID from Zustand (same as CM Profile)
+  const currentEditingResumeId = useCVStore((s) => s.currentEditingResumeId);
+  
+  // Resume ID state - for CV completion tracking only
+  const [resumeId, setResumeId] = useState<number | null>(null);
+
+  // ✅ Profile state (from Candidate Profile API - for user display)
   const [profileName, setProfileName] = useState("");
   const [profileTitle, setProfileTitle] = useState("");
   const [profileImage, setProfileImage] = useState("");
+  const [isLoadingProfile, setIsLoadingProfile] = useState(true);
   const [userEmail, setUserEmail] = useState("");
   const [isPremium, setIsPremium] = useState(false);
-  const [profileCompletion, setProfileCompletion] = useState(20);
+  
+  // ✅ Resume data state (for CV completion calculation only, NOT for user display)
+  const [profileData, setProfileData] = useState<{
+    fullName?: string;
+    title?: string;
+    phone?: string;
+    dob?: string;
+    gender?: string;
+    address?: string;
+    link?: string;
+    aboutMe?: string;
+    awards?: any[];
+    certificates?: any[];
+    projects?: any[];
+    languages?: any[];
+    educations?: any[];
+    workExperiences?: any[];
+    coreSkillGroups?: Array<{ items?: any[] }>;
+    softSkillGroups?: Array<{ items?: any[] }>;
+  }>({});
+
+  // Calculate profile completion (based on resume data)
+  const profileCompletion = useProfileCompletion(profileData);
 
   // CV state
   const [defaultCV, setDefaultCV] = useState<CV | null>(null);
@@ -69,47 +101,134 @@ export default function CandidateDashboard() {
     }
   }, [headerHeight]);
 
-  // Fetch profile data
+  // ✅ PRIMARY: Fetch profile data from Candidate Profile API (for user display)
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const response = await api.get("/api/candidates/profiles/current");
-        if (response.data?.result) {
-          const profile = response.data.result;
-          setProfileName(profile.fullName || "");
-          setProfileTitle(profile.title || "");
-          setProfileImage(profile.image || "");
-          
-          // Calculate profile completion using same logic as cm-profile
-          const completionData = {
-            fullName: profile.fullName,
-            title: profile.title,
-            phone: profile.phone,
-            dob: profile.dob,
-            gender: profile.gender,
-            address: profile.address,
-            link: profile.link,
-            image: profile.image,
-            aboutMe: profile.aboutMe,
-            awards: profile.awards || [],
-            certificates: profile.certificates || [],
-            projects: profile.projects || [],
-            languages: profile.languages || [],
-            educations: profile.educations || [],
-            workExperiences: profile.workExperiences || [],
-            // Flatten skill groups to get total skill count
-            coreSkills: (profile.coreSkillGroups || []).flatMap((g: any) => g.items || []),
-            softSkills: (profile.softSkillGroups || []).flatMap((g: any) => g.items || []),
-          };
-          const completion = calculateProfileCompletion(completionData);
-          setProfileCompletion(completion);
-        }
+        setIsLoadingProfile(true);
+        console.log('🔍 Dashboard: Fetching candidate profile...');
+        const profile = await fetchCurrentCandidateProfile();
+        
+        console.log('✅ Dashboard: Candidate profile fetched:', {
+          fullName: profile.fullName,
+          title: profile.title,
+          hasImage: !!profile.image,
+        });
+        
+        // Set profile display data (for user card)
+        setProfileName(profile.fullName || "");
+        setProfileTitle(profile.title || "Update your title");
+        setProfileImage(profile.image || "");
+        
+        // ✅ SYNC with AuthStore (single source of truth)
+        setProfile({
+          fullName: profile.fullName || "",
+          title: profile.title || "",
+          image: profile.image || "",
+        });
+        
       } catch (error) {
-        console.error("Failed to fetch profile:", error);
+        console.error("❌ Dashboard: Failed to fetch candidate profile:", error);
+        // Set defaults if profile not found
+        setProfileName("");
+        setProfileTitle("Update your title");
+        setProfileImage("");
+        setProfile(null);
+      } finally {
+        setIsLoadingProfile(false);
       }
     };
 
-    // Fetch current user info (including email) from API
+    fetchProfile();
+
+    // Refresh profile data when page becomes visible (user returns from cm-profile)
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        console.log('📍 Page visible again, refreshing profile data...');
+        fetchProfile();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []); // Run once on mount and on visibility change
+
+  // ✅ SECONDARY: Fetch resume data (for CV completion calculation only)
+  useEffect(() => {
+    const fetchResumeData = async () => {
+      try {
+        console.log('� Dashboard: Fetching resume data for completion...');
+        const response = await api.get("/api/resume");
+        
+        if (response.data?.result && response.data.result.length > 0) {
+          const resumes = response.data.result;
+          
+          // Select resume using priority:
+          // 1. currentEditingResumeId from Zustand (synced with CM Profile)
+          // 2. Resume with isActive === true
+          // 3. First resume in list
+          let selectedResume;
+          
+          if (currentEditingResumeId) {
+            selectedResume = resumes.find((r: any) => 
+              String(r.resumeId) === currentEditingResumeId
+            );
+          }
+          
+          if (!selectedResume) {
+            selectedResume = resumes.find((r: any) => r.isActive === true);
+          }
+          
+          if (!selectedResume) {
+            selectedResume = resumes[0];
+          }
+          
+          const resume = selectedResume;
+          
+          console.log('✅ Dashboard: Resume selected for completion:', {
+            resumeId: resume.resumeId,
+            isActive: resume.isActive
+          });
+          
+          // Set resumeId state
+          setResumeId(resume.resumeId);
+          
+          // Set profile data ONLY for completion calculation
+          setProfileData({
+            fullName: resume.fullName,
+            title: resume.title,
+            phone: resume.phone,
+            dob: resume.dob,
+            gender: resume.gender,
+            address: resume.address,
+            link: resume.link,
+            aboutMe: resume.aboutMe,
+            awards: resume.awards || [],
+            certificates: resume.certificates || [],
+            projects: resume.projects || [],
+            languages: resume.languages || [],
+            educations: resume.educations || [],
+            workExperiences: resume.workExperiences || [],
+            coreSkillGroups: resume.coreSkillGroups || [],
+            softSkillGroups: resume.softSkillGroups || [],
+          });
+          
+          console.log('✅ Dashboard: Resume data set for completion calculation');
+        } else {
+          console.log('ℹ️ Dashboard: No resume found');
+          setProfileData({});
+        }
+      } catch (error) {
+        console.error("❌ Dashboard: Failed to fetch resume data:", error);
+        setProfileData({});
+      }
+    };
+
+    fetchResumeData();
+  }, [currentEditingResumeId]); // Re-fetch when currentEditingResumeId changes
+
+  // Fetch current user info (including email) from API
+  useEffect(() => {
     const fetchCurrentUserInfo = async () => {
       try {
         const currentUser = await getCurrentUser();
@@ -125,7 +244,6 @@ export default function CandidateDashboard() {
       }
     };
 
-    fetchProfile();
     fetchCurrentUserInfo();
   }, [user]);
 
@@ -186,19 +304,11 @@ export default function CandidateDashboard() {
     loadJobActivities();
   }, [candidateId]);
 
-  // Calculate profile completion (simplified)
-  useEffect(() => {
-    let completion = 20; // Base
-    if (profileName) completion += 15;
-    if (profileTitle) completion += 15;
-    if (profileImage) completion += 10;
-    if (allCVs.length > 0) completion += 20;
-    if (appliedJobsCount > 0) completion += 20;
-    setProfileCompletion(Math.min(completion, 100));
-  }, [profileName, profileTitle, profileImage, allCVs, appliedJobsCount]);
+  // Note: Profile completion is now calculated in the fetchProfile function above
+  // using the same logic as cm-profile (calculateProfileCompletion)
 
   // Display name
-  const displayName = profileName || user?.fullName || user?.name || user?.email?.split('@')[0] || 'User';
+  const displayName = profileName || user?.fullName || user?.name || user?.email?.split('@')[0] || '';
   const initials = displayName.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase();
 
   return (
@@ -229,21 +339,31 @@ export default function CandidateDashboard() {
                     isPremium={isPremium}
                   />
                   <div>
-                    <h1 className="text-2xl font-semibold text-gray-900 mb-1">
-                      {displayName}
-                    </h1>
-                    <p className="text-sm text-gray-600 mb-1">
-                      💼 {profileTitle || 'Update your title'}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      ✉️ {userEmail || user?.email || 'No email'}
-                    </p>
-                    <Link
-                      href="/candidate/cm-profile"
-                      className="text-sm text-blue-600 hover:text-blue-700 font-medium mt-1 inline-block"
-                    >
-                      Update your profile →
-                    </Link>
+                    {isLoadingProfile && !displayName ? (
+                      <>
+                        <div className="h-8 w-48 bg-gray-200 rounded animate-pulse mb-2"></div>
+                        <div className="h-4 w-32 bg-gray-200 rounded animate-pulse mb-2"></div>
+                        <div className="h-4 w-40 bg-gray-200 rounded animate-pulse"></div>
+                      </>
+                    ) : (
+                      <>
+                        <h1 className="text-2xl font-semibold text-gray-900 mb-1">
+                          {displayName}
+                        </h1>
+                        <p className="text-sm text-gray-600 mb-1">
+                          💼 {profileTitle || 'Update your title'}
+                        </p>
+                        <p className="text-sm text-gray-500">
+                          ✉️ {userEmail || user?.email || 'No email'}
+                        </p>
+                        <Link
+                          href="/candidate/cm-profile"
+                          className="text-sm text-blue-600 hover:text-blue-700 font-medium mt-1 inline-block"
+                        >
+                          Update your profile →
+                        </Link>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
@@ -258,9 +378,9 @@ export default function CandidateDashboard() {
                 <div className="bg-gradient-to-r from-[#3a4660] to-gray-400 rounded-xl p-5">
                   <div className="flex items-center justify-between mb-3">
                     <div className="flex items-center gap-2">
-                      <span className="text-white font-medium">Active CV</span>
+                      <span className="text-white font-medium">Default CV</span>
                       <span className="text-xs bg-white/20 backdrop-blur-sm text-white px-2 py-0.5 rounded-full">
-                        Active
+                        Default
                       </span>
                     </div>
                   </div>
@@ -310,38 +430,12 @@ export default function CandidateDashboard() {
                 CM Profile
               </h2>
               <div className="flex items-start gap-8 flex-wrap xl:flex-nowrap">
-                {/* Progress Circle */}
+                {/* Progress Circle - Using shared component with cm-profile colors */}
                 <div className="flex-shrink-0">
-                  <div className="relative w-36 h-36">
-                    <svg className="w-36 h-36 transform -rotate-90">
-                      <circle
-                        cx="72"
-                        cy="72"
-                        r="64"
-                        stroke="#fee2e2"
-                        strokeWidth="14"
-                        fill="none"
-                      />
-                      <circle
-                        cx="72"
-                        cy="72"
-                        r="64"
-                        stroke={profileCompletion >= 70 ? "#22c55e" : "#ef4444"}
-                        strokeWidth="14"
-                        fill="none"
-                        strokeDasharray={`${64 * 2 * Math.PI * (profileCompletion / 100)} ${64 * 2 * Math.PI}`}
-                        strokeLinecap="round"
-                      />
-                    </svg>
-                    <div className="absolute inset-0 flex items-center justify-center">
-                      <div className="text-center">
-                        <div className="text-4xl font-bold text-gray-900">
-                          {profileCompletion}%
-                        </div>
-                        <div className="text-sm text-gray-500">completed</div>
-                      </div>
-                    </div>
-                  </div>
+                  <ProfileProgressCircle 
+                    completion={profileCompletion} 
+                    size="lg"
+                  />
                 </div>
                 {/* Chat bubble for complete profile */}
                 <div className="flex-1 flex flex-col justify-center min-w-[220px]">
@@ -352,15 +446,20 @@ export default function CandidateDashboard() {
                     >
                       {profileCompletion >= 70 ? (
                         <span>
-                          Great job! Your profile is{" "}
-                          <span className="text-green-600 font-semibold">{profileCompletion}%</span>{" "}
-                          complete. You can now generate CV templates!
+                          <span className="text-blue-600 font-semibold">Great!</span>{" "}
+                          Your profile is strong enough to generate a CV tailored for IT professionals.
+                        </span>
+                      ) : profileCompletion >= 40 ? (
+                        <span>
+                          <span className="text-amber-600 font-semibold">Almost there!</span>{" "}
+                          Complete your profile to at least{" "}
+                          <span className="font-semibold">70%</span>{" "}
+                          to generate your CV template.
                         </span>
                       ) : (
                         <span>
-                          Complete profile to{" "}
-                          <span className="text-gray-600 font-semibold">70%</span>{" "}
-                          to generate CV template for IT professionals.
+                          <span className="text-gray-600 font-semibold">Let's get started!</span>{" "}
+                          Your profile is still in early stage. Add more information to unlock CV generation.
                         </span>
                       )}
                     </div>

@@ -79,7 +79,7 @@ const RecentJobsTab = ({ viewedJobs }: RecentJobsTabProps) => {
                         No recently viewed jobs to display.
                     </p>
                     <Link
-                        href="/jobs-list"
+                        href="/jobs-detail"
                         className="px-6 py-3 bg-gray-500 hover:bg-gray-600 text-white rounded-md font-medium"
                     >
                         Explore jobs

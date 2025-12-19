@@ -49,7 +49,7 @@ export default function AboutMeDialog({
                         </div>
                     </div>
 
-                    {/* Rich text editor toolbar */}
+                    {/* Rich text editor toolbar
                     <div className="border-b border-gray-200 pb-2">
                         <div className="flex items-center gap-2">
                             <button className="p-2 hover:bg-gray-100 rounded" type="button">
@@ -65,7 +65,7 @@ export default function AboutMeDialog({
                                 ≡
                             </button>
                         </div>
-                    </div>
+                    </div> */}
 
                     <div className="space-y-2">
                         <Textarea

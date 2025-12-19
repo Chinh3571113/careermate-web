@@ -19,10 +19,10 @@ import { getCompanyStatistics, type CompanyStatisticsResponse } from "@/lib/revi
 import type { BlogResponse } from "@/types/blog";
 
 // Animated Counter Component
-function AnimatedCounter({ end, duration = 2000, suffix = "" }) {
+function AnimatedCounter({ end, duration = 2000, suffix = "" }: { end: number; duration?: number; suffix?: string }) {
   const [count, setCount] = useState(0);
   const [isVisible, setIsVisible] = useState(false);
-  const ref = useRef(null);
+  const ref = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -44,11 +44,11 @@ function AnimatedCounter({ end, duration = 2000, suffix = "" }) {
   useEffect(() => {
     if (!isVisible) return;
 
-    let startTime;
+    let startTime: number | undefined;
     const startCount = 0;
     const endCount = end;
 
-    const updateCount = (timestamp) => {
+    const updateCount = (timestamp: number) => {
       if (!startTime) startTime = timestamp;
       const progress = Math.min((timestamp - startTime) / duration, 1);
 
@@ -68,7 +68,7 @@ function AnimatedCounter({ end, duration = 2000, suffix = "" }) {
   }, [isVisible, end, duration]);
 
   return (
-    <span ref={ref} className="text-4xl md:text-5xl font-bold text-gray-600">
+    <span ref={ref} className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-600">
       {count.toLocaleString()}
       {suffix}
     </span>
@@ -180,34 +180,34 @@ export function ClientHomePage() {
         {/* Added margin-top equal to header height */}
         {/* Hero Section */}
         <section 
-          className="relative text-white py-20 pb-32 bg-cover bg-center bg-no-repeat"
+          className="relative text-white py-12 sm:py-16 md:py-20 pb-20 sm:pb-28 md:pb-32 bg-cover bg-center bg-no-repeat"
           style={{ backgroundImage: "url('/images/general/job-search-bg.png')" }}
         >
           {/* Dark overlay for better text readability */}
           <div className="absolute inset-0 bg-black/60"></div>
           
           <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
+            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-7xl font-bold mb-4 sm:mb-6 bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
               Welcome to CareerMate
             </h1>
-            <h2 className="text-xl md:text-3xl mb-12 text-blue-100 max-w-3xl mx-auto">
+            <h2 className="text-base sm:text-lg md:text-xl lg:text-3xl mb-8 sm:mb-10 md:mb-12 text-blue-100 max-w-3xl mx-auto px-4">
               The bridge between opportunity and success.
             </h2>
 
             {/* Search Bar */}
             <div className="max-w-4xl mx-auto">
-              <div className="bg-white/10 backdrop-blur-sm rounded-2xl p-8 border border-white/20">
-                <div className="flex flex-col lg:flex-row gap-4">
-                  <div className="flex-[2]">
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl sm:rounded-2xl p-4 sm:p-6 md:p-8 border border-white/20">
+                <div className="flex flex-col gap-3 sm:gap-4">
+                  <div className="w-full">
                     <input
                       type="text"
                       placeholder="Job title, keywords, or company"
-                      className="w-full px-6 py-4 rounded-xl text-gray-900 placeholder-gray-500 bg-white shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:shadow-xl transition-all"
+                      className="w-full px-4 sm:px-6 py-3 sm:py-4 rounded-lg sm:rounded-xl text-sm sm:text-base text-gray-900 placeholder-gray-500 bg-white shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:shadow-xl transition-all"
                     />
                   </div>
-                  <div className="flex-1 relative">
+                  <div className="w-full relative">
                     <select
-                      className="w-full px-6 py-4 pr-12 rounded-xl text-gray-900 bg-white shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:shadow-xl transition-all appearance-none cursor-pointer"
+                      className="w-full px-4 sm:px-6 py-3 sm:py-4 pr-10 sm:pr-12 rounded-lg sm:rounded-xl text-sm sm:text-base text-gray-900 bg-white shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:shadow-xl transition-all appearance-none cursor-pointer"
                       style={{ direction: "ltr" }}
                     >
                       <option value="">Select Location</option>
@@ -226,9 +226,9 @@ export function ClientHomePage() {
                       <option value="san-diego">San Diego, CA</option>
                       <option value="washington-dc">Washington, DC</option>
                     </select>
-                    <div className="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
+                    <div className="absolute inset-y-0 right-0 flex items-center pr-3 sm:pr-4 pointer-events-none">
                       <svg
-                        className="w-5 h-5 text-gray-400"
+                        className="w-4 h-4 sm:w-5 sm:h-5 text-gray-400"
                         fill="none"
                         stroke="currentColor"
                         viewBox="0 0 24 24"
@@ -242,28 +242,26 @@ export function ClientHomePage() {
                       </svg>
                     </div>
                   </div>
-                  <button className="px-8 py-4 font-semibold shadow-lg hover:shadow-xl bg-gradient-to-r from-[#3a4660] to-gray-400 text-white rounded-md hover:bg-gradient-to-r hover:from-[#3a4660] hover:to-[#3a4660] transition-colors">
+                  <button className="w-full px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base font-semibold shadow-lg hover:shadow-xl bg-gradient-to-r from-[#3a4660] to-gray-400 text-white rounded-lg sm:rounded-md hover:bg-gradient-to-r hover:from-[#3a4660] hover:to-[#3a4660] transition-colors">
                     Search
                   </button>
                 </div>
 
                 {/* Quick Filters */}
-                <div
-                  className="mt-6 flex flex-wrap justify-center gap-3 items-center"
-                >
-                  <span className="font-bold text-base text-white">
+                <div className="mt-4 sm:mt-6 flex flex-wrap justify-center gap-2 sm:gap-3 items-center">
+                  <span className="font-bold text-sm sm:text-base text-white w-full sm:w-auto text-center sm:text-left mb-2 sm:mb-0">
                     Suggestions for you:
                   </span>
-                  <span className="px-4 py-2 bg-white/20 rounded-full text-sm text-white/90 hover:bg-white/30 transition-colors cursor-pointer">
+                  <span className="px-3 sm:px-4 py-1.5 sm:py-2 bg-white/20 rounded-full text-xs sm:text-sm text-white/90 hover:bg-white/30 transition-colors cursor-pointer">
                     Software Engineer
                   </span>
-                  <span className="px-4 py-2 bg-white/20 rounded-full text-sm text-white/90 hover:bg-white/30 transition-colors cursor-pointer">
+                  <span className="px-3 sm:px-4 py-1.5 sm:py-2 bg-white/20 rounded-full text-xs sm:text-sm text-white/90 hover:bg-white/30 transition-colors cursor-pointer">
                     IT Comtor
                   </span>
-                  <span className="px-4 py-2 bg-white/20 rounded-full text-sm text-white/90 hover:bg-white/30 transition-colors cursor-pointer">
+                  <span className="px-3 sm:px-4 py-1.5 sm:py-2 bg-white/20 rounded-full text-xs sm:text-sm text-white/90 hover:bg-white/30 transition-colors cursor-pointer">
                     Companies
                   </span>
-                  <span className="px-4 py-2 bg-white/20 rounded-full text-sm text-white/90 hover:bg-white/30 transition-colors cursor-pointer">
+                  <span className="px-3 sm:px-4 py-1.5 sm:py-2 bg-white/20 rounded-full text-xs sm:text-sm text-white/90 hover:bg-white/30 transition-colors cursor-pointer">
                     Skills
                   </span>
                   
@@ -274,38 +272,38 @@ export function ClientHomePage() {
         </section>
 
         {/* Quick Stats */}
-        <section className="py-16 bg-white">
+        <section className="py-12 sm:py-16 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-8 text-center">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 md:gap-8 text-center">
               <div className="group">
-                <div className="mb-2">
+                <div className="mb-1 sm:mb-2">
                   <AnimatedCounter end={10000} suffix="+" duration={2500} />
                 </div>
-                <div className="text-gray-600 text-lg font-sans">
+                <div className="text-gray-600 text-sm sm:text-base md:text-lg font-sans">
                   Active Jobs
                 </div>
               </div>
               <div className="group">
-                <div className="mb-2">
+                <div className="mb-1 sm:mb-2">
                   <AnimatedCounter end={500} suffix="+" duration={2000} />
                 </div>
-                <div className="text-gray-600 text-lg font-sans">
+                <div className="text-gray-600 text-sm sm:text-base md:text-lg font-sans">
                   Top Companies
                 </div>
               </div>
               <div className="group">
-                <div className="mb-2">
+                <div className="mb-1 sm:mb-2">
                   <AnimatedCounter end={50000} suffix="+" duration={3000} />
                 </div>
-                <div className="text-gray-600 text-lg font-sans">
+                <div className="text-gray-600 text-sm sm:text-base md:text-lg font-sans">
                   Candidates
                 </div>
               </div>
               <div className="group">
-                <div className="mb-2">
+                <div className="mb-1 sm:mb-2">
                   <AnimatedCounter end={95} suffix="%" duration={1500} />
                 </div>
-                <div className="text-gray-600 text-lg font-sans">
+                <div className="text-gray-600 text-sm sm:text-base md:text-lg font-sans">
                   Success Rate
                 </div>
               </div>
@@ -317,26 +315,26 @@ export function ClientHomePage() {
         <TopEmployers />
 
         {/* Hot Companies Section */}
-        <section className="py-16 bg-gradient-to-br from-gray-900 to-indigo-900">
+        <section className="py-12 sm:py-16 bg-gradient-to-br from-gray-900 to-indigo-900">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between mb-10">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 sm:mb-10 gap-4">
               <div>
-                <div className="flex items-center gap-3 mb-2">
-                  <Building2 className="h-8 w-8 text-blue-400" />
-                  <h2 className="text-3xl font-bold text-white">
+                <div className="flex items-center gap-2 sm:gap-3 mb-2">
+                  <Building2 className="h-6 w-6 sm:h-8 sm:w-8 text-blue-400" />
+                  <h2 className="text-2xl sm:text-3xl font-bold text-white">
                     Hot Companies
                   </h2>
                 </div>
-                <p className="text-gray-300 text-lg">
+                <p className="text-gray-300 text-base sm:text-lg">
                   Top-rated companies actively hiring
                 </p>
               </div>
               <Link 
                 href="/companies"
-                className="px-6 py-3 bg-white/10 backdrop-blur text-white rounded-lg font-semibold hover:bg-white/20 transition-colors flex items-center gap-2 border border-white/20"
+                className="px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base bg-white/10 backdrop-blur text-white rounded-lg font-semibold hover:bg-white/20 transition-colors flex items-center gap-2 border border-white/20"
               >
                 Explore Companies
-                <ChevronRight className="h-5 w-5" />
+                <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5" />
               </Link>
             </div>
 
@@ -422,26 +420,26 @@ export function ClientHomePage() {
         </section>
 
         {/* Career Insights Blog Section */}
-        <section className="py-16 bg-gray-50">
+        <section className="py-12 sm:py-16 bg-gray-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-between mb-10">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-8 sm:mb-10 gap-4">
               <div>
-                <div className="flex items-center gap-3 mb-2">
-                  <BookOpen className="h-8 w-8 text-blue-600" />
-                  <h2 className="text-3xl font-bold text-gray-900">
+                <div className="flex items-center gap-2 sm:gap-3 mb-2">
+                  <BookOpen className="h-6 w-6 sm:h-8 sm:w-8 text-blue-600" />
+                  <h2 className="text-2xl sm:text-3xl font-bold text-gray-900">
                     Career Insights
                   </h2>
                 </div>
-                <p className="text-gray-600 text-lg">
+                <p className="text-gray-600 text-base sm:text-lg">
                   Expert tips and guides for your career journey
                 </p>
               </div>
               <Link 
                 href="/blog"
-                className="px-6 py-3 bg-gray-900 text-white rounded-lg font-semibold hover:bg-gray-800 transition-colors flex items-center gap-2"
+                className="px-4 sm:px-6 py-2 sm:py-3 text-sm sm:text-base bg-gray-900 text-white rounded-lg font-semibold hover:bg-gray-800 transition-colors flex items-center gap-2"
               >
                 Read More Articles
-                <ChevronRight className="h-5 w-5" />
+                <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5" />
               </Link>
             </div>
 
@@ -522,46 +520,46 @@ export function ClientHomePage() {
         </section>
 
         {/* AI Features Section */}
-        <section className="py-16 bg-gray-100">
+        <section className="py-12 sm:py-16 bg-gray-100">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-12">
-              <h2 className="text-3xl font-bold text-gray-900 mb-4">
+            <div className="text-center mb-8 sm:mb-12">
+              <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-3 sm:mb-4">
                 AI-Powered Features
               </h2>
-              <p className="text-xl text-gray-600">
+              <p className="text-lg sm:text-xl text-gray-600 px-4">
                 Get personalized job recommendations and career insights
               </p>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-              <div className="bg-white rounded-lg p-8 text-center shadow-sm">
-                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <span className="text-2xl">🤖</span>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6 sm:gap-8">
+              <div className="bg-white rounded-lg p-6 sm:p-8 text-center shadow-sm">
+                <div className="w-14 h-14 sm:w-16 sm:h-16 bg-blue-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                  <span className="text-xl sm:text-2xl">🤖</span>
                 </div>
-                <h3 className="text-xl font-semibold mb-4">Smart Matching</h3>
-                <p className="text-gray-600">
+                <h3 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Smart Matching</h3>
+                <p className="text-sm sm:text-base text-gray-600">
                   Our AI analyzes your skills and preferences to find the
                   perfect job matches.
                 </p>
               </div>
 
-              <div className="bg-white rounded-lg p-8 text-center shadow-sm">
-                <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <span className="text-2xl">📊</span>
+              <div className="bg-white rounded-lg p-6 sm:p-8 text-center shadow-sm">
+                <div className="w-14 h-14 sm:w-16 sm:h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                  <span className="text-xl sm:text-2xl">📊</span>
                 </div>
-                <h3 className="text-xl font-semibold mb-4">Career Insights</h3>
-                <p className="text-gray-600">
+                <h3 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">Career Insights</h3>
+                <p className="text-sm sm:text-base text-gray-600">
                   Get personalized career advice and market insights to advance
                   your career.
                 </p>
               </div>
 
-              <div className="bg-white rounded-lg p-8 text-center shadow-sm">
-                <div className="w-16 h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <span className="text-2xl">📝</span>
+              <div className="bg-white rounded-lg p-6 sm:p-8 text-center shadow-sm sm:col-span-2 md:col-span-1">
+                <div className="w-14 h-14 sm:w-16 sm:h-16 bg-purple-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4">
+                  <span className="text-xl sm:text-2xl">📝</span>
                 </div>
-                <h3 className="text-xl font-semibold mb-4">CV Analysis</h3>
-                <p className="text-gray-600">
+                <h3 className="text-lg sm:text-xl font-semibold mb-3 sm:mb-4">CV Analysis</h3>
+                <p className="text-sm sm:text-base text-gray-600">
                   Get your CV analyzed by AI to highlight strengths and suggest improvements.
                 </p>
               </div>
