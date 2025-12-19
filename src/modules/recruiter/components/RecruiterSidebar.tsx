@@ -14,6 +14,7 @@ import {
     Calendar,
     ChevronDown,
     ChevronRight,
+    MessageSquareText,
 } from "lucide-react";
 import type { NavItem, SubMenuItem } from "../types";
 
@@ -55,6 +56,11 @@ const NAV_ITEMS: NavItem[] = [
             { label: "Interviews", href: "/recruiter/interviews" },
             { label: "Employments", href: "/recruiter/employments" },
         ],
+    },
+    {
+        label: "Company Reviews",
+        href: "/recruiter/recruiter-feature/reviews",
+        icon: MessageSquareText,
     },
     {
         label: "Services",

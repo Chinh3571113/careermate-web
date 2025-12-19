@@ -16,7 +16,8 @@ import {
     Brain,
     BookUser,
     Shield,
-    Bell
+    Bell,
+    MessageSquareText
 } from "lucide-react";
 
 export interface NavItem {
@@ -72,6 +73,11 @@ const NAV_ITEMS: NavItem[] = [
         label: "Job Postings",
         href: "/admin/job-postings",
         icon: BookUser,
+    },
+    {
+        label: "Review Management",
+        href: "/admin/reviews",
+        icon: MessageSquareText,
     },
     {
         label: "Skill Management",

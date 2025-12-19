@@ -24,6 +24,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Switch } from "@/components/ui/switch";
 import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
+import { useAuthStore } from "@/store/use-auth-store";
 import {
   checkReviewEligibility,
   submitReview,
@@ -31,7 +32,8 @@ import {
   normalizeReviewType,
   type SubmitReviewRequest,
   type ReviewEligibilityResponse,
-  type ReviewType
+  type ReviewType,
+  type NormalizedReviewType
 } from "@/lib/review-api";
 
 const RATING_CATEGORIES = [
@@ -46,11 +48,23 @@ export default function SubmitReviewContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const jobApplyId = searchParams.get("jobApplyId");
+  const authCandidateId = useAuthStore((s) => s.candidateId);
+  const authUserId = useAuthStore((s) => s.user?.id);
+
+  const effectiveCandidateId =
+    typeof authCandidateId === "number"
+      ? authCandidateId
+      : typeof authUserId === "number"
+        ? authUserId
+        : typeof authUserId === "string"
+          ? Number.parseInt(authUserId, 10)
+          : null;
   
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [step, setStep] = useState(1);
   const [eligibility, setEligibility] = useState<ReviewEligibilityResponse | null>(null);
+  const [eligibleTypes, setEligibleTypes] = useState<NormalizedReviewType[]>([]);
   
   // Form state
   const [form, setForm] = useState<Partial<SubmitReviewRequest>>({
@@ -73,16 +87,18 @@ export default function SubmitReviewContent() {
   });
 
   useEffect(() => {
-    checkEligibility();
-  }, []);
+    // Wait until we can resolve candidateId from auth state
+    if (effectiveCandidateId) {
+      checkEligibility();
+    }
+  }, [effectiveCandidateId]);
 
   const checkEligibility = async () => {
     try {
       setLoading(true);
-      const candidateId = localStorage.getItem("userId");
-      if (!candidateId) {
-        toast.error("User ID not found");
-        router.push("/candidate/my-jobs");
+      if (!effectiveCandidateId) {
+        toast.error("Candidate ID not found. Please sign in again.");
+        router.push("/");
         return;
       }
 
@@ -92,22 +108,24 @@ export default function SubmitReviewContent() {
         return;
       }
 
-      const data = await checkReviewEligibility(parseInt(candidateId), parseInt(jobApplyId));
+      const data = await checkReviewEligibility(effectiveCandidateId, parseInt(jobApplyId));
       
       // Get eligible types (handle multiple field names)
-      const eligibleTypes = data.eligibleReviewTypes || data.reviewTypes || data.allowedReviewTypes || [];
-      
-      if (eligibleTypes.length === 0) {
+      const rawEligibleTypes: ReviewType[] = (data.eligibleReviewTypes || data.reviewTypes || data.allowedReviewTypes || []) as any;
+      const normalizedEligibleTypes = rawEligibleTypes.map((t) => normalizeReviewType(t as ReviewType));
+
+      if (normalizedEligibleTypes.length === 0) {
         toast.error("You are not eligible to submit a review for this application");
         router.push("/candidate/my-jobs");
         return;
       }
 
-      setEligibility({ ...data, eligibleReviewTypes: eligibleTypes });
+      setEligibility({ ...data, eligibleReviewTypes: rawEligibleTypes });
+      setEligibleTypes(normalizedEligibleTypes);
       
       // Auto-select review type if only one is available
-      if (eligibleTypes.length === 1) {
-        setForm(prev => ({ ...prev, reviewType: normalizeReviewType(eligibleTypes[0]) }));
+      if (normalizedEligibleTypes.length === 1) {
+        setForm(prev => ({ ...prev, reviewType: normalizedEligibleTypes[0] }));
       }
     } catch (error: any) {
       console.error("Failed to check eligibility:", error);
@@ -146,15 +164,19 @@ export default function SubmitReviewContent() {
 
     try {
       setSubmitting(true);
-      const candidateId = localStorage.getItem("userId");
-      if (!candidateId) {
-        toast.error("User ID not found");
+      if (!effectiveCandidateId) {
+        toast.error("Candidate ID not found. Please sign in again.");
+        return;
+      }
+
+      if (!form.reviewType) {
+        toast.error("Please select a review type");
         return;
       }
 
       await submitReview({
         ...form,
-        candidateId: parseInt(candidateId)
+        candidateId: effectiveCandidateId
       } as SubmitReviewRequest);
 
       toast.success("Review submitted successfully!");
@@ -239,13 +261,11 @@ export default function SubmitReviewContent() {
           <CardContent className="space-y-4">
             <RadioGroup
               value={form.reviewType}
-              onValueChange={(value: any) =>
-                setForm({ ...form, reviewType: value })
-              }
+              onValueChange={(value: any) => setForm({ ...form, reviewType: value as NormalizedReviewType })}
             >
-              {eligibility.eligibleReviewTypes?.includes("APPLICATION") && (
+              {eligibleTypes.includes("APPLICATION_EXPERIENCE") && (
                 <div className="flex items-start space-x-3 p-4 border rounded-lg cursor-pointer hover:bg-muted">
-                  <RadioGroupItem value="APPLICATION" id="application" />
+                  <RadioGroupItem value="APPLICATION_EXPERIENCE" id="application" />
                   <label htmlFor="application" className="flex-1 cursor-pointer">
                     <div className="flex items-center gap-2 mb-1">
                       <FileText className="h-5 w-5 text-primary" />
@@ -258,35 +278,36 @@ export default function SubmitReviewContent() {
                 </div>
               )}
 
-              {eligibility.eligibleReviewTypes?.includes("INTERVIEW") && (
+              {eligibleTypes.includes("INTERVIEW_EXPERIENCE") && (
                 <div className="flex items-start space-x-3 p-4 border rounded-lg cursor-pointer hover:bg-muted">
-                  <RadioGroupItem value="INTERVIEW" id="interview" />
+                  <RadioGroupItem value="INTERVIEW_EXPERIENCE" id="interview" />
                   <label htmlFor="interview" className="flex-1 cursor-pointer">
                     <div className="flex items-center gap-2 mb-1">
-                      <Users className="h-5 w-5 text-primary" />
+                      <Calendar className="h-5 w-5 text-primary" />
                       <span className="font-semibold">Interview Experience</span>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      Share feedback about the interview process
+                      Review the interview process and communication
                     </p>
                   </label>
                 </div>
               )}
 
-              {eligibility.eligibleReviewTypes?.includes("WORK") && (
+              {eligibleTypes.includes("WORK_EXPERIENCE") && (
                 <div className="flex items-start space-x-3 p-4 border rounded-lg cursor-pointer hover:bg-muted">
-                  <RadioGroupItem value="WORK" id="work" />
+                  <RadioGroupItem value="WORK_EXPERIENCE" id="work" />
                   <label htmlFor="work" className="flex-1 cursor-pointer">
                     <div className="flex items-center gap-2 mb-1">
                       <Briefcase className="h-5 w-5 text-primary" />
                       <span className="font-semibold">Work Experience</span>
                     </div>
                     <p className="text-sm text-muted-foreground">
-                      Review your experience working at the company
+                      Review company culture, management, and workplace experience
                     </p>
                   </label>
                 </div>
               )}
+
             </RadioGroup>
 
             {eligibility.message && (
