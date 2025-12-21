@@ -44,8 +44,8 @@ function ResourcesMenu({
 
   return (
     <>
-      <div 
-        className="fixed inset-0 z-40" 
+      <div
+        className="fixed inset-0 z-40"
         onClick={onClose}
       />
       <div className="absolute right-0 top-full mt-2 w-80 bg-white rounded-lg shadow-xl border border-gray-200 z-50 overflow-hidden">
@@ -80,7 +80,7 @@ function ResourcesMenu({
 // Tag Badge Component
 function TagBadge({ tag }: { tag: string }) {
   const tagLower = tag.toLowerCase();
-  
+
   // Personal Recommendation - Purple with Star
   if (tagLower.includes('personal recommendation') || tagLower.includes('recommended')) {
     return (
@@ -90,7 +90,7 @@ function TagBadge({ tag }: { tag: string }) {
       </span>
     );
   }
-  
+
   // Alternative Option - Green with CheckCircle
   if (tagLower.includes('alternative') || tagLower.includes('option')) {
     return (
@@ -100,7 +100,7 @@ function TagBadge({ tag }: { tag: string }) {
       </span>
     );
   }
-  
+
   // Order Not Strict - Amber with Info
   if (tagLower.includes('order') || tagLower.includes('not strict') || tagLower.includes('flexible')) {
     return (
@@ -110,7 +110,7 @@ function TagBadge({ tag }: { tag: string }) {
       </span>
     );
   }
-  
+
   // Default - Blue
   return (
     <span className="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-700 rounded-md text-xs font-medium">
@@ -143,12 +143,11 @@ function CourseItem({
   resources?: string[];
 }) {
   const [showMenu, setShowMenu] = useState(false);
-  
+
   return (
-    <div 
-      className={`flex items-center gap-4 p-4 bg-white border-b border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer relative ${
-        isCompleted ? 'bg-green-50' : ''
-      }`}
+    <div
+      className={`flex items-center gap-4 p-4 bg-white border-b border-gray-200 hover:bg-gray-50 transition-colors cursor-pointer relative ${isCompleted ? 'bg-green-50' : ''
+        }`}
       onClick={(e) => {
         // Don't trigger if clicking on checkbox or menu
         if ((e.target as HTMLElement).closest('button')) return;
@@ -195,7 +194,7 @@ function CourseItem({
 
       {/* More Options */}
       <div className="relative flex-shrink-0">
-        <button 
+        <button
           onClick={(e) => {
             e.stopPropagation();
             setShowMenu(!showMenu);
@@ -204,7 +203,7 @@ function CourseItem({
         >
           <MoreVertical className="w-4 h-4 text-gray-500" />
         </button>
-        
+
         {showMenu && (
           <ResourcesMenu
             resources={resources || []}
@@ -227,7 +226,7 @@ function SubtopicItem({
   description?: string;
 }) {
   const [isExpanded, setIsExpanded] = useState(false);
-  
+
   return (
     <div className="bg-gray-50 rounded-lg border border-gray-200 overflow-hidden">
       <div
@@ -252,7 +251,7 @@ function SubtopicItem({
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
       </div>
-      
+
       {isExpanded && (
         <div className="px-4 pb-4 space-y-4 border-t border-gray-200 bg-white">
           {/* Description */}
@@ -264,7 +263,7 @@ function SubtopicItem({
               </p>
             </div>
           )}
-          
+
           {/* Learning Resources */}
           {subtopic.resources && subtopic.resources.length > 0 && (
             <div>
@@ -287,7 +286,7 @@ function SubtopicItem({
               </div>
             </div>
           )}
-          
+
           {!description && (!subtopic.resources || subtopic.resources.length === 0) && (
             <div className="text-center py-6 text-gray-500">
               <BookOpen className="w-8 h-8 text-gray-300 mx-auto mb-2" />
@@ -331,16 +330,15 @@ function CourseGroup({
         onClick={onToggleExpand}
         className="w-full flex items-center gap-3 p-4 bg-gray-50 hover:bg-gray-100 transition-colors"
       >
-        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${
-          allCompleted ? 'bg-green-500' : 'bg-gray-300'
-        }`}>
+        <div className={`w-10 h-10 rounded-full flex items-center justify-center ${allCompleted ? 'bg-green-500' : 'bg-gray-300'
+          }`}>
           {allCompleted ? (
             <CheckCircle2 className="w-7 h-7 text-white" />
           ) : (
             <Circle className="w-7 h-7 text-white" />
           )}
         </div>
-        
+
         <div className="flex-1 text-left">
           <h2 className="font-bold text-gray-900">{title}</h2>
           <p className="text-xs text-gray-600 mt-1">
@@ -404,7 +402,7 @@ function CourseDetailModal({
   // Lock body scroll when modal is open
   useEffect(() => {
     document.body.style.overflow = 'hidden';
-    
+
     return () => {
       document.body.style.overflow = 'unset';
     };
@@ -414,7 +412,7 @@ function CourseDetailModal({
 
   const needsReadMore = course.description && course.description.length > 300;
   const displayText = (course.description && (isDescriptionExpanded || !needsReadMore))
-    ? course.description 
+    ? course.description
     : course.description?.substring(0, 300) + '...';
 
   return (
@@ -455,21 +453,19 @@ function CourseDetailModal({
             <div className="flex">
               <button
                 onClick={() => setActiveTab('overview')}
-                className={`flex-1 px-6 py-3 font-medium text-sm transition-colors border-b-2 ${
-                  activeTab === 'overview'
-                    ? 'border-teal-500 text-teal-600'
-                    : 'border-transparent text-gray-600 hover:text-gray-900'
-                }`}
+                className={`flex-1 px-6 py-3 font-medium text-sm transition-colors border-b-2 ${activeTab === 'overview'
+                  ? 'border-teal-500 text-teal-600'
+                  : 'border-transparent text-gray-600 hover:text-gray-900'
+                  }`}
               >
                 Overview
               </button>
               <button
                 onClick={() => setActiveTab('lessons')}
-                className={`flex-1 px-6 py-3 font-medium text-sm transition-colors border-b-2 ${
-                  activeTab === 'lessons'
-                    ? 'border-teal-500 text-teal-600'
-                    : 'border-transparent text-gray-600 hover:text-gray-900'
-                }`}
+                className={`flex-1 px-6 py-3 font-medium text-sm transition-colors border-b-2 ${activeTab === 'lessons'
+                  ? 'border-teal-500 text-teal-600'
+                  : 'border-transparent text-gray-600 hover:text-gray-900'
+                  }`}
               >
                 Lessons
               </button>
@@ -481,62 +477,62 @@ function CourseDetailModal({
             <div className="h-full overflow-y-auto p-6">
               {activeTab === 'overview' && (
                 <div className="space-y-6">
-                {/* Description */}
-                {course.description && (
-                  <div>
-                    <p className="text-gray-700 leading-relaxed text-sm whitespace-pre-line">
-                      {displayText}
-                    </p>
-                    {needsReadMore && (
-                      <button 
-                        onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
-                        className="text-teal-500 hover:text-teal-600 text-sm font-medium mt-2"
-                      >
-                        {isDescriptionExpanded ? 'Show less' : 'Read more'}
-                      </button>
-                    )}
-                  </div>
-                )}
-
-                {/* Tags */}
-                {course.tags && course.tags.length > 0 && (
-                  <div>
-                    <h3 className="text-sm font-bold text-gray-700 mb-3">Tags</h3>
-                    <div className="flex flex-wrap gap-2">
-                      {course.tags.map((tag, idx) => (
-                        <TagBadge key={idx} tag={tag} />
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Learning Resources */}
-                {course.resources.length > 0 && (
-                  <div>
-                    <h3 className="text-sm font-bold text-gray-700 mb-3">Learning Resources</h3>
-                    <div className="space-y-2">
-                      {course.resources.map((url, idx) => (
-                        <a
-                          key={idx}
-                          href={url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="flex items-start gap-3 p-3 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors group border border-blue-200"
+                  {/* Description */}
+                  {course.description && (
+                    <div>
+                      <p className="text-gray-700 leading-relaxed text-sm whitespace-pre-line">
+                        {displayText}
+                      </p>
+                      {needsReadMore && (
+                        <button
+                          onClick={() => setIsDescriptionExpanded(!isDescriptionExpanded)}
+                          className="text-teal-500 hover:text-teal-600 text-sm font-medium mt-2"
                         >
-                          <ExternalLink className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
-                          <span className="text-sm text-blue-700 group-hover:text-blue-800 break-all flex-1">{url}</span>
-                        </a>
-                      ))}
+                          {isDescriptionExpanded ? 'Show less' : 'Read more'}
+                        </button>
+                      )}
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {!course.description && course.resources.length === 0 && (
-                  <div className="text-center py-12 text-gray-500">
-                    <BookOpen className="w-12 h-12 text-gray-300 mx-auto mb-3" />
-                    <p className="text-sm">No overview information available</p>
-                  </div>
-                )}
+                  {/* Tags */}
+                  {course.tags && course.tags.length > 0 && (
+                    <div>
+                      <h3 className="text-sm font-bold text-gray-700 mb-3">Tags</h3>
+                      <div className="flex flex-wrap gap-2">
+                        {course.tags.map((tag, idx) => (
+                          <TagBadge key={idx} tag={tag} />
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Learning Resources */}
+                  {course.resources.length > 0 && (
+                    <div>
+                      <h3 className="text-sm font-bold text-gray-700 mb-3">Learning Resources asd</h3>
+                      <div className="space-y-2">
+                        {course.resources.map((url, idx) => (
+                          <a
+                            key={idx}
+                            href={url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-start gap-3 p-3 bg-blue-50 hover:bg-blue-100 rounded-lg transition-colors group border border-blue-200"
+                          >
+                            <ExternalLink className="w-4 h-4 text-blue-600 flex-shrink-0 mt-0.5" />
+                            <span className="text-sm text-blue-700 group-hover:text-blue-800 break-all flex-1">{url}</span>
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {!course.description && course.resources.length === 0 && (
+                    <div className="text-center py-12 text-gray-500">
+                      <BookOpen className="w-12 h-12 text-gray-300 mx-auto mb-3" />
+                      <p className="text-sm">No overview information available</p>
+                    </div>
+                  )}
                 </div>
               )}
 
@@ -570,19 +566,19 @@ function CourseDetailModal({
 export default function RoadmapCoursesPage() {
   const params = useParams();
   const router = useRouter();
-  
+
   const roadmapName = decodeURIComponent(params.roadmapName as string);
-  
+
   const [roadmapData, setRoadmapData] = useState<{ name: string; topics: Topic[] } | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string>("");
-  
+
   // Track completed courses
   const [completedCourses, setCompletedCourses] = useState<Set<number>>(new Set());
-  
+
   // Track expanded groups
   const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set(['mandatory']));
-  
+
   // Selected course for detail modal
   const [selectedCourse, setSelectedCourse] = useState<{
     name: string;
@@ -595,7 +591,7 @@ export default function RoadmapCoursesPage() {
 
   // Topic details cache
   const [topicDetails, setTopicDetails] = useState<Map<number, { description: string; resources: string[] }>>(new Map());
-  
+
   // Subtopic details cache
   const [subtopicDetails, setSubtopicDetails] = useState<Map<number, { description: string; resources: string[] }>>(new Map());
 
@@ -622,9 +618,9 @@ export default function RoadmapCoursesPage() {
     try {
       setIsLoading(true);
       setError("");
-      
+
       const response = await getRoadmapByName(roadmapName);
-      
+
       if (response.code === 200 && response.result) {
         setRoadmapData(response.result);
         fetchAllTopicDetails(response.result.topics);
@@ -645,7 +641,7 @@ export default function RoadmapCoursesPage() {
     console.log('🔵 fetchAllTopicDetails - topics:', topics);
     const detailsMap = new Map();
     const subtopicDetailsMap = new Map();
-    
+
     for (const topic of topics) {
       console.log(`🔵 Processing topic ${topic.id}: ${topic.name}, subtopics:`, topic.subtopics);
       try {
@@ -654,7 +650,7 @@ export default function RoadmapCoursesPage() {
           description: detail.description,
           resources: detail.resourceResponses.map(r => r.url).filter(url => url),
         });
-        
+
         // Fetch subtopic details
         if (topic.subtopics && topic.subtopics.length > 0) {
           for (const subtopic of topic.subtopics) {
@@ -677,10 +673,10 @@ export default function RoadmapCoursesPage() {
         console.error(`Error fetching detail for topic ${topic.id}:`, error);
       }
     }
-    
+
     console.log('🔵 Final detailsMap size:', detailsMap.size);
     console.log('🔵 Final subtopicDetailsMap size:', subtopicDetailsMap.size);
-    
+
     setTopicDetails(detailsMap);
     setSubtopicDetails(subtopicDetailsMap);
   };
@@ -693,7 +689,7 @@ export default function RoadmapCoursesPage() {
       } else {
         newSet.add(courseId);
       }
-      
+
       localStorage.setItem(`roadmap-courses-${roadmapName}`, JSON.stringify(Array.from(newSet)));
       return newSet;
     });
@@ -715,10 +711,10 @@ export default function RoadmapCoursesPage() {
     console.log('🔵 handleCourseClick - Topic:', topic);
     console.log('🔵 handleCourseClick - Topic subtopics:', topic.subtopics);
     console.log('🔵 handleCourseClick - subtopicDetails map size:', subtopicDetails.size);
-    
+
     const details = topicDetails.get(topic.id);
     const tags = topic.tags ? [topic.tags] : [];
-    
+
     // Add resources to subtopics
     const subtopicsWithResources = (topic.subtopics || []).map(subtopic => {
       const subDetails = subtopicDetails.get(subtopic.id);
@@ -728,9 +724,9 @@ export default function RoadmapCoursesPage() {
         resources: subDetails?.resources || [],
       };
     });
-    
+
     console.log('🔵 subtopicsWithResources:', subtopicsWithResources);
-    
+
     setSelectedCourse({
       name: topic.name,
       description: details?.description || "No description available",
@@ -795,7 +791,7 @@ export default function RoadmapCoursesPage() {
               <ArrowLeft className="w-4 h-4" />
               Back
             </button>
-            
+
             {/* Toggle Buttons */}
             <div className="flex items-center gap-2 bg-white/20 backdrop-blur-sm rounded-lg p-1">
               <button
@@ -819,7 +815,7 @@ export default function RoadmapCoursesPage() {
           <div className="mb-2">
             <span className="text-sm opacity-90">Curriculum</span>
           </div>
-          
+
           <h1 className="text-4xl font-bold mb-6 capitalize">{roadmapData.name}</h1>
 
           {/* Star Rating */}
