@@ -77,13 +77,13 @@ export const updateResume = async (resumeId: number, data: UpdateResumeData): Pr
   console.log('📝 ===== UPDATE RESUME API =====');
   console.log('Endpoint: PUT /api/resume/' + resumeId);
   console.log('Request Data:', JSON.stringify(data, null, 2));
-  
+
   try {
     // Try PUT first (standard update method)
     const response = await api.put(`/api/resume/${resumeId}`, data);
-    
+
     console.log('✅ Update Resume Response:', response.data);
-    
+
     // Handle both direct response and wrapped response
     return response.data.result || response.data;
   } catch (putError: any) {
@@ -99,12 +99,12 @@ export const updateResume = async (resumeId: number, data: UpdateResumeData): Pr
         throw patchError;
       }
     }
-    
+
     console.error('❌ Update Resume Error:', putError);
     console.error('Error Response:', putError.response?.data);
     console.error('Error Status:', putError.response?.status);
     console.error('Error Message:', putError.response?.data?.message || putError.message);
-    
+
     // If 400 error, log additional debugging info
     if (putError.response?.status === 400) {
       console.error('🔍 400 Bad Request - Possible causes:');
@@ -115,7 +115,7 @@ export const updateResume = async (resumeId: number, data: UpdateResumeData): Pr
       console.error('   - Resume ID not found:', resumeId);
       console.error('   - Backend validation error:', putError.response?.data?.message);
     }
-    
+
     throw putError;
   }
 };
@@ -253,7 +253,7 @@ export const addWorkExperience = async (data: WorkExperienceData): Promise<any> 
   console.log('📝 ===== ADD WORK EXPERIENCE API =====');
   console.log('Endpoint: POST /api/work-exp');
   console.log('Request Data:', JSON.stringify(data, null, 2));
-  
+
   try {
     const response = await api.post("/api/work-exp", data);
     console.log('✅ Response:', response.data);
@@ -320,7 +320,7 @@ export const addSkill = async (data: SkillData): Promise<any> => {
   console.log('📝 ===== ADD SKILL API =====');
   console.log('Endpoint: POST /api/skill');
   console.log('Request Data:', JSON.stringify(data, null, 2));
-  
+
   try {
     const response = await api.post("/api/skill", data);
     console.log('✅ Response:', response.data);
@@ -335,6 +335,35 @@ export const addSkill = async (data: SkillData): Promise<any> => {
 
 export const deleteSkill = async (resumeId: number, skillId: number): Promise<void> => {
   await api.delete(`/api/skill/${resumeId}/${skillId}`);
+};
+
+// ==================== ROADMAP API ====================
+
+/**
+ * Generate highlighted resume (roadmap)
+ * POST /roadmap/highlighted-resume
+ * 
+ * @param resumeId - The resume ID to generate roadmap for
+ * @returns The generated roadmap data
+ */
+export const generateHighlightedResume = async (resumeId: number): Promise<any> => {
+  console.log('📝 ===== GENERATE HIGHLIGHTED RESUME (ROADMAP) =====');
+  console.log('Endpoint: POST /roadmap/highlighted-resume');
+  console.log('Resume ID:', resumeId);
+
+  try {
+    const response = await api.post('/api/roadmap/highlighted-resume', null, {
+      params: { resumeId }
+    });
+
+    console.log('✅ Roadmap generated successfully:', response.data);
+    return response.data.result || response.data;
+  } catch (error: any) {
+    console.error('❌ Error generating roadmap:', error);
+    console.error('Error response:', error.response?.data);
+    console.error('Error status:', error.response?.status);
+    throw error;
+  }
 };
 
 // ==================== RESUME STATUS API ====================

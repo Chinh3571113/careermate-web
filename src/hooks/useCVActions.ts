@@ -4,8 +4,8 @@ import toast from "react-hot-toast";
 import { CV } from "@/services/cvService";
 import { useCVStore } from "@/stores/cvStore";
 import { syncCVWithUpdates } from "@/utils/syncCV";
-import { 
-  setResumeStatus, 
+import {
+  setResumeStatus,
   updateResumeType,
   updateResume,
   addEducation,
@@ -78,14 +78,14 @@ export const useCVActions = (
   const [showPreview, setShowPreview] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [selectedCV, setSelectedCV] = useState<CV | null>(null);
-  
+
   // Sync dialog states
   const [showSyncSummaryDialog, setShowSyncSummaryDialog] = useState(false);
   const [showSyncConfirmDialog, setShowSyncConfirmDialog] = useState(false);
   const [parsedCVData, setParsedCVData] = useState<ParsedCV | null>(null);
   const [syncingCV, setSyncingCV] = useState<CV | null>(null);
   const [isSyncing, setIsSyncing] = useState(false);
-  
+
   // Draft conversion dialog states
   const [showDraftConversionConfirm, setShowDraftConversionConfirm] = useState(false);
   const [showSwitchCVConfirm, setShowSwitchCVConfirm] = useState(false);
@@ -101,7 +101,7 @@ export const useCVActions = (
   const currentEditingResumeId = useCVStore((state) => state.currentEditingResumeId);
   const setUntypedResumeId = useCVStore((state) => state.setUntypedResumeId);
   const clearUntypedResumeId = useCVStore((state) => state.clearUntypedResumeId);
-  
+
   /**
    * TEMPORARY: Set the current editing resume ID in Zustand store.
    * This allows cm-profile to know which resume the user was working on
@@ -147,10 +147,10 @@ export const useCVActions = (
 
   const handleSetDefault = useCallback(async (cv: CV) => {
     console.log('⭐ handleSetDefault called for CV:', cv.id, cv.name);
-    
+
     // Get resumeId from CV (id should be the resumeId)
     const resumeId = parseInt(cv.id, 10);
-    
+
     if (isNaN(resumeId)) {
       console.error('❌ Invalid resume ID:', cv.id);
       toast.error('Invalid CV ID');
@@ -197,7 +197,7 @@ export const useCVActions = (
 
     // Store the CV being synced
     setSyncingCV(cv);
-    
+
     /**
      * TEMPORARY: Set this resume as the current editing resume.
      * This allows cm-profile to display this resume when user navigates there.
@@ -240,11 +240,11 @@ export const useCVActions = (
         cv.name,
         (update) => {
           console.log("📥 Python sync update:", update);
-          
+
           if (update.taskId) {
             toast.loading(`Processing (Task: ${update.taskId.slice(0, 8)}...)`, { id: "sync-cv" });
           }
-          
+
           if (update.status === "processing") {
             toast.loading("AI is parsing your CV...", { id: "sync-cv" });
           }
@@ -253,7 +253,7 @@ export const useCVActions = (
 
       console.log("✅ Python parsing completed:", parsedData);
       toast.dismiss("sync-cv");
-      
+
       // Store parsed data and show summary dialog for review/edit
       setParsedCVData(parsedData);
       setShowSyncSummaryDialog(true);
@@ -283,7 +283,7 @@ export const useCVActions = (
   // Creates a NEW resume with the parsed data instead of updating existing
   const handleConfirmSync = useCallback(async (editedData: ParsedCV) => {
     console.log("✅ User confirmed sync with edited data:", editedData);
-    
+
     if (!syncingCV) {
       toast.error("No CV selected for sync");
       return;
@@ -301,27 +301,27 @@ export const useCVActions = (
       // STEP 1: Create new resume with aboutMe (no type - will be converted to DRAFT later)
       // ========================================
       let newResumeId: number;
-      
+
       try {
         console.log("📝 Creating new resume with About Me:", normalizedData.summary);
-        
+
         // Create resume - backend will set default type
         const createResponse = await createResume({
           aboutMe: normalizedData.summary || "",
           isActive: false, // Don't set as active by default
         });
-        
+
         newResumeId = createResponse.resumeId;
         console.log("✅ New resume created with ID:", newResumeId);
-        
+
         if (!newResumeId) {
           throw new Error("Failed to get resumeId from create response");
         }
-        
+
         // Store the untyped resume ID - will prompt user to convert to DRAFT when switching CVs
         setUntypedResumeId(String(newResumeId));
         console.log("📝 Stored untyped resume ID:", newResumeId);
-        
+
       } catch (err) {
         console.error("❌ Failed to create new resume:", err);
         toast.error("Failed to create new resume", { id: "save-profile" });
@@ -428,19 +428,19 @@ export const useCVActions = (
             results.skills.failed++;
             continue;
           }
-          
+
           // Check if skill already exists (same name AND same type)
           const isDuplicate = existingSkills.some(
-            existing => 
+            existing =>
               existing.skillName === skill.skillName.toLowerCase().trim() &&
               existing.skillType === skill.skillType.toLowerCase()
           );
-          
+
           if (isDuplicate) {
             console.log(`⏭️ Skipping duplicate skill: ${skill.skillName} (${skill.skillType})`);
             continue; // Skip duplicate, don't count as failed
           }
-          
+
           await addSkill({
             resumeId,
             skillType: skill.skillType, // "core" or "soft" - required
@@ -481,7 +481,7 @@ export const useCVActions = (
             results.languages.failed++;
             continue;
           }
-          
+
           await addForeignLanguage({
             resumeId,
             language: lang.language,
@@ -533,6 +533,17 @@ export const useCVActions = (
         console.log("✅ Data refreshed from API successfully");
       }
 
+      // 🎯 Generate highlighted resume (roadmap) after all skills are added
+      try {
+        console.log("🎯 Generating highlighted resume (roadmap)...");
+        const { generateHighlightedResume } = await import('@/lib/resume-api');
+        await generateHighlightedResume(resumeId);
+        console.log("✅ Highlighted resume generated successfully");
+      } catch (roadmapError: any) {
+        console.error("⚠️  Failed to generate roadmap (non-blocking):", roadmapError);
+        // Don't block the flow if roadmap generation fails
+      }
+
       // Set the newly created resume as the current editing resume
       // This ensures cm-profile will display this resume (highest priority)
       setCurrentEditingResume(String(resumeId));
@@ -557,7 +568,7 @@ export const useCVActions = (
   // Confirm draft conversion (WEB → DRAFT)
   const handleConfirmDraftConversion = useCallback(async () => {
     console.log("✅ User confirmed draft conversion");
-    
+
     if (!syncingCV) {
       toast.error("No CV selected");
       return;
@@ -576,6 +587,17 @@ export const useCVActions = (
       // Call API to change type from WEB to DRAFT
       await updateResumeType(resumeId, "DRAFT");
 
+      // 🚀 Generate highlighted resume (roadmap) after draft conversion
+      try {
+        console.log("🎯 Generating highlighted resume (roadmap)...");
+        const { generateHighlightedResume } = await import('@/lib/resume-api');
+        await generateHighlightedResume(resumeId);
+        console.log("✅ Highlighted resume generated successfully");
+      } catch (roadmapError: any) {
+        console.error("⚠️  Failed to generate roadmap (non-blocking):", roadmapError);
+        // Don't block the flow if roadmap generation fails
+      }
+
       // 🚀 Refresh data from API to get latest state
       if (refresh) {
         console.log("🔄 Refreshing data from API after draft conversion...");
@@ -584,7 +606,7 @@ export const useCVActions = (
       } else {
         // Fallback: Update local state if no refresh callback
         const updatedCV = { ...syncingCV, type: "DRAFT" };
-        
+
         // Move from builtCVs to draftCVs
         setBuiltCVs(prev => prev.filter(cv => cv.id !== syncingCV.id));
         setDraftCVs(prev => [...prev, updatedCV as CV]);
@@ -638,7 +660,7 @@ export const useCVActions = (
 
       console.log("✅ Python parsing completed:", parsedData);
       toast.dismiss("sync-cv");
-      
+
       setParsedCVData(parsedData);
       setShowSyncSummaryDialog(true);
       setIsSyncing(false);
@@ -670,37 +692,37 @@ export const useCVActions = (
 
     try {
       toast.loading("Converting resume to Draft...", { id: "convert-to-draft" });
-      
+
       const resumeId = parseInt(untypedResumeId, 10);
       console.log("📝 Converting untyped resume to DRAFT:", resumeId);
-      
+
       // Call API: PATCH /api/resume/{resumeId}/type/DRAFT
       await updateResumeType(resumeId, "DRAFT");
-      
+
       console.log("✅ Resume converted to DRAFT successfully");
       toast.success("Resume saved as Draft!", { id: "convert-to-draft" });
-      
+
       // Clear the untyped resume ID
       clearUntypedResumeId();
-      
+
       // Close dialog FIRST
       handleCloseDraftConversionConfirm();
-      
+
       // Refresh data
       if (refresh) {
         await refresh();
       }
-      
+
       // Continue with pending action - call sync logic DIRECTLY (bypass checkBeforeSwitchCV)
       if (actionToPerform) {
         const { type, cv } = actionToPerform;
-        
+
         if (type === 'sync') {
           console.log("🔄 Continuing sync after DRAFT conversion (direct call)");
           // Set current editing resume
           setSyncingCV(cv);
           setCurrentEditingResume(cv.id);
-          
+
           // Call sync logic directly based on CV source
           if (cv.source === "builder") {
             // Builder CV - show sync confirm dialog
@@ -721,7 +743,7 @@ export const useCVActions = (
           router.push(`/candidate/cm-profile?resumeId=${cv.id}`);
         }
       }
-      
+
     } catch (err: any) {
       console.error("❌ Failed to convert resume to DRAFT:", err);
       toast.error("Failed to save as Draft", { id: "convert-to-draft" });
@@ -731,26 +753,26 @@ export const useCVActions = (
   // Skip converting to DRAFT (just proceed with pending action)
   const handleSkipConvertToDraft = useCallback(() => {
     console.log("⏭️ Skipping DRAFT conversion");
-    
+
     // Capture pending action BEFORE clearing state
     const actionToPerform = pendingAction ? { ...pendingAction } : null;
-    
+
     // Clear the untyped resume ID without converting
     clearUntypedResumeId();
-    
+
     // Close dialog FIRST
     handleCloseDraftConversionConfirm();
-    
+
     // Continue with pending action - call sync logic DIRECTLY (bypass checkBeforeSwitchCV)
     if (actionToPerform) {
       const { type, cv } = actionToPerform;
-      
+
       if (type === 'sync') {
         console.log("🔄 Continuing sync after skip (direct call)");
         // Set current editing resume
         setSyncingCV(cv);
         setCurrentEditingResume(cv.id);
-        
+
         // Call sync logic directly based on CV source
         if (cv.source === "builder") {
           setShowSyncConfirmDialog(true);
@@ -774,7 +796,7 @@ export const useCVActions = (
   // ========================================
   // Switch CV Confirmation Handlers (for WEB/DRAFT CVs)
   // ========================================
-  
+
   // Close switch CV confirmation dialog
   const handleCloseSwitchCVConfirm = useCallback(() => {
     setShowSwitchCVConfirm(false);
@@ -784,11 +806,11 @@ export const useCVActions = (
   // Confirm switch to another CV (for WEB/DRAFT)
   const handleConfirmSwitchCV = useCallback(() => {
     console.log("✅ User confirmed switch to another CV");
-    
+
     if (pendingAction) {
       const { type, cv } = pendingAction;
       handleCloseSwitchCVConfirm();
-      
+
       if (type === 'sync') {
         // Continue to sync - call the actual sync logic
         setSyncingCV(cv);
@@ -811,12 +833,12 @@ export const useCVActions = (
   // Handle Edit CV action with confirmation check
   const handleEditCV = useCallback((cv: CV) => {
     console.log("✏️ handleEditCV called for CV:", cv.id, cv.name);
-    
+
     // Check if we need to show confirmation dialog
     if (checkBeforeSwitchCV('edit', cv)) {
       return; // Action blocked, dialog will be shown
     }
-    
+
     // No blocking, proceed with edit
     setCurrentEditingResume(cv.id);
     router.push(`/candidate/cm-profile?resumeId=${cv.id}`);
@@ -855,7 +877,7 @@ export const useCVActions = (
   const handleDelete = useCallback(async (cvId: string) => {
     // Find the CV to delete
     const cvToDeleteItem = [...uploadedCVs, ...builtCVs, ...draftCVs].find(cv => cv.id === cvId);
-    
+
     if (!cvToDeleteItem) {
       toast.error('CV not found');
       return;
@@ -878,7 +900,7 @@ export const useCVActions = (
 
     const cvId = cvToDelete.id;
     const resumeId = parseInt(cvId, 10);
-    
+
     if (isNaN(resumeId)) {
       console.error('❌ Invalid resume ID:', cvId);
       toast.error('Invalid CV ID');
@@ -888,10 +910,10 @@ export const useCVActions = (
 
     try {
       toast.loading('Deleting CV...', { id: 'delete-cv' });
-      
+
       // Call API to delete resume
       await resumeService.deleteResume(resumeId);
-      
+
       // Update local state
       setUploadedCVs(prev => prev.filter(cv => cv.id !== cvId));
       setBuiltCVs(prev => prev.filter(cv => cv.id !== cvId));
