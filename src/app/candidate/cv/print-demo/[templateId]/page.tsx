@@ -529,6 +529,19 @@ function VintageTemplate({ data }: { data: CVData }) {
             ))}
           </section>
         )}
+
+        {/* Awards */}
+        {data.awards && data.awards.length > 0 && (
+          <section className="vintage-section">
+            <h2 className="vintage-section-title">Awards</h2>
+            {data.awards.map((award, index) => (
+              <div key={index} className="vintage-cert-item">
+                <p className="vintage-cert-name">{award.name}</p>
+                <p className="vintage-cert-issuer">{award.issuer} • {award.date}</p>
+              </div>
+            ))}
+          </section>
+        )}
       </div>
     </div>
   );

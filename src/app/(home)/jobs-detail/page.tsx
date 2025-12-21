@@ -1003,7 +1003,7 @@ ${jobData.recruiterInfo?.about || 'N/A'}
                           {/* NEW: chips ngay dưới tiêu đề */}
                           <div className="flex flex-wrap gap-2.5 mb-4">
                             {selectedJob.salaryRange && (
-                              <span className="salary-badge inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-bold shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200">
+                              <span className="salary-badge inline-flex items-center gap-1.5 px-4 py-2 rounded-lg bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-semibold shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200" style={{ fontFamily: 'system-ui, -apple-system, sans-serif' }}>
                                 <RiMoneyDollarCircleLine size={18} />
                                 {selectedJob.salaryRange}
                               </span>
@@ -1155,7 +1155,7 @@ ${jobData.recruiterInfo?.about || 'N/A'}
                     >
                       <div className="p-6">
                         {/* NEW: meta bar tóm tắt compensation */}
-                        {(selectedJob.salaryRange ||
+                        {/* {(selectedJob.salaryRange ||
                           selectedJob.benefitSummary?.length) && (
                             <div className="mb-6 rounded-lg border border-emerald-200 bg-gradient-to-r from-emerald-50 to-green-50 p-4 shadow-sm">
                               <ul className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm text-gray-800">
@@ -1172,7 +1172,7 @@ ${jobData.recruiterInfo?.about || 'N/A'}
                                   ))}
                               </ul>
                             </div>
-                          )}
+                          )} */}
 
                         <div className="grid md:grid-cols-2 gap-6 mb-6">
                           <div>
@@ -1197,35 +1197,35 @@ ${jobData.recruiterInfo?.about || 'N/A'}
                               )}
                             </div>
 
-                            <h3 className="font-semibold text-gray-700 mb-3">
+                            <h3 className="font-semibold text-gray-900 mb-3">
                               Job Expertise:
                             </h3>
-                            <p className="text-sm text-gray-700 mb-4 ml-2">
+                            <p className="text-sm text-gray-900 mb-4 ml-2 font-medium">
                               {selectedJob.expertise}
                             </p>
 
-                            <h3 className="font-semibold text-gray-700 mb-3">
+                            {/* <h3 className="font-semibold text-gray-900 mb-3">
                               Job Domain:
                             </h3>
                             <div className="flex flex-wrap gap-2 mb-4">
                               <span className="px-4 py-1 bg-white border border-gray-300 text-gray-700 text-sm rounded-full shadow-sm">
                                 {selectedJob.company}
                               </span>
-                            </div>
+                            </div> */}
                           </div>
 
                           <div>
                             <h3 className="font-semibold text-gray-900 mb-4">
                               Why you'll love working here
                             </h3>
-                            <ul className="space-y-3 text-sm">
+                            <ul className="space-y-3 text-sm ml-4">
                               {selectedJob.highlights.map((item, index) => (
                                 <li
                                   key={index}
                                   className="flex items-start gap-2"
                                 >
-                                  <span className="w-1.5 h-1.5 bg-red-500 rounded-full mt-2 flex-shrink-0"></span>
-                                  <span className="text-gray-700">{item}</span>
+                                  <span className="w-1.5 h-1.5 bg-gray-900 rounded-full mt-2 flex-shrink-0"></span>
+                                  <span className="text-gray-900">{item}</span>
                                 </li>
                               ))}
                             </ul>
@@ -1241,13 +1241,13 @@ ${jobData.recruiterInfo?.about || 'N/A'}
                                   Compensation & Benefits
                                 </h3>
                               </div>
-                              <ul className="space-y-2 text-sm text-gray-700">
+                              <ul className="space-y-2 text-sm text-gray-900 ml-4">
                                 {selectedJob.benefits.map((b, i) => (
                                   <li
                                     key={i}
                                     className="flex items-start gap-2"
                                   >
-                                    <span className="w-1.5 h-1.5 bg-emerald-500 rounded-full mt-2 flex-shrink-0"></span>
+                                    <span className="w-1.5 h-1.5 bg-gray-900 rounded-full mt-2 flex-shrink-0"></span>
                                     <span>{b}</span>
                                   </li>
                                 ))}

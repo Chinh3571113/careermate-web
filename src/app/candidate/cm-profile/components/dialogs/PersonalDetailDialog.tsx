@@ -121,7 +121,7 @@ export default function PersonalDetailDialog({
                     <DialogTitle>Personal Details</DialogTitle>
                 </DialogHeader>
 
-                <div className="space-y-4">
+                <div className="space-y-3">
                     {/* Avatar Upload Section */}
                     <div className="flex items-center gap-6 pb-4 border-b border-gray-200">
                         <div className="relative">

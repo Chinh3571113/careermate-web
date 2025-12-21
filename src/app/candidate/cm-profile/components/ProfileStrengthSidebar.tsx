@@ -1,10 +1,13 @@
-import { Plus, ChevronDown, ChevronUp } from "lucide-react";
+import { SquarePlus, ChevronDown, ChevronUp } from "lucide-react";
 import { ProfileProgressCircle } from "@/components/ui/profile-progress-circle";
 
 interface SectionCompletion {
+    aboutMe: { hasAny: boolean };
     workExperience: { count: number; maxCount: number }; // max 3
     education: { hasAny: boolean };
     skills: { totalCount: number; maxCount: number }; // max 10 total skills
+    languages: { hasAny: boolean };
+    projects: { hasAny: boolean };
     certificates: { hasAny: boolean };
     awards: { hasAny: boolean };
 }
@@ -16,9 +19,12 @@ interface ProfileStrengthSidebarProps {
     onPreviewClick?: () => void;
     sectionCompletion?: SectionCompletion;
     // Dialog open handlers
-    onAddWorkExperience?: () => void;
+    onAddAboutMe?: () => void;
     onAddEducation?: () => void;
+    onAddWorkExperience?: () => void;
     onAddSkills?: () => void;
+    onAddLanguages?: () => void;
+    onAddProjects?: () => void;
     onAddCertificates?: () => void;
     onAddAwards?: () => void;
 }
@@ -52,9 +58,12 @@ export default function ProfileStrengthSidebar({
     onToggleSection,
     onPreviewClick,
     sectionCompletion,
+    onAddAboutMe,
     onAddWorkExperience,
     onAddEducation,
     onAddSkills,
+    onAddLanguages,
+    onAddProjects,
     onAddCertificates,
     onAddAwards
 }: ProfileStrengthSidebarProps) {
@@ -63,22 +72,28 @@ export default function ProfileStrengthSidebar({
 
     // Calculate which sections are incomplete
     const incompleteSections = {
+        aboutMe: !sectionCompletion || !sectionCompletion.aboutMe.hasAny,
         workExperience: !sectionCompletion || sectionCompletion.workExperience.count < sectionCompletion.workExperience.maxCount,
         education: !sectionCompletion || !sectionCompletion.education.hasAny,
         skills: !sectionCompletion || sectionCompletion.skills.totalCount < sectionCompletion.skills.maxCount,
+        languages: !sectionCompletion || !sectionCompletion.languages.hasAny,
+        projects: !sectionCompletion || !sectionCompletion.projects.hasAny,
         certificates: !sectionCompletion || !sectionCompletion.certificates.hasAny,
         awards: !sectionCompletion || !sectionCompletion.awards.hasAny
     };
 
-    // Primary items to show (collapsed)
+    // Primary items to show (collapsed) - ordered as they appear in UI from top to bottom
     const primaryItems = [
-        { key: 'workExperience', label: 'Add Work Experience', onClick: onAddWorkExperience, show: incompleteSections.workExperience },
+        { key: 'aboutMe', label: 'Add About Me', onClick: onAddAboutMe, show: incompleteSections.aboutMe },
         { key: 'education', label: 'Add Education', onClick: onAddEducation, show: incompleteSections.education },
-        { key: 'skills', label: 'Add Skills', onClick: onAddSkills, show: incompleteSections.skills },
+        { key: 'workExperience', label: 'Add Work Experience', onClick: onAddWorkExperience, show: incompleteSections.workExperience },
     ].filter(item => item.show);
 
-    // Secondary items (expanded)
+    // Secondary items (expanded) - ordered as they appear in UI from top to bottom
     const secondaryItems = [
+        { key: 'skills', label: 'Add Skills', onClick: onAddSkills, show: incompleteSections.skills },
+        { key: 'projects', label: 'Add Highlight Project', onClick: onAddProjects, show: incompleteSections.projects },
+        { key: 'languages', label: 'Add Foreign Language', onClick: onAddLanguages, show: incompleteSections.languages },
         { key: 'certificates', label: 'Add Certificates', onClick: onAddCertificates, show: incompleteSections.certificates },
         { key: 'awards', label: 'Add Awards', onClick: onAddAwards, show: incompleteSections.awards },
     ].filter(item => item.show);
@@ -95,8 +110,8 @@ export default function ProfileStrengthSidebar({
 
                 {/* Progress Circle - Using shared component */}
                 <div className="flex justify-center mb-6">
-                    <ProfileProgressCircle 
-                        completion={profileCompletion} 
+                    <ProfileProgressCircle
+                        completion={profileCompletion}
                         size="md"
                     />
                 </div>
@@ -125,7 +140,7 @@ export default function ProfileStrengthSidebar({
                                 onClick={item.onClick}
                                 className="w-full text-left flex items-center gap-2 text-blue-600 hover:text-blue-700 text-sm font-medium transition-colors"
                             >
-                                <Plus className="w-4 h-4" />
+                                <SquarePlus className="w-4 h-4" />
                                 <span>{item.label}</span>
                             </button>
                         ))}
@@ -137,7 +152,7 @@ export default function ProfileStrengthSidebar({
                                 onClick={item.onClick}
                                 className="w-full text-left flex items-center gap-2 text-blue-600 hover:text-blue-700 text-sm font-medium transition-colors"
                             >
-                                <Plus className="w-4 h-4" />
+                                <SquarePlus className="w-4 h-4" />
                                 <span>{item.label}</span>
                             </button>
                         ))}

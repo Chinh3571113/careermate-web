@@ -7,7 +7,7 @@ export default function HomeBg({ children }: { children: React.ReactNode }) {
   const isHome = pathname === "/";
 
   return (
-    <div className={`${isHome ? "bg-[#f9fafb]" : "bg-transparent"} min-h-screen`}>
+    <div className={`${isHome ? "bg-[#f9fafb]" : "bg-transparent"} min-h-screen flex flex-col`}>
       {children}
     </div>
   );

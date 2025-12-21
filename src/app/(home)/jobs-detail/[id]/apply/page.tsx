@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 import { useRouter, useParams } from "next/navigation";
 import { FiUpload, FiFile, FiChevronDown, FiCheck } from "react-icons/fi";
 import { submitJobApplication } from "@/lib/job-apply-api";
-import { fetchJobPostingById, transformJobPosting } from "@/lib/job-api";
+import { fetchJobPostingById, transformJobPosting, submitApplyFeedback } from "@/lib/job-api";
 import { useAuthStore } from "@/store/use-auth-store";
 import { uploadJobApplicationCV } from "@/lib/firebase-upload";
 import { resumeService, Resume } from "@/services/resumeService";
@@ -272,6 +272,14 @@ export default function JobApplicationPage() {
       return;
     }
 
+    // ✅ Validate candidateId is loaded (like save/like buttons do)
+    if (!candidateId) {
+      toast.error("Loading your profile... Please try again in a moment.");
+      // Try to fetch profile again
+      await fetchCandidateProfile();
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -302,15 +310,14 @@ export default function JobApplicationPage() {
       }
 
       // Prepare application data
-      const finalCandidateId = candidateId || 1;
-
+      // ✅ Don't use fallback - require real candidateId like save/like buttons
       if (!candidateId) {
-        console.warn("⚠️  CandidateId not loaded from profile, using fallback value 1");
+        throw new Error("Candidate ID not found. Please login again.");
       }
 
       const applicationData = {
         jobPostingId: parseInt(jobId),
-        candidateId: finalCandidateId,
+        candidateId: candidateId,
         cvFilePath: cvFilePath,
         fullName: formData.fullName.trim(),
         phoneNumber: formData.phoneNumber.trim(),
@@ -323,7 +330,7 @@ export default function JobApplicationPage() {
       console.log("🔍 ===== PREPARING TO SUBMIT APPLICATION =====");
       console.log("🔍 Job ID:", jobId);
       console.log("🔍 User ID (from JWT):", user.id);
-      console.log("🔍 Candidate ID (from profile API):", finalCandidateId);
+      console.log("🔍 Candidate ID (from profile API):", candidateId);
       console.log("🔍 CV File Path:", cvFilePath);
 
       // Validate required fields
@@ -342,6 +349,19 @@ export default function JobApplicationPage() {
       const response = await submitJobApplication(applicationData);
 
       toast.success("Application submitted successfully!", { id: "submit-app" });
+
+      // ✅ Submit apply feedback - AWAIT like save/like buttons do
+      const jobIdNumber = parseInt(jobId);
+      
+      try {
+        console.log('📝 Submitting apply feedback:', { candidateId, jobIdNumber });
+        await submitApplyFeedback(candidateId, jobIdNumber);
+        console.log('✅ Apply feedback submitted successfully');
+      } catch (error: any) {
+        // Log error but don't block user flow - this is background tracking
+        console.error("❌ Failed to submit apply feedback:", error);
+        console.error("❌ Error details:", error.response?.data || error.message);
+      }
 
       // Navigate to success page with job info (no extra API call needed on success page)
       const successParams = new URLSearchParams({

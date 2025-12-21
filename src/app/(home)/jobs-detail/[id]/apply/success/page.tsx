@@ -184,7 +184,7 @@ export default function ApplicationSuccessPage() {
 
           {applicationId && (
             <p className="text-xs text-gray-400 mb-4">
-              Application ID: #{applicationId}
+              {/* Application ID: #{applicationId} */}
             </p>
           )}
         </div>

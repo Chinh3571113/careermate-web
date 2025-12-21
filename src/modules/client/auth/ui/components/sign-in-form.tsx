@@ -156,12 +156,12 @@ export default function SignInForm({
                         </label>
                       </div>
                       <div>
-                        <a
-                          href="#0"
+                        <Link
+                          href="/change-password"
                           className="text-primary text-sm font-medium hover:underline"
                         >
                           Forgot Password?
-                        </a>
+                        </Link>
                       </div>
                     </div>
                     <div className="mb-6">

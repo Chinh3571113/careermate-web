@@ -77,24 +77,55 @@ export const getCandidateInvoiceHistory = async (
   page = 0,
   size = 20
 ): Promise<PageResponse<InvoiceListItem>> => {
-  const response = await api.get<InvoiceHistoryResponse>(
-    "/api/candidate-invoice/my-invoices",
-    { params: { page, size } }
-  );
+  try {
+    console.log('📡 Fetching invoice history with params:', { page, size });
+    
+    const response = await api.get<InvoiceHistoryResponse>(
+      "/api/candidate-invoice/my-invoices",
+      { params: { page, size } }
+    );
 
-  if (response.data.code === 200) {
-    return response.data.result;
+    console.log('✅ Invoice history response:', response.data);
+
+    if (response.data.code === 200) {
+      return response.data.result;
+    }
+
+    console.warn('⚠️ Unexpected response code:', response.data.code);
+    return {
+      content: [],
+      number: page,
+      size,
+      totalElements: 0,
+      totalPages: 0,
+      first: true,
+      last: true,
+    };
+  } catch (error: any) {
+    console.error('❌ Error fetching invoice history:', error);
+    console.error('Error details:', {
+      status: error.response?.status,
+      statusText: error.response?.statusText,
+      data: error.response?.data,
+      message: error.message,
+    });
+    
+    // If 400 error, might be endpoint issue - return empty instead of throwing
+    if (error.response?.status === 400) {
+      console.warn('⚠️ 400 Bad Request - endpoint might not exist or params invalid');
+      return {
+        content: [],
+        number: page,
+        size,
+        totalElements: 0,
+        totalPages: 0,
+        first: true,
+        last: true,
+      };
+    }
+    
+    throw error;
   }
-
-  return {
-    content: [],
-    number: page,
-    size,
-    totalElements: 0,
-    totalPages: 0,
-    first: true,
-    last: true,
-  };
 };
 
 /**

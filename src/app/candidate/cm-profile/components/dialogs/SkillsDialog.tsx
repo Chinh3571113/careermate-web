@@ -4,6 +4,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Trash2, X } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { searchSkills, type JDSkill } from "@/lib/jd-skill-api";
 
 interface SkillItem {
     id: string;
@@ -42,6 +44,62 @@ export default function SkillsDialog({
     onCancel,
     isEditMode = false
 }: SkillsDialogProps) {
+    // Autocomplete state for core skills
+    const [suggestedSkills, setSuggestedSkills] = useState<JDSkill[]>([]);
+    const [showSuggestions, setShowSuggestions] = useState(false);
+    const [isLoadingSkills, setIsLoadingSkills] = useState(false);
+    const inputRef = useRef<HTMLInputElement>(null);
+    const suggestionsRef = useRef<HTMLDivElement>(null);
+
+    // Search skills when user types (only for core skills)
+    useEffect(() => {
+        if (skillType !== 'core' || !selectedSkill || selectedSkill.trim().length < 2) {
+            setSuggestedSkills([]);
+            setShowSuggestions(false);
+            return;
+        }
+
+        const searchTimer = setTimeout(async () => {
+            setIsLoadingSkills(true);
+            try {
+                const results = await searchSkills(selectedSkill);
+                setSuggestedSkills(results);
+                setShowSuggestions(results.length > 0);
+            } catch (error) {
+                console.error('Error fetching skills:', error);
+                setSuggestedSkills([]);
+            } finally {
+                setIsLoadingSkills(false);
+            }
+        }, 300); // Debounce 300ms
+
+        return () => clearTimeout(searchTimer);
+    }, [selectedSkill, skillType]);
+
+    // Close suggestions when clicking outside
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (
+                suggestionsRef.current &&
+                !suggestionsRef.current.contains(event.target as Node) &&
+                inputRef.current &&
+                !inputRef.current.contains(event.target as Node)
+            ) {
+                setShowSuggestions(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
+    // Handle selecting a suggested skill
+    const handleSelectSuggestion = (skillName: string) => {
+        onSelectedSkillChange(skillName);
+        setShowSuggestions(false);
+        setSuggestedSkills([]);
+    };
+
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto bg-white">
@@ -70,12 +128,47 @@ export default function SkillsDialog({
                         </Label>
 
                         <div className="flex space-x-2">
-                            <Input
-                                placeholder="Enter skill"
-                                value={selectedSkill}
-                                onChange={e => onSelectedSkillChange(e.target.value)}
-                                className="flex-1"
-                            />
+                            <div className="flex-1 relative">
+                                <Input
+                                    ref={inputRef}
+                                    placeholder="Enter skill"
+                                    value={selectedSkill}
+                                    onChange={e => onSelectedSkillChange(e.target.value)}
+                                    onFocus={() => {
+                                        if (skillType === 'core' && suggestedSkills.length > 0) {
+                                            setShowSuggestions(true);
+                                        }
+                                    }}
+                                    className="flex-1"
+                                />
+                                
+                                {/* Autocomplete Dropdown for Core Skills */}
+                                {skillType === 'core' && showSuggestions && (
+                                    <div
+                                        ref={suggestionsRef}
+                                        className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+                                    >
+                                        {isLoadingSkills ? (
+                                            <div className="px-4 py-3 text-sm text-gray-500 text-center">
+                                                <div className="animate-spin inline-block w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full mr-2"></div>
+                                                Searching skills...
+                                            </div>
+                                        ) : suggestedSkills.length > 0 ? (
+                                            <ul className="py-1">
+                                                {suggestedSkills.map((skill) => (
+                                                    <li
+                                                        key={skill.id}
+                                                        className="px-4 py-2 hover:bg-blue-50 cursor-pointer text-sm text-gray-900 transition-colors"
+                                                        onClick={() => handleSelectSuggestion(skill.name)}
+                                                    >
+                                                        {skill.name}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        ) : null}
+                                    </div>
+                                )}
+                            </div>
                             {skillType === "core" && (
                                 <Select value={skillExperience} onValueChange={onSkillExperienceChange}>
                                     <SelectTrigger className="w-48">
