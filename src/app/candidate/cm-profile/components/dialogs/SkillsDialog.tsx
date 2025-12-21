@@ -3,9 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Trash2, X } from "lucide-react";
+import { Plus, X } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
-import { searchSkills, type JDSkill } from "@/lib/jd-skill-api";
+import { fetchSkillSuggestions, type SkillSuggestion } from "@/services/skillService";
 
 interface SkillItem {
     id: string;
@@ -44,36 +44,58 @@ export default function SkillsDialog({
     onCancel,
     isEditMode = false
 }: SkillsDialogProps) {
-    // Autocomplete state for core skills
-    const [suggestedSkills, setSuggestedSkills] = useState<JDSkill[]>([]);
+    const [skillSuggestions, setSkillSuggestions] = useState<SkillSuggestion[]>([]);
     const [showSuggestions, setShowSuggestions] = useState(false);
-    const [isLoadingSkills, setIsLoadingSkills] = useState(false);
+    const [isLoadingSuggestions, setIsLoadingSuggestions] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
     const suggestionsRef = useRef<HTMLDivElement>(null);
 
-    // Search skills when user types (only for core skills)
+    // Fetch skill suggestions from API
     useEffect(() => {
-        if (skillType !== 'core' || !selectedSkill || selectedSkill.trim().length < 2) {
-            setSuggestedSkills([]);
-            setShowSuggestions(false);
-            return;
-        }
+        console.log('🔄 [SkillsDialog] useEffect triggered:', {
+            selectedSkill,
+            skillType,
+            length: selectedSkill?.length,
+            type: typeof selectedSkill
+        });
 
-        const searchTimer = setTimeout(async () => {
-            setIsLoadingSkills(true);
-            try {
-                const results = await searchSkills(selectedSkill);
-                setSuggestedSkills(results);
-                setShowSuggestions(results.length > 0);
-            } catch (error) {
-                console.error('Error fetching skills:', error);
-                setSuggestedSkills([]);
-            } finally {
-                setIsLoadingSkills(false);
+        const fetchSkills = async () => {
+            // Trim whitespace
+            const trimmedSkill = (selectedSkill || '').trim();
+
+            console.log('🔍 [SkillsDialog] Validation check:', {
+                selectedSkill,
+                trimmedSkill,
+                trimmedLength: trimmedSkill.length,
+                skillType,
+            });
+
+            // Only check if skillType is valid
+            if (!skillType) {
+                console.log('⏭️ [SkillsDialog] SKIPPING fetch - no skillType');
+                setSkillSuggestions([]);
+                setShowSuggestions(false);
+                return;
             }
-        }, 300); // Debounce 300ms
 
-        return () => clearTimeout(searchTimer);
+            console.log('🚀 [SkillsDialog] PROCEEDING with fetch, trimmedSkill:', trimmedSkill);
+
+            setIsLoadingSuggestions(true);
+            try {
+                const suggestions = await fetchSkillSuggestions(trimmedSkill, skillType);
+                setSkillSuggestions(suggestions);
+                setShowSuggestions(suggestions.length > 0);
+            } catch (error) {
+                console.error('Error fetching skill suggestions:', error);
+                setSkillSuggestions([]);
+                setShowSuggestions(false);
+            } finally {
+                setIsLoadingSuggestions(false);
+            }
+        };
+
+        const debounceTimer = setTimeout(fetchSkills, 300);
+        return () => clearTimeout(debounceTimer);
     }, [selectedSkill, skillType]);
 
     // Close suggestions when clicking outside
@@ -93,11 +115,14 @@ export default function SkillsDialog({
         return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    // Handle selecting a suggested skill
-    const handleSelectSuggestion = (skillName: string) => {
-        onSelectedSkillChange(skillName);
+    const handleSelectSuggestion = (suggestion: string) => {
+        onSelectedSkillChange(suggestion);
         setShowSuggestions(false);
-        setSuggestedSkills([]);
+    };
+
+    const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        onSelectedSkillChange(e.target.value);
+        setShowSuggestions(true);
     };
 
     return (
@@ -128,44 +153,40 @@ export default function SkillsDialog({
                         </Label>
 
                         <div className="flex space-x-2">
-                            <div className="flex-1 relative">
+                            <div className="relative flex-1">
                                 <Input
                                     ref={inputRef}
-                                    placeholder="Enter skill"
+                                    placeholder="Type to search skills..."
                                     value={selectedSkill}
-                                    onChange={e => onSelectedSkillChange(e.target.value)}
+                                    onChange={handleInputChange}
                                     onFocus={() => {
-                                        if (skillType === 'core' && suggestedSkills.length > 0) {
+                                        if (skillSuggestions.length > 0) {
                                             setShowSuggestions(true);
                                         }
                                     }}
                                     className="flex-1"
                                 />
-                                
-                                {/* Autocomplete Dropdown for Core Skills */}
-                                {skillType === 'core' && showSuggestions && (
+                                {showSuggestions && skillSuggestions.length > 0 && (
                                     <div
                                         ref={suggestionsRef}
-                                        className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto"
+                                        className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg max-h-60 overflow-y-auto"
                                     >
-                                        {isLoadingSkills ? (
-                                            <div className="px-4 py-3 text-sm text-gray-500 text-center">
-                                                <div className="animate-spin inline-block w-4 h-4 border-2 border-gray-300 border-t-blue-600 rounded-full mr-2"></div>
-                                                Searching skills...
+                                        {isLoadingSuggestions ? (
+                                            <div className="px-3 py-2 text-sm text-gray-500">
+                                                Loading...
                                             </div>
-                                        ) : suggestedSkills.length > 0 ? (
-                                            <ul className="py-1">
-                                                {suggestedSkills.map((skill) => (
-                                                    <li
-                                                        key={skill.id}
-                                                        className="px-4 py-2 hover:bg-blue-50 cursor-pointer text-sm text-gray-900 transition-colors"
-                                                        onClick={() => handleSelectSuggestion(skill.name)}
-                                                    >
-                                                        {skill.name}
-                                                    </li>
-                                                ))}
-                                            </ul>
-                                        ) : null}
+                                        ) : (
+                                            skillSuggestions.map((suggestion, index) => (
+                                                <button
+                                                    key={index}
+                                                    type="button"
+                                                    className="w-full px-3 py-2 text-left text-sm hover:bg-gray-100 focus:bg-gray-100 focus:outline-none"
+                                                    onClick={() => handleSelectSuggestion(suggestion.name)}
+                                                >
+                                                    {suggestion.name}
+                                                </button>
+                                            ))
+                                        )}
                                     </div>
                                 )}
                             </div>

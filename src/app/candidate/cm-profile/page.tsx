@@ -7,6 +7,7 @@ import { useProfileCompletion } from "@/hooks/useProfileCompletion";
 import { useLayout } from "@/contexts/LayoutContext";
 import api from "@/lib/api";
 import { openCVTemplate } from "@/lib/cv-template-navigation";
+import { generateHighlightedResume } from "@/lib/resume-api";
 import {
   ProfileHeaderCard,
   AboutMeSection,
@@ -68,7 +69,7 @@ export default function CMProfile() {
   // Get resumeId from URL query param (set by CV Management Edit button or Sync)
   const searchParams = useSearchParams();
   const urlResumeId = searchParams.get('resumeId');
-  
+
   /**
    * Resume selection priority (handled by Zustand store with sessionStorage persist):
    * 0. resumeId from URL query param (highest priority - from Edit/Sync button)
@@ -80,7 +81,7 @@ export default function CMProfile() {
   const currentEditingResumeId = useCVStore((s) => s.currentEditingResumeId);
   const setCurrentEditingResume = useCVStore((s) => s.setCurrentEditingResume);
   const _hasHydrated = useCVStore((s) => s._hasHydrated);
-  
+
   // When URL has resumeId, save it to Zustand (which persists to sessionStorage)
   useEffect(() => {
     if (urlResumeId) {
@@ -90,10 +91,10 @@ export default function CMProfile() {
       setCurrentEditingResume(urlResumeId);
     }
   }, [urlResumeId, setCurrentEditingResume]);
-  
+
   // Get candidateId and setCandidateId from auth store for avatar upload
   const { candidateId, setCandidateId } = useAuthStore();
-  
+
   // Resume ID state - will be fetched from API
   const [resumeId, setResumeId] = useState<number | null>(null);
   const [isLoadingResume, setIsLoadingResume] = useState(true);
@@ -184,22 +185,29 @@ export default function CMProfile() {
       0
     );
     const totalSkillsCount = coreSkillsCount + softSkillsCount;
-    
+
     return {
+<<<<<<< HEAD
       aboutMe: {
         hasAny: aboutMeHook.aboutMeText.trim().length > 0
       },
       workExperience: { 
         count: workExpHook.workExperiences.length, 
         maxCount: 3 
+=======
+      workExperience: {
+        count: workExpHook.workExperiences.length,
+        maxCount: 3
+>>>>>>> 572d44a33c2301817d97d26885d1621d5366da9e
       },
-      education: { 
-        hasAny: educationHook.educations.length > 0 
+      education: {
+        hasAny: educationHook.educations.length > 0
       },
-      skills: { 
-        totalCount: totalSkillsCount, 
-        maxCount: 10 
+      skills: {
+        totalCount: totalSkillsCount,
+        maxCount: 10
       },
+<<<<<<< HEAD
       languages: {
         hasAny: languagesHook.languages.length > 0
       },
@@ -208,9 +216,13 @@ export default function CMProfile() {
       },
       certificates: { 
         hasAny: certificatesHook.certificates.length > 0 
+=======
+      certificates: {
+        hasAny: certificatesHook.certificates.length > 0
+>>>>>>> 572d44a33c2301817d97d26885d1621d5366da9e
       },
-      awards: { 
-        hasAny: awardsHook.awards.length > 0 
+      awards: {
+        hasAny: awardsHook.awards.length > 0
       }
     };
   }, [
@@ -394,7 +406,7 @@ export default function CMProfile() {
 
       if (response.data?.result && response.data.result.length > 0) {
         const resumes = response.data.result;
-        
+
         /**
          * Resume selection logic with fallback
          * 
@@ -408,10 +420,10 @@ export default function CMProfile() {
          */
         let selectedResume = resumes[0]; // Default fallback
         let selectionSource = "default (first resume)";
-        
+
         // Priority 0: Check for resumeId from URL query param
         if (urlResumeId) {
-          const urlResume = resumes.find((r: any) => 
+          const urlResume = resumes.find((r: any) =>
             String(r.resumeId) === urlResumeId
           );
           if (urlResume) {
@@ -421,7 +433,7 @@ export default function CMProfile() {
         }
         // Priority 1: Check for currentEditingResumeId from Zustand (persisted to sessionStorage)
         else if (currentEditingResumeId) {
-          const storedResume = resumes.find((r: any) => 
+          const storedResume = resumes.find((r: any) =>
             String(r.resumeId) === currentEditingResumeId
           );
           if (storedResume) {
@@ -435,14 +447,14 @@ export default function CMProfile() {
           selectedResume = activeResume;
           selectionSource = "active resume (isActive=true)";
         }
-        
+
         if (process.env.NODE_ENV === 'development') {
           console.log("✅ Selected resume:", selectedResume.resumeId, "| Source:", selectionSource);
         }
-        
+
         const resume = selectedResume;
         setResumeId(resume.resumeId);
-        
+
         // Also update Zustand store to keep it in sync
         setCurrentEditingResume(String(resume.resumeId));
 
@@ -668,6 +680,17 @@ export default function CMProfile() {
 
     await skillsHook.saveSkills(skills, skillType, originalSkills);
 
+    // Generate highlighted resume (roadmap) after saving skills
+    if (resumeId) {
+      try {
+        await generateHighlightedResume(resumeId);
+        console.log('✅ Highlighted resume generated after saving skills');
+      } catch (error) {
+        console.error('❌ Error generating highlighted resume:', error);
+        // Don't show error to user as this is a background operation
+      }
+    }
+
     // Reset form after successful save
     setSkillType("");
     setSkills([]);
@@ -744,8 +767,8 @@ export default function CMProfile() {
   // Role recommendation handlers
   const handleGetRecommendRole = () => {
     // Đóng Personal Detail Dialog (nếu đang mở)
-    setIsPersonalDetailOpen(false); 
-    
+    setIsPersonalDetailOpen(false);
+
     // Mở Role Recommend Dialog
     setIsRoleRecommendOpen(true);
     setInputText("");
@@ -766,11 +789,11 @@ export default function CMProfile() {
       // ✅ Get Python API URL from environment variable
       const API_BASE = process.env.NEXT_PUBLIC_PYTHON_API_URL || 'http://localhost:8000';
       console.log('🔗 Python API URL:', API_BASE);
-      
+
       // ✅ Add timeout to prevent hanging requests
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
-      
+
       const response = await fetch(`${API_BASE}/api/cv-creation/recommend-roles/`, {
         method: 'POST',
         headers: {
@@ -789,11 +812,11 @@ export default function CMProfile() {
       }
 
       const data = await response.json();
-      
+
       // Sort by confidence and store results
       const sortedResults = (data.recommendations || data.roles || []).sort((a: any, b: any) => b.confidence - a.confidence);
       setRoleResults(sortedResults);
-      
+
       if (sortedResults.length === 0) {
         toast.error("No role recommendations found");
       } else {
@@ -801,7 +824,7 @@ export default function CMProfile() {
       }
     } catch (error: any) {
       console.error('Error analyzing text:', error);
-      
+
       // ✅ Better error messages
       if (error.name === 'AbortError') {
         toast.error("Request timed out. Please try again.");
@@ -875,7 +898,7 @@ export default function CMProfile() {
 
       toast.success('Professional Title updated successfully!');
       setIsRoleRecommendOpen(false);
-      
+
       // Reset states
       setInputText('');
       setRoleResults([]);
@@ -1170,18 +1193,18 @@ export default function CMProfile() {
           profileGender={profileGender}
           profileAddress={profileAddress}
           profileLink={profileLink}
-        profileImage={profileImage}
-        onProfileNameChange={setProfileName}
-        onProfileTitleChange={setProfileTitle}
-        onProfilePhoneChange={setProfilePhone}
-        onProfileDobChange={setProfileDob}
-        onProfileGenderChange={setProfileGender}
-        onProfileAddressChange={setProfileAddress}
-        onProfileLinkChange={setProfileLink}
-        onProfileImageChange={setProfileImage}
-        onSave={handleSavePersonalDetail}
-        onGetRecommendRole={handleGetRecommendRole} // ✅ Hàm mở Role Recommend Dialog
-      />
+          profileImage={profileImage}
+          onProfileNameChange={setProfileName}
+          onProfileTitleChange={setProfileTitle}
+          onProfilePhoneChange={setProfilePhone}
+          onProfileDobChange={setProfileDob}
+          onProfileGenderChange={setProfileGender}
+          onProfileAddressChange={setProfileAddress}
+          onProfileLinkChange={setProfileLink}
+          onProfileImageChange={setProfileImage}
+          onSave={handleSavePersonalDetail}
+          onGetRecommendRole={handleGetRecommendRole} // ✅ Hàm mở Role Recommend Dialog
+        />
       </Suspense>
 
       <Suspense fallback={<DialogFallback />}>
@@ -1292,18 +1315,17 @@ export default function CMProfile() {
               {roleResults.length > 0 && (
                 <div className="space-y-4">
                   <h3 className="text-lg font-semibold text-gray-900">Recommended Roles</h3>
-                  
+
                   {/* Top 3 or All Roles */}
                   <div className="space-y-3">
                     {(showAllRoles ? roleResults : roleResults.slice(0, 3)).map((role, index) => (
                       <div
                         key={index}
                         onClick={() => handleSelectRole(role)}
-                        className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${
-                          selectedRole === role.role
+                        className={`p-4 border-2 rounded-lg cursor-pointer transition-all ${selectedRole === role.role
                             ? 'border-blue-600 bg-blue-50'
                             : 'border-gray-200 hover:border-blue-300 hover:bg-gray-50'
-                        }`}
+                          }`}
                       >
                         <div className="flex items-start justify-between mb-2">
                           <div className="flex-1">

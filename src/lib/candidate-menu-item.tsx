@@ -5,7 +5,11 @@ import {
   FileText,
   IdCardLanyard,
   LayoutDashboard,
+<<<<<<< HEAD
   Route,
+=======
+  Star,
+>>>>>>> 572d44a33c2301817d97d26885d1621d5366da9e
   Settings,
 } from "lucide-react";
 
@@ -156,6 +160,12 @@ export const candidateMenuItems: MenuItem[] = [
     //   </svg>
     // ),
     icon: <IdCardLanyard className="w-5 h-5" />,
+  },
+  {
+    href: "/my-reviews",
+    label: "My Reviews",
+    key: "my-reviews",
+    icon: <Star className="w-5 h-5" />,
   },
   // Future Feature
   // {
