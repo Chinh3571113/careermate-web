@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 import {
   PlusCircle,
   Calendar,
@@ -17,11 +18,13 @@ import {
   Package,
   Tag,
   Plus,
+  Pencil,
 } from "lucide-react";
 import { createJobPost, CreateJobPostRequest, getSkills, Skill, getRecruiterJobPostings, RecruiterJobPosting } from "@/lib/recruiter-api";
 import toast from "react-hot-toast";
 
 export default function CreateJobPage() {
+  const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [viewJob, setViewJob] = useState<RecruiterJobPosting | null>(null);
   const [jobs, setJobs] = useState<RecruiterJobPosting[]>([]);
@@ -37,6 +40,7 @@ export default function CreateJobPage() {
   // Skills state
   const [availableSkills, setAvailableSkills] = useState<Skill[]>([]);
   const [isLoadingSkills, setIsLoadingSkills] = useState(false);
+  const [skillsError, setSkillsError] = useState<string | null>(null);
   
   // State for adding new skill
   const [selectedSkillId, setSelectedSkillId] = useState("");
@@ -63,28 +67,37 @@ export default function CreateJobPage() {
 
   // Fetch skills on component mount
   useEffect(() => {
-    const fetchSkills = async () => {
-      try {
-        setIsLoadingSkills(true);
-        const response = await getSkills();
-        console.log('📋 Skills response:', response);
-        
-        if (response.code === 200 && response.result) {
-          setAvailableSkills(response.result);
+    fetchSkillsData();
+  }, []);
+
+  const fetchSkillsData = async () => {
+    try {
+      setIsLoadingSkills(true);
+      setSkillsError(null);
+      const response = await getSkills();
+      console.log('📋 Skills response:', response);
+      
+      if (response.code === 200 && response.result) {
+        setAvailableSkills(response.result);
+        if (response.result.length > 0) {
           toast.success(`Loaded ${response.result.length} skills`);
         } else {
-          toast.error(response.message || "Failed to load skills");
+          setSkillsError('No skills available. Please contact administrator.');
         }
-      } catch (error: any) {
-        console.error("Failed to fetch skills:", error);
-        toast.error(error.message || "Failed to load skills");
-      } finally {
-        setIsLoadingSkills(false);
+      } else {
+        const errorMsg = response.message || "Failed to load skills";
+        setSkillsError(errorMsg);
+        toast.error(errorMsg);
       }
-    };
-    
-    fetchSkills();
-  }, []);
+    } catch (error: any) {
+      console.error("Failed to fetch skills:", error);
+      const errorMsg = error.message || "Failed to load skills";
+      setSkillsError(errorMsg);
+      toast.error(errorMsg);
+    } finally {
+      setIsLoadingSkills(false);
+    }
+  };
 
   // Fetch recruiter's job postings with pagination
   useEffect(() => {
@@ -232,18 +245,23 @@ export default function CreateJobPage() {
     const validationErrors = validate();
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
+      toast.error("Please fill in all required fields");
       return;
     }
 
     try {
       setIsSubmitting(true);
       
+      // Prepare job post data, ensuring skills only have id and mustToHave
       const jobPostData: CreateJobPostRequest = {
         title: formData.title,
         description: formData.description,
         address: formData.address,
         expirationDate: formData.expirationDate,
-        jdSkills: formData.skills,
+        jdSkills: formData.skills.map(skill => ({
+          id: skill.id,
+          mustToHave: skill.mustToHave
+        })),
         yearsOfExperience: parseInt(formData.yearsOfExperience),
         workModel: formData.workModel,
         salaryRange: formData.salaryRange,
@@ -251,18 +269,17 @@ export default function CreateJobPage() {
         jobPackage: formData.jobPackage,
       };
 
+      console.log('📝 [CREATE JOB PAGE] Submitting job post:', jobPostData);
+
       const response = await createJobPost(jobPostData);
       
       if (response.code === 200 || response.code === 201 || response.code === 0) {
-        toast.success("Job post created successfully!");
+        toast.success("Job post created successfully! Redirecting to job management...");
         
-        // Refresh job list from server instead of adding locally
-        const jobsResponse = await getRecruiterJobPostings({ page: currentPage, size: pageSize });
-        if (jobsResponse.code === 0 || jobsResponse.code === 200) {
-          setJobs(jobsResponse.result.content);
-          setTotalPages(jobsResponse.result.totalPages);
-          setTotalElements(jobsResponse.result.totalElements);
-        }
+        // Redirect to unified jobs management page
+        setTimeout(() => {
+          router.push("/recruiter/recruiter-feature/jobs/active");
+        }, 1500);
         
         setIsOpen(false);
 
@@ -405,6 +422,16 @@ export default function CreateJobPage() {
                     >
                       <Eye className="w-4 h-4" />
                     </button>
+                    {/* Show Edit button only for PENDING or REJECTED jobs */}
+                    {(job.status === 'PENDING' || job.status === 'REJECTED') && (
+                      <button
+                        onClick={() => router.push(`/recruiter/recruiter-feature/jobs/edit/${job.id}`)}
+                        className="text-amber-600 hover:text-amber-800 transition"
+                        title="Edit"
+                      >
+                        <Pencil className="w-4 h-4" />
+                      </button>
+                    )}
                     <button
                       onClick={() => handleDelete(job)}
                       className="text-red-500 hover:text-red-700 transition"
@@ -695,15 +722,40 @@ export default function CreateJobPage() {
                 <Tag className="w-4 h-4 mr-1 text-gray-500" /> Skills
                 <span className="text-red-500 ml-1">*</span>
               </label>
+              
+              {/* Skills Error State */}
+              {skillsError && !isLoadingSkills && (
+                <div className="mb-2 p-3 bg-red-50 border border-red-200 rounded-md">
+                  <div className="flex items-start justify-between">
+                    <div className="flex-1">
+                      <p className="text-sm text-red-700 font-medium">⚠️ {skillsError}</p>
+                      <p className="text-xs text-red-600 mt-1">
+                        Skills are required to create a job posting. Please try again or contact support.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={fetchSkillsData}
+                      className="ml-2 px-3 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 transition"
+                    >
+                      Retry
+                    </button>
+                  </div>
+                </div>
+              )}
+              
               <div className="flex space-x-2 mb-2">
                 <select
                   value={selectedSkillId}
                   onChange={(e) => setSelectedSkillId(e.target.value)}
                   className="flex-1 p-2 border border-gray-300 rounded-md"
-                  disabled={isLoadingSkills}
+                  disabled={isLoadingSkills || !!skillsError}
                 >
                   <option value="">
-                    {isLoadingSkills ? "Loading skills..." : "Select a skill"}
+                    {isLoadingSkills ? "Loading skills..." : 
+                     skillsError ? "Skills unavailable" :
+                     availableSkills.length === 0 ? "No skills available" :
+                     "Select a skill"}
                   </option>
                   {availableSkills.map((jdskill) => (
                     <option key={jdskill.id} value={jdskill.id}>

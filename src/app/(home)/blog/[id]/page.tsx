@@ -45,12 +45,26 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
         if (!accessToken) return null;
         try {
             const decoded = decodeJWT(accessToken);
-            return {
-                id: decoded?.sub || decoded?.userId || decoded?.id,
-                email: decoded?.email || decoded?.username,
+            console.log('🔍 Full decoded JWT for user ID extraction:', decoded);
+            
+            // Try to extract numeric user ID from various possible fields
+            // Priority: accountId > userId > id (skip sub as it's usually email)
+            let userId = decoded?.accountId || decoded?.userId || decoded?.id;
+            
+            // If userId is still not found or is an email string, log all available fields
+            if (!userId || typeof userId === 'string') {
+                console.log('⚠️ Available JWT fields:', Object.keys(decoded || {}));
+                console.log('⚠️ JWT values:', decoded);
+            }
+            
+            const userObj = {
+                id: userId ? String(userId) : null, // Always store as string for consistent comparison
+                email: decoded?.email || decoded?.username || decoded?.sub,
                 name: decoded?.name || decoded?.username || decoded?.email,
                 username: decoded?.username || decoded?.email
             };
+            console.log('🔍 Extracted user object:', userObj);
+            return userObj;
         } catch (error) {
             console.error('Error decoding user from token:', error);
             return null;
@@ -67,6 +81,8 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
     const [hoveredRating, setHoveredRating] = useState(0);
     const [submittingComment, setSubmittingComment] = useState(false);
     const [submittingRating, setSubmittingRating] = useState(false);
+    const [editingCommentId, setEditingCommentId] = useState<number | null>(null);
+    const [editCommentText, setEditCommentText] = useState('');
 
     useEffect(() => {
         fetchBlogData();
@@ -263,6 +279,56 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
             }
         } finally {
             setSubmittingComment(false);
+        }
+    };
+
+    const handleEditComment = (comment: Comment) => {
+        setEditingCommentId(comment.id);
+        setEditCommentText(comment.content);
+    };
+
+    const handleUpdateComment = async (commentId: number) => {
+        if (!editCommentText.trim()) {
+            toast.error('Comment cannot be empty');
+            return;
+        }
+
+        try {
+            await blogApi.updateComment(blogId, commentId, {
+                content: editCommentText.trim()
+            });
+
+            // Refresh comments
+            await refreshComments();
+            setEditingCommentId(null);
+            setEditCommentText('');
+            toast.success('Comment updated successfully!');
+        } catch (error: any) {
+            console.error('Error updating comment:', error);
+            toast.error(error.response?.data?.message || 'Failed to update comment');
+        }
+    };
+
+    const handleDeleteComment = async (commentId: number) => {
+        if (!confirm('Are you sure you want to delete this comment?')) {
+            return;
+        }
+
+        try {
+            await blogApi.deleteComment(blogId, commentId);
+
+            // Refresh comments
+            await refreshComments();
+
+            // Update blog comment count
+            if (blog) {
+                setBlog(prev => prev ? { ...prev, commentCount: Math.max(0, (prev.commentCount || 1) - 1) } : null);
+            }
+
+            toast.success('Comment deleted successfully!');
+        } catch (error: any) {
+            console.error('Error deleting comment:', error);
+            toast.error(error.response?.data?.message || 'Failed to delete comment');
         }
     };
 
@@ -524,17 +590,144 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
                                             </p>
                                         ) : (
                                             <div className="mt-6 space-y-4">
-                                                {(comments || []).map((comment, index) => (
-                                                    <div key={`comment-${comment.id || comment.userId || index}`} className="border-l-4 border-gray-200 pl-4 py-2">
-                                                        <div className="flex items-center gap-2 mb-2">
-                                                            <span className="font-medium text-gray-900">{comment.userName || 'Unknown User'}</span>
-                                                            <span className="text-sm text-gray-500">
-                                                                {formatDate(comment.createdAt)}
-                                                            </span>
-                                                        </div>
-                                                        <p className="text-gray-700">{comment.content}</p>
-                                                    </div>
-                                                ))}
+                                                {/* Sort comments - current user's comments first, then others */}
+                                                {(comments || [])
+                                                    .slice()
+                                                    .sort((a, b) => {
+                                                        // Match by userId - convert both to strings for comparison
+                                                        const aIsOwn = user && user.id && a.userId && 
+                                                            String(user.id) === String(a.userId);
+                                                        const bIsOwn = user && user.id && b.userId && 
+                                                            String(user.id) === String(b.userId);
+                                                        
+                                                        // User's own comments come first
+                                                        if (aIsOwn && !bIsOwn) return -1;
+                                                        if (!aIsOwn && bIsOwn) return 1;
+                                                        
+                                                        // Otherwise maintain original order (by date)
+                                                        return 0;
+                                                    })
+                                                    .map((comment, index) => {
+                                                        // Match by userId - convert both to strings for consistent comparison
+                                                        const isOwnComment = user && user.id && comment.userId && 
+                                                            String(user.id) === String(comment.userId);
+                                                        
+                                                        console.log('🔍 Comment ownership check:', {
+                                                            commentId: comment.id,
+                                                            commentUserId: comment.userId,
+                                                            commentUserIdType: typeof comment.userId,
+                                                            commentUserName: comment.userName,
+                                                            currentUserId: user?.id,
+                                                            currentUserIdType: typeof user?.id,
+                                                            currentUsername: user?.username,
+                                                            stringMatch: String(user?.id) === String(comment.userId),
+                                                            isOwnComment
+                                                        });
+                                                        
+                                                        return (
+                                                            <div 
+                                                                key={`comment-${comment.id || comment.userId || index}`} 
+                                                                className={`rounded-lg p-4 transition-all ${
+                                                                    isOwnComment 
+                                                                        ? 'bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200' 
+                                                                        : 'bg-gray-50 border border-gray-200'
+                                                                }`}
+                                                            >
+                                                                <div className="flex items-start justify-between gap-4 mb-3">
+                                                                    <div className="flex items-center gap-3 flex-1">
+                                                                        {/* Avatar */}
+                                                                        <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-semibold ${
+                                                                            isOwnComment ? 'bg-blue-600' : 'bg-gray-600'
+                                                                        }`}>
+                                                                            {(comment.userName || 'U').charAt(0).toUpperCase()}
+                                                                        </div>
+                                                                        
+                                                                        <div className="flex flex-col">
+                                                                            <div className="flex items-center gap-2">
+                                                                                <span className={`font-semibold text-base ${
+                                                                                    isOwnComment ? 'text-blue-900' : 'text-gray-900'
+                                                                                }`}>
+                                                                                    {comment.userName || 'Unknown User'}
+                                                                                </span>
+                                                                                {isOwnComment && (
+                                                                                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-600 text-white">
+                                                                                        You
+                                                                                    </span>
+                                                                                )}
+                                                                            </div>
+                                                                            <span className="text-sm text-gray-500">
+                                                                                {formatDate(comment.createdAt)}
+                                                                            </span>
+                                                                        </div>
+                                                                    </div>
+                                                                    
+                                                                    {/* Show edit/delete buttons for own comments */}
+                                                                    {isOwnComment && (
+                                                                        <div className="flex items-center gap-1">
+                                                                            {editingCommentId === comment.id ? (
+                                                                                <>
+                                                                                    <Button
+                                                                                        size="sm"
+                                                                                        variant="outline"
+                                                                                        className="h-8 px-3"
+                                                                                        onClick={() => {
+                                                                                            setEditingCommentId(null);
+                                                                                            setEditCommentText('');
+                                                                                        }}
+                                                                                    >
+                                                                                        Cancel
+                                                                                    </Button>
+                                                                                    <Button
+                                                                                        size="sm"
+                                                                                        className="h-8 px-3 bg-blue-600 hover:bg-blue-700"
+                                                                                        onClick={() => handleUpdateComment(comment.id)}
+                                                                                    >
+                                                                                        Save
+                                                                                    </Button>
+                                                                                </>
+                                                                            ) : (
+                                                                                <>
+                                                                                    <Button
+                                                                                        size="sm"
+                                                                                        variant="ghost"
+                                                                                        className="h-8 px-3 text-gray-700 hover:text-blue-600 hover:bg-blue-50"
+                                                                                        onClick={() => handleEditComment(comment)}
+                                                                                    >
+                                                                                        Edit
+                                                                                    </Button>
+                                                                                    <Button
+                                                                                        size="sm"
+                                                                                        variant="ghost"
+                                                                                        className="h-8 px-3 text-gray-700 hover:text-red-600 hover:bg-red-50"
+                                                                                        onClick={() => handleDeleteComment(comment.id)}
+                                                                                    >
+                                                                                        Delete
+                                                                                    </Button>
+                                                                                </>
+                                                                            )}
+                                                                        </div>
+                                                                    )}
+                                                                </div>
+                                                                
+                                                                {editingCommentId === comment.id ? (
+                                                                    <div className="mt-2">
+                                                                        <Textarea
+                                                                            value={editCommentText}
+                                                                            onChange={(e) => setEditCommentText(e.target.value)}
+                                                                            rows={3}
+                                                                            className="bg-white border-gray-300 focus:border-blue-500 focus:ring-blue-500"
+                                                                        />
+                                                                    </div>
+                                                                ) : (
+                                                                    <p className={`ml-13 text-base leading-relaxed ${
+                                                                        isOwnComment ? 'text-gray-800' : 'text-gray-700'
+                                                                    }`}>
+                                                                        {comment.content}
+                                                                    </p>
+                                                                )}
+                                                            </div>
+                                                        );
+                                                    })}
                                             </div>
                                         )}
                                     </CardContent>

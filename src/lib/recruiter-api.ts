@@ -7,6 +7,7 @@ import { normalizeStatus } from '@/lib/status-utils';
 export interface Skill {
   id: number;
   name: string;
+  type?: string; // Optional: technical, soft, etc.
 }
 
 export interface SkillsResponse {
@@ -16,15 +17,42 @@ export interface SkillsResponse {
 }
 
 // Get all skills
-export const getSkills = async (): Promise<SkillsResponse> => {
+// type: 'core' | 'soft' | '' (empty string for all types)
+// keyword: optional search term for autocomplete
+export const getSkills = async (type: string = '', keyword?: string): Promise<SkillsResponse> => {
   try {
-    console.log('🔵 [GET SKILLS] Fetching all skills');
-    const response = await api.get('/api/jdskill');
+    console.log(`🔵 [GET SKILLS] Fetching skills (type: "${type || 'all'}", keyword: ${keyword || 'none'})`);
+    const params: any = { type }; // Required parameter, empty string = all types
+    if (keyword) params.keyword = keyword;
+    
+    const response = await api.get('/api/jdskill', { params });
     console.log('✅ [GET SKILLS] Response:', response.data);
     return response.data;
   } catch (error: any) {
-    console.error('❌ [GET SKILLS] Error:', error.response?.data || error);
-    throw new Error(error.response?.data?.message || 'Failed to fetch skills');
+    console.error('❌ [GET SKILLS] Error:', error.response?.data || error.message || error);
+    
+    // Provide more detailed error information
+    if (error.response) {
+      // Server responded with error status
+      const status = error.response.status;
+      const message = error.response.data?.message || error.message;
+      
+      if (status === 401) {
+        throw new Error('Authentication required. Please sign in again.');
+      } else if (status === 403) {
+        throw new Error('You do not have permission to access skills.');
+      } else if (status === 404) {
+        throw new Error('Skills endpoint not found. Please contact support.');
+      } else {
+        throw new Error(message || `Failed to fetch skills (Status: ${status})`);
+      }
+    } else if (error.request) {
+      // Request made but no response received
+      throw new Error('Cannot connect to server. Please check your connection.');
+    } else {
+      // Something else happened
+      throw new Error(error.message || 'Failed to fetch skills');
+    }
   }
 };
 
@@ -484,14 +512,20 @@ export const getRecruiterJobPostings = async (params?: GetJobPostingsParams): Pr
   }
 };
 
+// JdSkill interface for job posting
+export interface JdSkill {
+  id: number;
+  mustToHave: boolean;
+}
+
 export interface CreateJobPostRequest {
   title: string;
   description: string;
   address: string;
-  expirationDate: string; // Format: YYYY-MM-DD
-  jdSkills: JdSkill[];
+  expirationDate: string; // Format: YYYY-MM-DD (will be converted to LocalDate by backend)
+  jdSkills: JdSkill[]; // Array of skill IDs with mustToHave flag
   yearsOfExperience: number;
-  workModel: string;
+  workModel: string; // 'Onsite' | 'Remote' | 'Hybrid' or 'AT_OFFICE' | 'REMOTE' | 'HYBRID'
   salaryRange: string;
   reason: string;
   jobPackage: string;
@@ -506,13 +540,71 @@ export interface JobPostResponse {
 // Create Job Post
 export const createJobPost = async (data: CreateJobPostRequest): Promise<JobPostResponse> => {
   try {
-    console.log('🔵 [CREATE JOB] Sending request:', data);
+    console.log('🔵 [CREATE JOB] Sending request:', JSON.stringify(data, null, 2));
     const response = await api.post('/api/jobposting', data);
     console.log('✅ [CREATE JOB] Response:', response.data);
     return response.data;
   } catch (error: any) {
-    console.error('❌ [CREATE JOB] Error:', error.response?.data || error);
-    throw new Error(error.response?.data?.message || 'Failed to create job post');
+    console.error('❌ [CREATE JOB] Error:', error.response?.data || error.message || error);
+    
+    // Provide detailed error information
+    if (error.response) {
+      const status = error.response.status;
+      const errorData = error.response.data;
+      const message = errorData?.message || error.message;
+      
+      console.error('❌ [CREATE JOB] Status:', status);
+      console.error('❌ [CREATE JOB] Error Data:', errorData);
+      
+      if (status === 400) {
+        // Validation error - provide detailed feedback
+        if (errorData?.errors) {
+          const validationErrors = Object.entries(errorData.errors)
+            .map(([field, msg]) => `${field}: ${msg}`)
+            .join('; ');
+          throw new Error(`Validation failed: ${validationErrors}`);
+        }
+        throw new Error(message || 'Invalid job posting data. Please check all required fields.');
+      } else if (status === 401) {
+        throw new Error('Authentication required. Please sign in again.');
+      } else if (status === 403) {
+        throw new Error('You do not have permission to create job postings.');
+      } else {
+        throw new Error(message || `Failed to create job post (Status: ${status})`);
+      }
+    } else if (error.request) {
+      throw new Error('Cannot connect to server. Please check your connection.');
+    } else {
+      throw new Error(error.message || 'Failed to create job post');
+    }
+  }
+};
+
+// Update Job Posting
+// - For ACTIVE/EXPIRED jobs: Only expiration date can be changed
+// - For PENDING/REJECTED jobs: Full update is allowed
+// Note: ACTIVE jobs with applicants have limits on date changes (max -7 to +60 days)
+export const updateJobPosting = async (jobPostingId: number, data: CreateJobPostRequest): Promise<JobPostResponse> => {
+  try {
+    console.log('🔵 [UPDATE JOB] Job ID:', jobPostingId, 'Data:', data);
+    const response = await api.put(`/api/jobposting/recruiter/${jobPostingId}`, data);
+    console.log('✅ [UPDATE JOB] Response:', response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ [UPDATE JOB] Error:', error.response?.data || error);
+    // Handle specific error codes from backend
+    const errorCode = error.response?.data?.code;
+    let errorMessage = error.response?.data?.message || 'Failed to update job posting';
+    
+    if (errorCode === 6023) {
+      errorMessage = 'Cannot edit job content after candidates have applied. Only expiration date can be changed.';
+    } else if (errorCode === 6024) {
+      errorMessage = 'Cannot shorten deadline by more than 7 days for jobs with applicants.';
+    } else if (errorCode === 6025) {
+      errorMessage = 'Cannot extend deadline by more than 60 days for jobs with applicants.';
+    }
+    
+    throw new Error(errorMessage);
   }
 };
 
@@ -528,6 +620,45 @@ export const extendJobPosting = async (jobPostingId: number, newExpirationDate: 
   } catch (error: any) {
     console.error('❌ [EXTEND JOB] Error:', error.response?.data || error);
     throw new Error(error.response?.data?.message || 'Failed to extend job posting');
+  }
+};
+
+// Pause Job Posting (ACTIVE → PAUSED)
+export const pauseJobPosting = async (jobPostingId: number): Promise<JobPostResponse> => {
+  try {
+    console.log('🔵 [PAUSE JOB] Job ID:', jobPostingId);
+    const response = await api.patch(`/api/jobposting/recruiter/${jobPostingId}/pause`);
+    console.log('✅ [PAUSE JOB] Response:', response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ [PAUSE JOB] Error:', error.response?.data || error);
+    throw new Error(error.response?.data?.message || 'Failed to pause job posting');
+  }
+};
+
+// Resume Job Posting (PAUSED → ACTIVE)
+export const resumeJobPosting = async (jobPostingId: number): Promise<JobPostResponse> => {
+  try {
+    console.log('🔵 [RESUME JOB] Job ID:', jobPostingId);
+    const response = await api.patch(`/api/jobposting/recruiter/${jobPostingId}/resume`);
+    console.log('✅ [RESUME JOB] Response:', response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ [RESUME JOB] Error:', error.response?.data || error);
+    throw new Error(error.response?.data?.message || 'Failed to resume job posting');
+  }
+};
+
+// Close Job Posting (ACTIVE → CLOSED)
+export const closeJobPosting = async (jobPostingId: number): Promise<JobPostResponse> => {
+  try {
+    console.log('🔵 [CLOSE JOB] Job ID:', jobPostingId);
+    const response = await api.patch(`/api/jobposting/recruiter/${jobPostingId}/close`);
+    console.log('✅ [CLOSE JOB] Response:', response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ [CLOSE JOB] Error:', error.response?.data || error);
+    throw new Error(error.response?.data?.message || 'Failed to close job posting');
   }
 };
 
@@ -850,5 +981,64 @@ export const changePassword = async (email: string, data: ChangePasswordRequest)
   } catch (error: any) {
     console.error('❌ [CHANGE PASSWORD] Error:', error.response?.data || error);
     throw new Error(error.response?.data?.message || 'Failed to change password');
+  }
+};
+
+// Candidate Recommendation Interfaces
+export interface CandidateRecommendation {
+  candidateId: number;
+  candidateName: string;
+  email: string;
+  matchScore: number;
+  matchedSkills: string[];
+  missingSkills: string[];
+  totalYearsExperience: number;
+  profileSummary: string;
+  educationLevel: string;
+  certificatesCount: number;
+  projectsCount: number;
+  awardsCount: number;
+  languagesCount: number;
+  scoreBreakdown: Record<string, number>;
+  applicationId?: number;
+  applicationStatus?: string;
+  cvFilePath?: string;
+  phoneNumber?: string;
+  avatarUrl?: string;
+  preferredWorkLocation?: string;
+  appliedAt?: string;
+  coverLetter?: string;
+}
+
+export interface RecommendationResponse {
+  code: number;
+  message: string;
+  result: {
+    jobPostingId: number;
+    jobTitle: string;
+    totalCandidatesFound: number;
+    recommendations: CandidateRecommendation[];
+    processingTimeMs: number;
+  };
+}
+
+// Get Recommended Candidates for a Job
+export const getRecommendedCandidates = async (
+  jobPostingId: number,
+  maxCandidates?: number,
+  minMatchScore?: number
+): Promise<RecommendationResponse> => {
+  try {
+    console.log(`🔵 [GET RECOMMENDATIONS] Fetching candidates for job ${jobPostingId}`);
+    const params: any = {};
+    if (maxCandidates) params.maxCandidates = maxCandidates;
+    if (minMatchScore) params.minMatchScore = minMatchScore;
+    
+    const response = await api.get(`/api/recruiter/recommendations/job/${jobPostingId}`, { params });
+    console.log('✅ [GET RECOMMENDATIONS] Response:', response.data);
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ [GET RECOMMENDATIONS] Error:', error.response?.data || error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch recommended candidates');
   }
 };

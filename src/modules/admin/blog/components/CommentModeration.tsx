@@ -41,7 +41,11 @@ export default function CommentModeration() {
     
     // Filters
     const [searchEmail, setSearchEmail] = useState('');
+    const [searchContent, setSearchContent] = useState('');
     const [blogIdFilter, setBlogIdFilter] = useState('');
+    const [dateFrom, setDateFrom] = useState('');
+    const [dateTo, setDateTo] = useState('');
+    const [duration, setDuration] = useState('all');
     const [sortBy, setSortBy] = useState<'createdAt' | 'updatedAt' | 'flaggedAt'>('flaggedAt');
     const [sortDirection, setSortDirection] = useState<'ASC' | 'DESC'>('DESC');
 
@@ -53,11 +57,12 @@ export default function CommentModeration() {
         fetchModerationStats();
     }, [currentPage, sortBy, sortDirection, activeTab]);
 
-    const fetchComments = async (overrideFilters?: { searchEmail?: string; blogIdFilter?: string; page?: number }) => {
+    const fetchComments = async (overrideFilters?: { searchEmail?: string; searchContent?: string; blogIdFilter?: string; page?: number }) => {
         try {
             setLoading(true);
             
             const emailFilter = overrideFilters?.searchEmail ?? searchEmail;
+            const contentFilter = overrideFilters?.searchContent ?? searchContent;
             const blogFilter = overrideFilters?.blogIdFilter ?? blogIdFilter;
             const pageNum = overrideFilters?.page ?? currentPage;
             
@@ -69,7 +74,10 @@ export default function CommentModeration() {
             };
 
             if (emailFilter) filters.userEmail = emailFilter;
+            if (contentFilter) filters.content = contentFilter;
             if (blogFilter) filters.blogId = parseInt(blogFilter);
+            if (dateFrom) filters.startDate = dateFrom;
+            if (dateTo) filters.endDate = dateTo;
 
             let response;
             if (activeTab === 'flagged') {
@@ -117,6 +125,38 @@ export default function CommentModeration() {
         e.preventDefault();
         setCurrentPage(0);
         fetchComments();
+    };
+
+    const handleDurationChange = (value: string) => {
+        setDuration(value);
+        const now = new Date();
+        const today = now.toISOString().split('T')[0];
+        
+        switch(value) {
+            case "today":
+                setDateFrom(today);
+                setDateTo(today);
+                break;
+            case "7days":
+                const last7Days = new Date(now.setDate(now.getDate() - 7)).toISOString().split('T')[0];
+                setDateFrom(last7Days);
+                setDateTo(today);
+                break;
+            case "30days":
+                const last30Days = new Date(now.setDate(now.getDate() - 30)).toISOString().split('T')[0];
+                setDateFrom(last30Days);
+                setDateTo(today);
+                break;
+            case "90days":
+                const last90Days = new Date(now.setDate(now.getDate() - 90)).toISOString().split('T')[0];
+                setDateFrom(last90Days);
+                setDateTo(today);
+                break;
+            case "all":
+                setDateFrom("");
+                setDateTo("");
+                break;
+        }
     };
 
     const handleDeleteComment = async (commentId: number) => {
@@ -383,13 +423,21 @@ export default function CommentModeration() {
                 </CardHeader>
                 <CardContent>
                     <form onSubmit={handleSearch} className="space-y-4">
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                             <div>
                                 <label className="text-sm font-medium mb-2 block">User Email</label>
                                 <Input
                                     placeholder="Search by email..."
                                     value={searchEmail}
                                     onChange={(e) => setSearchEmail(e.target.value)}
+                                />
+                            </div>
+                            <div>
+                                <label className="text-sm font-medium mb-2 block">Comment Content</label>
+                                <Input
+                                    placeholder="Search by content..."
+                                    value={searchContent}
+                                    onChange={(e) => setSearchContent(e.target.value)}
                                 />
                             </div>
                             <div>
@@ -404,6 +452,47 @@ export default function CommentModeration() {
                                             setBlogIdFilter(value);
                                         }
                                     }}
+                                />
+                            </div>
+                            <div>
+                                <label className="text-sm font-medium mb-2 block">Duration</label>
+                                <select
+                                    value={duration}
+                                    onChange={(e) => handleDurationChange(e.target.value)}
+                                    className="w-full h-10 px-3 border border-gray-300 rounded-md"
+                                >
+                                    <option value="all">All Time</option>
+                                    <option value="today">Today</option>
+                                    <option value="7days">Last 7 Days</option>
+                                    <option value="30days">Last 30 Days</option>
+                                    <option value="90days">Last 90 Days</option>
+                                </select>
+                            </div>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div>
+                                <label className="text-sm font-medium mb-2 block">Date From</label>
+                                <Input
+                                    type="date"
+                                    value={dateFrom}
+                                    onChange={(e) => {
+                                        setDateFrom(e.target.value);
+                                        setDuration("all");
+                                    }}
+                                    max={dateTo || undefined}
+                                />
+                            </div>
+                            <div>
+                                <label className="text-sm font-medium mb-2 block">Date To</label>
+                                <Input
+                                    type="date"
+                                    value={dateTo}
+                                    onChange={(e) => {
+                                        setDateTo(e.target.value);
+                                        setDuration("all");
+                                    }}
+                                    min={dateFrom || undefined}
                                 />
                             </div>
                             <div>
@@ -446,8 +535,10 @@ export default function CommentModeration() {
                                 onClick={() => {
                                     setSearchEmail('');
                                     setBlogIdFilter('');
+                                    setDateFrom('');
+                                    setDateTo('');
+                                    setDuration('all');
                                     setCurrentPage(0);
-                                    // Pass empty values directly to bypass state delay
                                     fetchComments({ searchEmail: '', blogIdFilter: '', page: 0 });
                                 }}
                             >
@@ -543,49 +634,28 @@ export default function CommentModeration() {
                                             </div>
                                         )}
 
-                                        {/* Actions */}
+                                        {/* Actions - Simplified: Only Hide/Show buttons */}
                                         <div className="flex gap-2">
-                                            <Button
-                                                onClick={() => handleApprove(comment.id)}
-                                                className="flex-1 bg-green-600 hover:bg-green-700"
-                                                size="sm"
-                                            >
-                                                <CheckCircle className="w-4 h-4 mr-1" />
-                                                Approve
-                                            </Button>
-
-                                            <Button
-                                                onClick={() => handleDeleteComment(comment.id)}
-                                                className="flex-1 bg-red-600 hover:bg-red-700 text-white"
-                                                size="sm"
-                                            >
-                                                <Trash2 className="w-4 h-4 mr-1" />
-                                                Delete
-                                            </Button>
-
-                                            <Button
-                                                onClick={() => handleReject(comment.id)}
-                                                variant="destructive"
-                                                className="flex-1"
-                                                size="sm"
-                                            >
-                                                <XCircle className="w-4 h-4 mr-1" />
-                                                Reject
-                                            </Button>
-
                                             <Button
                                                 onClick={() => 
                                                     comment.isHidden 
                                                         ? handleShowComment(comment.id) 
                                                         : handleHideComment(comment.id)
                                                 }
-                                                variant="outline"
+                                                variant={comment.isHidden ? "default" : "outline"}
+                                                className="flex-1"
                                                 size="sm"
                                             >
                                                 {comment.isHidden ? (
-                                                    <Eye className="w-4 h-4" />
+                                                    <>
+                                                        <Eye className="w-4 h-4 mr-2" />
+                                                        Show
+                                                    </>
                                                 ) : (
-                                                    <EyeOff className="w-4 h-4" />
+                                                    <>
+                                                        <EyeOff className="w-4 h-4 mr-2" />
+                                                        Hide
+                                                    </>
                                                 )}
                                             </Button>
                                         </div>
