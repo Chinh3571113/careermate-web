@@ -15,6 +15,7 @@ import {
   Search,
   Lock,
   Pencil,
+  Trash2,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -42,6 +43,7 @@ import {
   getCandidateReviews,
   getReviewTypeText,
   getJobApplicationsWithReviewStatus,
+  deleteOwnReview,
   type ReviewResponse,
   type JobApplicationReviewStatus,
   type ReviewType,
@@ -100,9 +102,10 @@ interface ReviewTypeSectionProps {
   };
   onWrite: () => void;
   onEdit?: () => void;
+  onDelete?: () => void;
 }
 
-function ReviewTypeSection({ type, status, onWrite, onEdit }: ReviewTypeSectionProps) {
+function ReviewTypeSection({ type, status, onWrite, onEdit, onDelete }: ReviewTypeSectionProps) {
   const typeLabels = {
     application: "Application Experience",
     interview: "Interview Experience",
@@ -169,6 +172,20 @@ function ReviewTypeSection({ type, status, onWrite, onEdit }: ReviewTypeSectionP
               >
                 <Pencil className="h-3 w-3" />
                 Edit
+              </Button>
+            )}
+            {onDelete && (
+              <Button 
+                size="sm" 
+                variant="ghost" 
+                className="h-7 gap-1 text-xs text-red-600 hover:text-red-700 hover:bg-red-50"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onDelete();
+                }}
+              >
+                <Trash2 className="h-3 w-3" />
+                Delete
               </Button>
             )}
           </div>
@@ -370,6 +387,29 @@ export default function CandidateMyReviewsPage() {
       setDrawerOpen(true);
     } else {
       toast.error("Unable to edit this review.");
+    }
+  };
+
+  // Handle deleting a review
+  const handleDeleteReview = async (reviewId: number) => {
+    if (!confirm("Are you sure you want to delete this review? This action cannot be undone.")) {
+      return;
+    }
+
+    if (!effectiveCandidateId) {
+      toast.error("Unable to delete review: User not authenticated");
+      return;
+    }
+
+    try {
+      await deleteOwnReview(reviewId, effectiveCandidateId);
+      toast.success("Review deleted successfully!");
+      // Refresh the reviews list
+      await loadSubmittedReviews();
+      await loadApplicationsWithStatus();
+    } catch (error: any) {
+      console.error("Error deleting review:", error);
+      toast.error(error.message || "Failed to delete review");
     }
   };
 
@@ -596,6 +636,15 @@ export default function CandidateMyReviewsPage() {
                               <Pencil className="h-3 w-3" />
                               Edit
                             </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => handleDeleteReview(r.id)}
+                              className="h-8 gap-1 text-red-600 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                              Delete
+                            </Button>
                           </div>
                         </div>
                       </CardContent>
@@ -676,6 +725,9 @@ export default function CandidateMyReviewsPage() {
                             onEdit={app.applicationReview?.reviewId 
                               ? () => handleEditReviewById(app, app.applicationReview!.reviewId!, "APPLICATION_EXPERIENCE")
                               : undefined}
+                            onDelete={app.applicationReview?.reviewId 
+                              ? () => handleDeleteReview(app.applicationReview!.reviewId!)
+                              : undefined}
                           />
                           <ReviewTypeSection
                             type="interview"
@@ -684,6 +736,9 @@ export default function CandidateMyReviewsPage() {
                             onEdit={app.interviewReview?.reviewId 
                               ? () => handleEditReviewById(app, app.interviewReview!.reviewId!, "INTERVIEW_EXPERIENCE")
                               : undefined}
+                            onDelete={app.interviewReview?.reviewId 
+                              ? () => handleDeleteReview(app.interviewReview!.reviewId!)
+                              : undefined}
                           />
                           <ReviewTypeSection
                             type="work"
@@ -691,6 +746,9 @@ export default function CandidateMyReviewsPage() {
                             onWrite={() => handleWriteReview(app, "WORK_EXPERIENCE")}
                             onEdit={app.workReview?.reviewId 
                               ? () => handleEditReviewById(app, app.workReview!.reviewId!, "WORK_EXPERIENCE")
+                              : undefined}
+                            onDelete={app.workReview?.reviewId 
+                              ? () => handleDeleteReview(app.workReview!.reviewId!)
                               : undefined}
                           />
                         </div>

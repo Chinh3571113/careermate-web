@@ -23,6 +23,32 @@ export interface AdminCommentResponse {
     flagReason?: string;
     flaggedAt?: string;
     reviewedByAdmin?: boolean;
+    // Semantic toxicity analysis fields
+    toxicityScore?: number;
+    toxicityConfidence?: 'HIGH' | 'MEDIUM' | 'LOW';
+    analyzedAt?: string;
+}
+
+// Semantic Analysis Types
+export interface ToxicityAnalysisResult {
+    commentId: number;
+    toxicityScore: number;
+    confidence: 'HIGH' | 'MEDIUM' | 'LOW';
+    reasoning: string;
+    toxicSimilarity?: number;
+    positiveSimilarity?: number;
+}
+
+export interface BatchAnalysisResult {
+    totalAnalyzed: number;
+    results: ToxicityAnalysisResult[];
+}
+
+export interface BulkActionResult {
+    action: string;
+    totalComments: number;
+    filtered: number;
+    actioned: number;
 }
 
 export interface AdminCommentFilters {
@@ -32,6 +58,9 @@ export interface AdminCommentFilters {
     sortDirection?: 'ASC' | 'DESC';
     blogId?: number;
     userEmail?: string;
+    content?: string;
+    startDate?: string;
+    endDate?: string;
 }
 
 export interface CommentStatistics {
@@ -83,6 +112,11 @@ export interface AdminRatingFilters {
     size?: number;
     sortBy?: 'createdAt' | 'updatedAt' | 'rating';
     sortDirection?: 'ASC' | 'DESC';
+    startDate?: string;
+    endDate?: string;
+    userEmail?: string;
+    blogId?: number;
+    rating?: number;
 }
 
 export interface RatingStatistics {
@@ -140,6 +174,9 @@ class AdminModerationApiService {
         if (filters.sortDirection) params.append('sortDirection', filters.sortDirection);
         if (filters.blogId) params.append('blogId', filters.blogId.toString());
         if (filters.userEmail) params.append('userEmail', filters.userEmail);
+        if (filters.content) params.append('content', filters.content);
+        if (filters.startDate) params.append('startDate', filters.startDate);
+        if (filters.endDate) params.append('endDate', filters.endDate);
 
         const response = await api.get(`/api/admin/comments?${params.toString()}`);
         const responseData = response.data;
@@ -238,7 +275,10 @@ class AdminModerationApiService {
         if (filters.sortBy) params.append('sortBy', filters.sortBy);
         if (filters.sortDirection) params.append('sortDirection', filters.sortDirection);
         if (filters.userEmail) params.append('userEmail', filters.userEmail);
+        if (filters.content) params.append('content', filters.content);
         if (filters.blogId) params.append('blogId', filters.blogId.toString());
+        if (filters.startDate) params.append('startDate', filters.startDate);
+        if (filters.endDate) params.append('endDate', filters.endDate);
 
         const response = await api.get(`/api/admin/comment-moderation/flagged?${params.toString()}`);
         const responseData = response.data;
@@ -357,6 +397,11 @@ class AdminModerationApiService {
         if (filters.size !== undefined) params.append('size', filters.size.toString());
         if (filters.sortBy) params.append('sortBy', filters.sortBy);
         if (filters.sortDirection) params.append('sortDirection', filters.sortDirection);
+        if (filters.startDate) params.append('startDate', filters.startDate);
+        if (filters.endDate) params.append('endDate', filters.endDate);
+        if (filters.userEmail) params.append('userEmail', filters.userEmail);
+        if (filters.blogId) params.append('blogId', filters.blogId.toString());
+        if (filters.rating) params.append('rating', filters.rating.toString());
 
         const response = await api.get(`/api/admin/ratings?${params.toString()}`);
         const responseData = response.data;
@@ -421,6 +466,64 @@ class AdminModerationApiService {
 
         if (responseData.code && (responseData.code < 200 || responseData.code >= 300)) {
             throw new Error(responseData.message || 'Failed to fetch blog rating summary');
+        }
+
+        return responseData.result || responseData;
+    }
+
+    // ============= Semantic Toxicity Analysis ============= //
+
+    /**
+     * Analyze toxicity of a single comment using semantic AI
+     */
+    async analyzeCommentToxicity(commentId: number): Promise<ToxicityAnalysisResult> {
+        const response = await api.post(`/api/admin/comment-moderation/${commentId}/analyze-toxicity`);
+        const responseData = response.data;
+
+        if (responseData.code && (responseData.code < 200 || responseData.code >= 300)) {
+            throw new Error(responseData.message || 'Failed to analyze comment toxicity');
+        }
+
+        return responseData.result || responseData;
+    }
+
+    /**
+     * Batch analyze toxicity for multiple comments
+     */
+    async batchAnalyzeToxicity(commentIds: number[]): Promise<BatchAnalysisResult> {
+        const response = await api.post('/api/admin/comment-moderation/batch-analyze', commentIds);
+        const responseData = response.data;
+
+        if (responseData.code && (responseData.code < 200 || responseData.code >= 300)) {
+            throw new Error(responseData.message || 'Failed to batch analyze toxicity');
+        }
+
+        return responseData.result || responseData;
+    }
+
+    /**
+     * Bulk action on comments based on toxicity score filters
+     * @param action - 'hide', 'show', or 'delete'
+     * @param commentIds - List of comment IDs to filter from
+     * @param minToxicity - Minimum toxicity score (0.0-1.0)
+     * @param confidence - Filter by confidence level: HIGH, MEDIUM, LOW
+     */
+    async bulkActionComments(
+        action: 'hide' | 'show' | 'delete',
+        commentIds: number[],
+        minToxicity?: number,
+        confidence?: 'HIGH' | 'MEDIUM' | 'LOW'
+    ): Promise<BulkActionResult> {
+        const params = new URLSearchParams();
+        params.append('action', action);
+        if (minToxicity !== undefined) params.append('minToxicity', minToxicity.toString());
+        if (confidence) params.append('confidence', confidence);
+
+        const response = await api.post(`/api/admin/comment-moderation/bulk-action?${params.toString()}`, commentIds);
+        const responseData = response.data;
+
+        if (responseData.code && (responseData.code < 200 || responseData.code >= 300)) {
+            throw new Error(responseData.message || 'Failed to perform bulk action');
         }
 
         return responseData.result || responseData;
