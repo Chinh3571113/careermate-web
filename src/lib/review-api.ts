@@ -300,6 +300,27 @@ export const updateReview = async (
   }
 };
 
+/**
+ * Delete own review
+ * DELETE /api/v1/reviews/my-reviews/{reviewId}
+ */
+export const deleteOwnReview = async (
+  reviewId: number,
+  candidateId: number
+): Promise<void> => {
+  try {
+    console.log('⭐ [DELETE REVIEW]', reviewId, candidateId);
+    await api.delete(
+      `/api/v1/reviews/my-reviews/${reviewId}`,
+      { params: { candidateId } }
+    );
+    console.log('✅ [DELETE REVIEW] Success');
+  } catch (error: any) {
+    console.error('❌ [DELETE REVIEW] Error:', error.response?.data || error);
+    throw new Error(error.response?.data?.message || 'Failed to delete review');
+  }
+};
+
 // ==================== Review Management ====================
 
 /**

@@ -28,12 +28,18 @@ export default function RatingModeration() {
     // Filters
     const [sortBy, setSortBy] = useState<'createdAt' | 'updatedAt' | 'rating'>('createdAt');
     const [sortDirection, setSortDirection] = useState<'ASC' | 'DESC'>('DESC');
+    const [duration, setDuration] = useState<string>('all');
+    const [dateFrom, setDateFrom] = useState<string>('');
+    const [dateTo, setDateTo] = useState<string>('');
+    const [userEmail, setUserEmail] = useState<string>('');
+    const [blogId, setBlogId] = useState<string>('');
+    const [ratingValue, setRatingValue] = useState<string>('');
 
     const pageSize = 20;
 
     useEffect(() => {
         fetchRatings();
-    }, [currentPage, sortBy, sortDirection]);
+    }, [currentPage, sortBy, sortDirection, dateFrom, dateTo, userEmail, blogId, ratingValue]);
 
     const fetchRatings = async () => {
         try {
@@ -44,6 +50,11 @@ export default function RatingModeration() {
                 size: pageSize,
                 sortBy,
                 sortDirection,
+                ...(dateFrom && { startDate: dateFrom }),
+                ...(dateTo && { endDate: dateTo }),
+                ...(userEmail && { userEmail }),
+                ...(blogId && { blogId: parseInt(blogId) }),
+                ...(ratingValue && { rating: parseInt(ratingValue) }),
             };
 
             const response = await adminModerationApi.getAllRatings(filters);
@@ -60,6 +71,43 @@ export default function RatingModeration() {
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleDurationChange = (newDuration: string) => {
+        setDuration(newDuration);
+        const today = new Date();
+        
+        switch(newDuration) {
+            case 'today':
+                const todayStr = today.toISOString().split('T')[0];
+                setDateFrom(todayStr);
+                setDateTo(todayStr);
+                break;
+            case '7days':
+                const sevenDaysAgo = new Date(today);
+                sevenDaysAgo.setDate(today.getDate() - 7);
+                setDateFrom(sevenDaysAgo.toISOString().split('T')[0]);
+                setDateTo(today.toISOString().split('T')[0]);
+                break;
+            case '30days':
+                const thirtyDaysAgo = new Date(today);
+                thirtyDaysAgo.setDate(today.getDate() - 30);
+                setDateFrom(thirtyDaysAgo.toISOString().split('T')[0]);
+                setDateTo(today.toISOString().split('T')[0]);
+                break;
+            case '90days':
+                const ninetyDaysAgo = new Date(today);
+                ninetyDaysAgo.setDate(today.getDate() - 90);
+                setDateFrom(ninetyDaysAgo.toISOString().split('T')[0]);
+                setDateTo(today.toISOString().split('T')[0]);
+                break;
+            case 'all':
+            default:
+                setDateFrom('');
+                setDateTo('');
+                break;
+        }
+        setCurrentPage(0);
     };
 
     const handleDeleteRating = async (ratingId: number) => {
@@ -114,6 +162,124 @@ export default function RatingModeration() {
 
     return (
         <div className="space-y-6">
+            {/* Filters */}
+            <Card>
+                <CardContent className="pt-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                        {/* Duration Filter */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Duration
+                            </label>
+                            <select
+                                value={duration}
+                                onChange={(e) => handleDurationChange(e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                            >
+                                <option value="all">All Time</option>
+                                <option value="today">Today</option>
+                                <option value="7days">Last 7 Days</option>
+                                <option value="30days">Last 30 Days</option>
+                                <option value="90days">Last 90 Days</option>
+                            </select>
+                        </div>
+
+                        {/* Date From */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Date From
+                            </label>
+                            <input
+                                type="date"
+                                value={dateFrom}
+                                onChange={(e) => {
+                                    setDateFrom(e.target.value);
+                                    setDuration('all');
+                                    setCurrentPage(0);
+                                }}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                            />
+                        </div>
+
+                        {/* Date To */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Date To
+                            </label>
+                            <input
+                                type="date"
+                                value={dateTo}
+                                onChange={(e) => {
+                                    setDateTo(e.target.value);
+                                    setDuration('all');
+                                    setCurrentPage(0);
+                                }}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                            />
+                        </div>
+
+                        {/* User Email Filter */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                User Email
+                            </label>
+                            <input
+                                type="text"
+                                value={userEmail}
+                                onChange={(e) => {
+                                    setUserEmail(e.target.value);
+                                    setCurrentPage(0);
+                                }}
+                                placeholder="Search by email..."
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                            />
+                        </div>
+
+                        {/* Blog ID Filter */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Blog ID
+                            </label>
+                            <input
+                                type="text"
+                                value={blogId}
+                                onChange={(e) => {
+                                    const value = e.target.value;
+                                    if (value === '' || /^\d+$/.test(value)) {
+                                        setBlogId(value);
+                                        setCurrentPage(0);
+                                    }
+                                }}
+                                placeholder="Enter blog ID..."
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                            />
+                        </div>
+
+                        {/* Star Rating Filter */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Star Rating
+                            </label>
+                            <select
+                                value={ratingValue}
+                                onChange={(e) => {
+                                    setRatingValue(e.target.value);
+                                    setCurrentPage(0);
+                                }}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md text-sm"
+                            >
+                                <option value="">All Ratings</option>
+                                <option value="5">⭐⭐⭐⭐⭐ (5 stars)</option>
+                                <option value="4">⭐⭐⭐⭐ (4 stars)</option>
+                                <option value="3">⭐⭐⭐ (3 stars)</option>
+                                <option value="2">⭐⭐ (2 stars)</option>
+                                <option value="1">⭐ (1 star)</option>
+                            </select>
+                        </div>
+                    </div>
+                </CardContent>
+            </Card>
+
             {/* Ratings List */}
             <Card>
                 <CardHeader>
@@ -187,7 +353,12 @@ export default function RatingModeration() {
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4">
-                                                {renderStars(rating.rating)}
+                                                <div className="flex items-center gap-2">
+                                                    {renderStars(rating.rating)}
+                                                    <span className="text-sm font-medium text-gray-700">
+                                                        {rating.rating}/5
+                                                    </span>
+                                                </div>
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div className="max-w-xs">
