@@ -2,28 +2,29 @@
 
 import { useEffect, useState, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { 
-  ArrowLeft, 
-  CheckCircle2, 
-  XCircle, 
-  TrendingUp, 
-  FileText, 
+import {
+  ArrowLeft,
+  CheckCircle2,
+  XCircle,
+  TrendingUp,
+  FileText,
   Award,
   Layout,
   BookOpen,
   Palette,
   Lightbulb,
-  Target
+  Target,
+  Download
 } from "lucide-react";
 import { CVATSAnalyzeResponse } from "@/types/cv-ats";
 import CVSidebar from "@/components/layout/CVSidebar";
 import toast from "react-hot-toast";
 
 // Radar Chart Component
-function RadarChart({ 
-  data 
-}: { 
-  data: { label: string; value: number; color: string }[] 
+function RadarChart({
+  data
+}: {
+  data: { label: string; value: number; color: string }[]
 }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
@@ -101,7 +102,7 @@ function RadarChart({
       const r = (radius * item.value) / 100;
       const x = centerX + Math.cos(angle) * r;
       const y = centerY + Math.sin(angle) * r;
-      
+
       ctx.beginPath();
       ctx.arc(x, y, 5, 0, Math.PI * 2);
       ctx.fillStyle = item.color;
@@ -120,13 +121,13 @@ function RadarChart({
       const labelRadius = radius + 35;
       const x = centerX + Math.cos(angle) * labelRadius;
       const y = centerY + Math.sin(angle) * labelRadius;
-      
+
       // Draw colored dot
       ctx.beginPath();
       ctx.arc(x + 25, y, 4, 0, Math.PI * 2);
       ctx.fillStyle = item.color;
       ctx.fill();
-      
+
       // Draw label text
       ctx.fillStyle = '#374151';
       ctx.fillText(item.label, x, y);
@@ -135,9 +136,9 @@ function RadarChart({
   }, [data]);
 
   return (
-    <canvas 
-      ref={canvasRef} 
-      width={320} 
+    <canvas
+      ref={canvasRef}
+      width={320}
       height={320}
       className="mx-auto"
     />
@@ -147,16 +148,97 @@ function RadarChart({
 export default function AICVResult() {
   const router = useRouter();
   const [result, setResult] = useState<CVATSAnalyzeResponse | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
 
   useEffect(() => {
     const storedResult = sessionStorage.getItem('cv_ats_result');
     if (storedResult) {
-      setResult(JSON.parse(storedResult));
+      try {
+        const parsedResult = JSON.parse(storedResult);
+        console.log('[AI CV Result] Loaded analysis data:', {
+          overall_score: parsedResult.overall_score,
+          hasContent: !!parsedResult.content,
+          hasSkills: !!parsedResult.skills,
+          dataSize: storedResult.length,
+        });
+        setResult(parsedResult);
+      } catch (error) {
+        console.error('[AI CV Result] Failed to parse stored result:', error);
+        toast.error("Failed to load analysis results");
+        router.push('/candidate/ai-cv-checker');
+      }
     } else {
+      console.warn('[AI CV Result] No stored result found in sessionStorage');
       toast.error("Analysis result not found");
       router.push('/candidate/ai-cv-checker');
     }
   }, [router]);
+
+  const handleExportPDF = async () => {
+    if (!result) {
+      console.error('[Export PDF] No result data available');
+      toast.error("No analysis data available. Please analyze a CV first.");
+      return;
+    }
+
+    // Validate result has required data
+    if (!result.overall_score) {
+      console.error('[Export PDF] Invalid result data:', result);
+      toast.error("Invalid analysis data. Please try analyzing again.");
+      return;
+    }
+
+    console.log('[Export PDF] Starting export with data:', {
+      overall_score: result.overall_score,
+      hasContent: !!result.content,
+      hasSkills: !!result.skills,
+      hasFormat: !!result.format,
+    });
+
+    setIsExporting(true);
+
+    try {
+      const today = new Date().toISOString().split("T")[0];
+      const fileName = `careermate-cv-analysis-report-${today}`;
+      const response = await fetch('/api/export-cv-analysis', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          analysisData: result,
+          fileName,
+        }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to export PDF');
+      }
+
+      console.log('[Export PDF] PDF generated successfully');
+
+      // Get PDF blob and trigger download
+      const blob = await response.blob();
+      console.log('[Export PDF] PDF size:', (blob.size / 1024).toFixed(2), 'KB');
+
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${fileName}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+
+      toast.success('PDF exported successfully!');
+    } catch (error: any) {
+      console.error('[Export PDF] Error:', error);
+      toast.error(error.message || 'Failed to export PDF. Please try again.');
+    } finally {
+      setIsExporting(false);
+    }
+  };
 
   if (!result) {
     return (
@@ -201,7 +283,7 @@ export default function AICVResult() {
                 <ArrowLeft className="w-5 h-5" />
                 Back
               </button>
-              
+
               <div className="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
                 <div className="flex items-center justify-between">
                   <div>
@@ -236,7 +318,7 @@ export default function AICVResult() {
               <div className="grid md:grid-cols-2 gap-8">
                 {/* Radar Chart */}
                 <div className="flex items-center justify-center">
-                  <RadarChart 
+                  <RadarChart
                     data={[
                       { label: "Content", value: result.content?.score || 0, color: "#3b82f6" },
                       { label: "Format", value: result.format?.score || 0, color: "#f97316" },
@@ -429,7 +511,24 @@ export default function AICVResult() {
             </div>
 
             {/* Action Buttons */}
-            <div className="mt-8 flex gap-4 justify-center">
+            <div className="mt-8 flex flex-wrap gap-4 justify-center">
+              <button
+                onClick={handleExportPDF}
+                disabled={isExporting}
+                className="px-6 py-3 border border-blue-600 text-blue-600 rounded-xl hover:bg-blue-50 transition-colors font-semibold disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+              >
+                {isExporting ? (
+                  <>
+                    <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
+                    Exporting...
+                  </>
+                ) : (
+                  <>
+                    <Download className="w-5 h-5" />
+                    Export PDF
+                  </>
+                )}
+              </button>
               <button
                 onClick={() => router.push('/candidate/ai-cv-checker')}
                 className="px-6 py-3 border-2 border-green-600 text-green-600 rounded-xl hover:bg-green-50 transition-colors font-semibold"
