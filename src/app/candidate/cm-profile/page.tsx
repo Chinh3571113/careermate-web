@@ -187,18 +187,12 @@ export default function CMProfile() {
     const totalSkillsCount = coreSkillsCount + softSkillsCount;
 
     return {
-<<<<<<< HEAD
       aboutMe: {
         hasAny: aboutMeHook.aboutMeText.trim().length > 0
       },
       workExperience: { 
         count: workExpHook.workExperiences.length, 
         maxCount: 3 
-=======
-      workExperience: {
-        count: workExpHook.workExperiences.length,
-        maxCount: 3
->>>>>>> 572d44a33c2301817d97d26885d1621d5366da9e
       },
       education: {
         hasAny: educationHook.educations.length > 0
@@ -207,7 +201,6 @@ export default function CMProfile() {
         totalCount: totalSkillsCount,
         maxCount: 10
       },
-<<<<<<< HEAD
       languages: {
         hasAny: languagesHook.languages.length > 0
       },
@@ -216,10 +209,6 @@ export default function CMProfile() {
       },
       certificates: { 
         hasAny: certificatesHook.certificates.length > 0 
-=======
-      certificates: {
-        hasAny: certificatesHook.certificates.length > 0
->>>>>>> 572d44a33c2301817d97d26885d1621d5366da9e
       },
       awards: {
         hasAny: awardsHook.awards.length > 0

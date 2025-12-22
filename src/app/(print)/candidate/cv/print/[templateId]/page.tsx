@@ -229,13 +229,26 @@ function normalizeCVData(rawData: any): CVData {
     //     description: award.description || ''
     //   }))
     // };
-    // Awards - fallback from multiple possible sources
-    awards: rawAwards.map((award: any) => ({
-      name: award.name || award.title || '',
-      organization: award.organization || award.issuer || award.org || '',
-      date: award.date || award.year || '',
-      description: award.description || ''
-    }))
+    // Awards - normalized to handle both string and object formats
+    awards: rawAwards.map((award: any) => {
+      // Case 1: award is a string (from Vintage template export)
+      if (typeof award === 'string') {
+        return {
+          name: award,
+          organization: '',
+          date: '',
+          description: ''
+        };
+      }
+
+      // Case 2: award is an object (standard format)
+      return {
+        name: award.name || award.title || '',
+        organization: award.organization || award.issuer || award.org || '',
+        date: award.date || award.year || '',
+        description: award.description || ''
+      };
+    })
   };
 }
 

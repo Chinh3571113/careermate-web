@@ -197,15 +197,15 @@ export function ClientHomePage() {
             {/* Search Bar */}
             <div className="max-w-4xl mx-auto">
               <div className="bg-white/10 backdrop-blur-sm rounded-xl sm:rounded-2xl p-4 sm:p-6 md:p-8 border border-white/20">
-                <div className="flex flex-col gap-3 sm:gap-4">
-                  <div className="w-full">
+                <div className="flex flex-col lg:flex-row gap-3 sm:gap-4">
+                  <div className="flex-[2]">
                     <input
                       type="text"
                       placeholder="Job title, keywords, or company"
                       className="w-full px-4 sm:px-6 py-3 sm:py-4 rounded-lg sm:rounded-xl text-sm sm:text-base text-gray-900 placeholder-gray-500 bg-white shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:shadow-xl transition-all"
                     />
                   </div>
-                  <div className="w-full relative">
+                  <div className="flex-1 relative">
                     <select
                       className="w-full px-4 sm:px-6 py-3 sm:py-4 pr-10 sm:pr-12 rounded-lg sm:rounded-xl text-sm sm:text-base text-gray-900 bg-white shadow-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:shadow-xl transition-all appearance-none cursor-pointer"
                       style={{ direction: "ltr" }}
@@ -242,26 +242,26 @@ export function ClientHomePage() {
                       </svg>
                     </div>
                   </div>
-                  <button className="w-full px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base font-semibold shadow-lg hover:shadow-xl bg-gradient-to-r from-[#3a4660] to-gray-400 text-white rounded-lg sm:rounded-md hover:bg-gradient-to-r hover:from-[#3a4660] hover:to-[#3a4660] transition-colors">
-                    Search
+                  <button className="px-6 sm:px-8 py-3 sm:py-4 text-sm sm:text-base font-semibold shadow-lg hover:shadow-xl bg-gradient-to-r from-[#3a4660] to-gray-400 text-white rounded-lg sm:rounded-md hover:bg-gradient-to-r hover:from-[#3a4660] hover:to-[#3a4660] transition-colors">
+                    Search Jobs
                   </button>
                 </div>
 
                 {/* Quick Filters */}
-                <div className="mt-4 sm:mt-6 flex flex-wrap justify-center gap-2 sm:gap-3 items-center">
-                  <span className="font-bold text-sm sm:text-base text-white w-full sm:w-auto text-center sm:text-left mb-2 sm:mb-0">
+                <div className="mt-6 flex flex-wrap justify-center gap-3 items-center">
+                  <span className="font-bold text-base text-white">
                     Suggestions for you:
                   </span>
-                  <span className="px-3 sm:px-4 py-1.5 sm:py-2 bg-white/20 rounded-full text-xs sm:text-sm text-white/90 hover:bg-white/30 transition-colors cursor-pointer">
+                  <span className="px-4 py-2 bg-white/20 rounded-full text-sm text-white/90 hover:bg-white/30 transition-colors cursor-pointer">
                     Software Engineer
                   </span>
-                  <span className="px-3 sm:px-4 py-1.5 sm:py-2 bg-white/20 rounded-full text-xs sm:text-sm text-white/90 hover:bg-white/30 transition-colors cursor-pointer">
+                  <span className="px-4 py-2 bg-white/20 rounded-full text-sm text-white/90 hover:bg-white/30 transition-colors cursor-pointer">
                     IT Comtor
                   </span>
-                  <span className="px-3 sm:px-4 py-1.5 sm:py-2 bg-white/20 rounded-full text-xs sm:text-sm text-white/90 hover:bg-white/30 transition-colors cursor-pointer">
+                  <span className="px-4 py-2 bg-white/20 rounded-full text-sm text-white/90 hover:bg-white/30 transition-colors cursor-pointer">
                     Companies
                   </span>
-                  <span className="px-3 sm:px-4 py-1.5 sm:py-2 bg-white/20 rounded-full text-xs sm:text-sm text-white/90 hover:bg-white/30 transition-colors cursor-pointer">
+                  <span className="px-4 py-2 bg-white/20 rounded-full text-sm text-white/90 hover:bg-white/30 transition-colors cursor-pointer">
                     Skills
                   </span>
                   
@@ -272,38 +272,38 @@ export function ClientHomePage() {
         </section>
 
         {/* Quick Stats */}
-        <section className="py-12 sm:py-16 bg-white">
+        <section className="py-16 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 md:gap-8 text-center">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-8 text-center">
               <div className="group">
-                <div className="mb-1 sm:mb-2">
+                <div className="mb-2">
                   <AnimatedCounter end={10000} suffix="+" duration={2500} />
                 </div>
-                <div className="text-gray-600 text-sm sm:text-base md:text-lg font-sans">
+                <div className="text-gray-600 text-lg font-sans">
                   Active Jobs
                 </div>
               </div>
               <div className="group">
-                <div className="mb-1 sm:mb-2">
+                <div className="mb-2">
                   <AnimatedCounter end={500} suffix="+" duration={2000} />
                 </div>
-                <div className="text-gray-600 text-sm sm:text-base md:text-lg font-sans">
+                <div className="text-gray-600 text-lg font-sans">
                   Top Companies
                 </div>
               </div>
               <div className="group">
-                <div className="mb-1 sm:mb-2">
+                <div className="mb-2">
                   <AnimatedCounter end={50000} suffix="+" duration={3000} />
                 </div>
-                <div className="text-gray-600 text-sm sm:text-base md:text-lg font-sans">
+                <div className="text-gray-600 text-lg font-sans">
                   Candidates
                 </div>
               </div>
               <div className="group">
-                <div className="mb-1 sm:mb-2">
+                <div className="mb-2">
                   <AnimatedCounter end={95} suffix="%" duration={1500} />
                 </div>
-                <div className="text-gray-600 text-sm sm:text-base md:text-lg font-sans">
+                <div className="text-gray-600 text-lg font-sans">
                   Success Rate
                 </div>
               </div>

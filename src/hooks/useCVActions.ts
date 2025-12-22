@@ -61,6 +61,10 @@ interface UseCVActionsReturn {
   // Delete confirmation handlers
   handleCloseDeleteConfirm: () => void;
   handleConfirmDelete: () => Promise<void>;
+  // Setter functions for external control
+  setShowDraftConversionConfirm: (show: boolean) => void;
+  setShowSwitchCVConfirm: (show: boolean) => void;
+  setPendingAction: (action: { type: 'sync' | 'edit'; cv: CV } | null) => void;
 }
 
 export const useCVActions = (
@@ -717,6 +721,15 @@ export const useCVActions = (
       if (actionToPerform) {
         const { type, cv } = actionToPerform;
 
+        // Check if this is a "Build new CV" action
+        if (cv.id === 'new-cv-creation') {
+          console.log("🔄 Continuing with Build new CV after DRAFT conversion");
+          // Trigger the callback passed from cv-management page
+          // We'll use a custom event for this
+          window.dispatchEvent(new CustomEvent('proceedWithCVCreation'));
+          return;
+        }
+
         if (type === 'sync') {
           console.log("🔄 Continuing sync after DRAFT conversion (direct call)");
           // Set current editing resume
@@ -810,6 +823,14 @@ export const useCVActions = (
     if (pendingAction) {
       const { type, cv } = pendingAction;
       handleCloseSwitchCVConfirm();
+
+      // Check if this is a "Build new CV" action
+      if (cv.id === 'new-cv-creation') {
+        console.log("🔄 Continuing with Build new CV after switch confirmation");
+        // Trigger the callback passed from cv-management page
+        window.dispatchEvent(new CustomEvent('proceedWithCVCreation'));
+        return;
+      }
 
       if (type === 'sync') {
         // Continue to sync - call the actual sync logic
@@ -982,5 +1003,9 @@ export const useCVActions = (
     // Delete confirmation handlers
     handleCloseDeleteConfirm,
     handleConfirmDelete,
+    // Setter functions for external control
+    setShowDraftConversionConfirm,
+    setShowSwitchCVConfirm,
+    setPendingAction,
   };
 };

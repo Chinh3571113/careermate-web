@@ -19,7 +19,6 @@ import { useProfileCompletion } from "@/hooks/useProfileCompletion";
 import { ProfileProgressCircle } from "@/components/ui/profile-progress-circle";
 import { useCVStore } from "@/stores/cvStore";
 import api from "@/lib/api";
-import { FaEnvelope} from "react-icons/fa";
 
 
 export default function CandidateDashboard() {
@@ -349,20 +348,22 @@ export default function CandidateDashboard() {
                       </>
                     ) : (
                       <>
-                        <h1 className="text-2xl font-semibold text-gray-900 mb-1">
+                        <h1 className="text-2xl font-semibold text-gray-900 mb-2">
                           {displayName}
                         </h1>
-                        <p className="text-sm text-gray-600 mb-1 flex items-center gap-2">
-                          <BriefcaseBusiness className="w-4 h-4 text-gray-400" />
-                          {profileTitle || 'Update your title'}
-                        </p>
-                        <p className="text-sm text-gray-500 flex items-center gap-2">
-                          <FaEnvelope className="w-3 h-3 text-gray-400" />
-                          {userEmail || user?.email || 'No email'}
-                        </p>
+                        <div className="space-y-1">
+                          <p className="text-sm text-gray-600 flex items-center gap-2">
+                            <BriefcaseBusiness className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                            <span>{profileTitle || 'Update your title'}</span>
+                          </p>
+                          <p className="text-sm text-gray-600 flex items-center gap-2">
+                            <Mail className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                            <span>{userEmail || user?.email || 'No email'}</span>
+                          </p>
+                        </div>
                         <Link
                           href="/candidate/cm-profile"
-                          className="text-sm text-blue-600 hover:text-blue-700 font-medium mt-1 inline-block"
+                          className="text-sm text-blue-600 hover:text-blue-700 font-medium mt-2 inline-block"
                         >
                           Update your profile →
                         </Link>

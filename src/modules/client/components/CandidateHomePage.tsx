@@ -85,11 +85,13 @@ export function CandidateHomePage() {
           
           <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <h1 className="text-5xl md:text-7xl font-bold mb-6 bg-gradient-to-r from-white to-gray-400 bg-clip-text text-transparent">
-              Find Your Dream Job
+              {/* Find Your Dream Job */}
+              Welcome to CareerMate
             </h1>
             <p className="text-xl md:text-2xl mb-12 text-blue-100 max-w-3xl mx-auto">
-              AI-powered job matching for IT professionals. Discover
-              opportunities that match your skills and career goals.
+              {/* AI-powered job matching for IT professionals. Discover
+              opportunities that match your skills and career goals. */}
+              The bridge between opportunity and success.
             </p>
 
             {/* Search Bar */}

@@ -5,11 +5,8 @@ import {
   FileText,
   IdCardLanyard,
   LayoutDashboard,
-<<<<<<< HEAD
   Route,
-=======
   Star,
->>>>>>> 572d44a33c2301817d97d26885d1621d5366da9e
   Settings,
 } from "lucide-react";
 

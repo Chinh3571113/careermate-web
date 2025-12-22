@@ -22,8 +22,8 @@ interface ProfileStrengthSidebarProps {
     onAddAboutMe?: () => void;
     onAddEducation?: () => void;
     onAddWorkExperience?: () => void;
-    onAddSkills?: () => void;
     onAddLanguages?: () => void;
+    onAddSkills?: () => void;
     onAddProjects?: () => void;
     onAddCertificates?: () => void;
     onAddAwards?: () => void;
@@ -82,24 +82,28 @@ export default function ProfileStrengthSidebar({
         awards: !sectionCompletion || !sectionCompletion.awards.hasAny
     };
 
-    // Primary items to show (collapsed) - ordered as they appear in UI from top to bottom
-    const primaryItems = [
+    // All items in priority order - incomplete items will be shown first
+    const allItems = [
         { key: 'aboutMe', label: 'Add About Me', onClick: onAddAboutMe, show: incompleteSections.aboutMe },
         { key: 'education', label: 'Add Education', onClick: onAddEducation, show: incompleteSections.education },
         { key: 'workExperience', label: 'Add Work Experience', onClick: onAddWorkExperience, show: incompleteSections.workExperience },
-    ].filter(item => item.show);
-
-    // Secondary items (expanded) - ordered as they appear in UI from top to bottom
-    const secondaryItems = [
+        { key: 'languages', label: 'Add Foreign Language', onClick: onAddLanguages, show: incompleteSections.languages },
         { key: 'skills', label: 'Add Skills', onClick: onAddSkills, show: incompleteSections.skills },
         { key: 'projects', label: 'Add Highlight Project', onClick: onAddProjects, show: incompleteSections.projects },
-        { key: 'languages', label: 'Add Foreign Language', onClick: onAddLanguages, show: incompleteSections.languages },
         { key: 'certificates', label: 'Add Certificates', onClick: onAddCertificates, show: incompleteSections.certificates },
         { key: 'awards', label: 'Add Awards', onClick: onAddAwards, show: incompleteSections.awards },
     ].filter(item => item.show);
 
     const isExpanded = expandedSections.includes("more");
-    const hasSecondaryItems = secondaryItems.length > 0;
+    const totalIncompleteItems = allItems.length;
+    
+    // Show toggle only when there are more than 4 items
+    const shouldShowToggle = totalIncompleteItems > 4;
+    
+    // When 4 or fewer items, show all. Otherwise show 3 by default or all when expanded
+    const visibleItems = totalIncompleteItems <= 4 
+        ? allItems 
+        : (isExpanded ? allItems : allItems.slice(0, 3));
 
     return (
         <aside className="hidden xl:block space-y-6 sticky [top:calc(var(--sticky-offset)+var(--content-pad))] self-start transition-all duration-300">
@@ -127,14 +131,14 @@ export default function ProfileStrengthSidebar({
                 </div>
 
                 {/* Action Items Section */}
-                {(primaryItems.length > 0 || hasSecondaryItems) && (
+                {visibleItems.length > 0 && (
                     <div className="space-y-3">
                         <p className="text-sm font-medium text-gray-700">
                             {statusInfo.actionLabel}
                         </p>
 
-                        {/* Primary Items */}
-                        {primaryItems.map((item) => (
+                        {/* Visible Items */}
+                        {visibleItems.map((item) => (
                             <button
                                 key={item.key}
                                 onClick={item.onClick}
@@ -145,20 +149,8 @@ export default function ProfileStrengthSidebar({
                             </button>
                         ))}
 
-                        {/* Secondary Items (when expanded) */}
-                        {isExpanded && secondaryItems.map((item) => (
-                            <button
-                                key={item.key}
-                                onClick={item.onClick}
-                                className="w-full text-left flex items-center gap-2 text-blue-600 hover:text-blue-700 text-sm font-medium transition-colors"
-                            >
-                                <SquarePlus className="w-4 h-4" />
-                                <span>{item.label}</span>
-                            </button>
-                        ))}
-
-                        {/* Show More/Less Toggle - Always at bottom */}
-                        {hasSecondaryItems && (
+                        {/* Show More/Less Toggle - Only show when more than 4 items */}
+                        {shouldShowToggle && (
                             <button
                                 onClick={() => onToggleSection("more")}
                                 className="w-full flex items-center gap-2 text-gray-700 hover:text-gray-900 font-medium transition-colors text-sm"

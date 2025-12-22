@@ -57,6 +57,12 @@ interface CVData {
     description: string;
     period: string;
   }>;
+  
+  awards?: Array<{
+    name: string;
+    organization: string;
+    date: string;
+  }>;
 }
 
 // ========================================
@@ -537,7 +543,7 @@ function VintageTemplate({ data }: { data: CVData }) {
             {data.awards.map((award, index) => (
               <div key={index} className="vintage-cert-item">
                 <p className="vintage-cert-name">{award.name}</p>
-                <p className="vintage-cert-issuer">{award.issuer} • {award.date}</p>
+                <p className="vintage-cert-issuer">{award.organization} • {award.date}</p>
               </div>
             ))}
           </section>

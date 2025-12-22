@@ -1,13 +1,10 @@
 "use client";
 
 import { FiEdit } from "react-icons/fi";
-import { FaEnvelope, FaPhone, FaCalendar, FaMapMarkerAlt, FaLink, FaGenderless } from "react-icons/fa";
-import { BsGenderMale, BsGenderFemale } from "react-icons/bs";
-import { Link2, Sparkles } from "lucide-react";
+import { Mail, Phone, Calendar, MapPin, Link, Sparkles, Mars, Venus, CircleSmall } from "lucide-react";
 import { PremiumAvatar } from "@/components/ui/premium-avatar";
 import { useEffect, useState } from "react";
 import { getMyInvoice } from "@/lib/invoice-api";
-import { User } from "lucide-react";
 import { useRouter } from "next/navigation";
 
 interface ProfileHeaderCardProps {
@@ -43,7 +40,7 @@ export default function ProfileHeaderCard({
         const checkPremiumStatus = async () => {
             try {
                 const invoice = await getMyInvoice();
-                setIsPremium(invoice.packageName === 'PREMIUM');
+                setIsPremium(invoice?.packageName === 'PREMIUM');
             } catch (error) {
                 setIsPremium(false);
             }
@@ -56,12 +53,12 @@ export default function ProfileHeaderCard({
     const getGenderIcon = () => {
         const gender = profileGender?.toLowerCase();
         if (gender === 'male') {
-            return <BsGenderMale className="text-gray-400 text-base" />;
+            return <Mars className="w-4 h-4 text-gray-500 flex-shrink-0" />;
         } else if (gender === 'female') {
-            return <BsGenderFemale className="text-gray-400 text-base" />;
+            return <Venus className="w-4 h-4 text-gray-500 flex-shrink-0" />;
         } else {
             // For 'other' or empty/undefined
-            return <FaGenderless className="text-gray-400 text-base" />;
+            return <CircleSmall className="w-4 h-4 text-gray-500 flex-shrink-0" />;
         }
     };
 
@@ -106,19 +103,19 @@ export default function ProfileHeaderCard({
             {/* Contact Information Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
                 <div className="flex items-center space-x-2.5">
-                    <FaEnvelope className="text-gray-400 text-base" />
+                    <Mail className="w-4 h-4 text-gray-500 flex-shrink-0" />
                     <span className={email ? "text-gray-900 font-medium" : "text-gray-400"}>
                         {email || "example@gmail.com"}
                     </span>
                 </div>
                 <div className="flex items-center space-x-2.5">
-                    <FaPhone className="text-gray-400 text-base" />
+                    <Phone className="w-4 h-4 text-gray-500 flex-shrink-0" />
                     <span className={profilePhone ? "text-gray-900 font-medium" : "text-gray-400"}>
                         {profilePhone || "Your phone number"}
                     </span>
                 </div>
                 <div className="flex items-center space-x-2.5">
-                    <FaCalendar className="text-gray-400 text-base" />
+                    <Calendar className="w-4 h-4 text-gray-500 flex-shrink-0" />
                     <span className={profileDob ? "text-gray-900 font-medium" : "text-gray-400"}>
                         {profileDob || "Your date of birth"}
                     </span>
@@ -130,13 +127,13 @@ export default function ProfileHeaderCard({
                     </span>
                 </div>
                 <div className="flex items-center space-x-2.5">
-                    <FaMapMarkerAlt className="text-gray-400 text-base" />
+                    <MapPin className="w-4 h-4 text-gray-500 flex-shrink-0" />
                     <span className={profileAddress ? "text-gray-900 font-medium" : "text-gray-400"}>
                         {profileAddress || "Your current address"}
                     </span>
                 </div>
                 <div className="flex items-center space-x-2.5">
-                    <Link2 className="text-gray-400 text-base" />
+                    <Link className="w-4 h-4 text-gray-500 flex-shrink-0" />
                     {profileLink ? (
                         <a
                             href={profileLink.startsWith('http') ? profileLink : `https://${profileLink}`}
