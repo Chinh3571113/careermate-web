@@ -290,8 +290,8 @@ export const fetchJobPostingById = async (id: number): Promise<JobPosting | null
 export interface SaveJobRequest {
   candidateId: number;
   jobId: number;
-  feedbackType: 'save';
-  score: number; // typically 1 for save
+  feedbackType: 'save' | 'apply' | 'like' | 'view';
+  score: number; // typically 1 for feedback
 }
 
 export interface SaveJobResponse {
@@ -341,6 +341,36 @@ export const unsaveJob = async (candidateId: number, jobId: number): Promise<voi
     console.log('✅ Job unsaved successfully');
   } catch (error: any) {
     console.error('❌ Error unsaving job:', error.response?.data || error.message);
+    throw error;
+  }
+};
+
+/**
+ * Submit application feedback after candidate applies to a job
+ * POST /api/job-feedback
+ * Similar to likeJob/saveJob - throws error on failure
+ */
+export const submitApplyFeedback = async (candidateId: number, jobId: number): Promise<SaveJobResponse> => {
+  const requestBody: SaveJobRequest = {
+    candidateId,
+    jobId,
+    feedbackType: 'apply',
+    score: 1
+  };
+
+  try {
+    console.log('📝 Submitting apply feedback:', requestBody);
+    console.log('📊 candidateId type:', typeof candidateId, 'value:', candidateId);
+    console.log('📊 jobId type:', typeof jobId, 'value:', jobId);
+    
+    const response = await api.post('/api/job-feedback', requestBody);
+    console.log('✅ Apply feedback submitted successfully:', response.data);
+    
+    return response.data;
+  } catch (error: any) {
+    console.error('❌ Error submitting apply feedback:', error.response?.data || error.message);
+    console.error('❌ Full error response:', error.response);
+    // ✅ Throw error like likeJob/saveJob do - don't swallow it
     throw error;
   }
 };

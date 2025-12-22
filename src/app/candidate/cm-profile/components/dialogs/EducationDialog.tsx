@@ -238,7 +238,7 @@ export default function EducationDialog({
                 <div 
                     ref={formContainerRef}
                     onContextMenu={handleContextMenu}
-                    className="space-y-4"
+                    className="space-y-3"
                 >
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">

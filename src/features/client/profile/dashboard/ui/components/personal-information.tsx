@@ -3,6 +3,8 @@ import { useTab } from "@/components/ui/tabs";
 import { BriefcaseBusiness, Mail } from "lucide-react";
 import Image from "next/image";
 import React from "react";
+import { FaEnvelope} from "react-icons/fa";
+
 
 const PersonalInformation = () => {
   const { activeTab, setActiveTab } = useTab();
@@ -31,7 +33,7 @@ const PersonalInformation = () => {
           {/* Email */}
           <div className="flex items-center">
             <div className="flex mr-2 pt-1">
-              <Mail className="w-4 h-4 text-gray-400" />
+              <FaEnvelope className="w-4 h-4 text-gray-400 text-base" />
             </div>
             <div className="flex-1 text-sm">example@gmail.com</div>
           </div>

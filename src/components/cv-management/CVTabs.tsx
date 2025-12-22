@@ -1,3 +1,4 @@
+import { FilePlus } from "lucide-react";
 import React from "react";
 import { FiInfo } from "react-icons/fi";
 
@@ -79,6 +80,7 @@ export const CVTabs: React.FC<CVTabsProps> = ({
             {/* <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
             </svg> */}
+            <FilePlus className="w-4 h-4" />
             <span className="hidden sm:inline">Build new CV</span>
             <span className="sm:hidden">Build</span>
           </button>

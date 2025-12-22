@@ -65,7 +65,7 @@ export default function WorkExperienceDialog({
                     </DialogTitle>
                 </DialogHeader>
 
-                <div className="space-y-4">
+                <div className="space-y-3">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                             Company Name <span className="text-red-500">*</span>
