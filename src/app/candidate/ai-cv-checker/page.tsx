@@ -388,8 +388,15 @@ export default function AICVChecker() {
                       </div>
                     ) : userCVs.length === 0 ? (
                       <div className="text-center py-8 text-gray-500">
-                        <p className="mb-2">You don't have any CVs yet.</p>
-                        <p className="text-sm">Please upload a CV or create one in CareerMate.</p>
+                        <FileText className="w-12 h-12 mx-auto mb-3 text-gray-400" />
+                        <p className="mb-2 font-medium">You don't have any CVs yet.</p>
+                        <p className="text-sm mb-4">Please upload a CV or create one in CareerMate.</p>
+                        <button
+                          onClick={() => router.push('/candidate/cv-management')}
+                          className="px-4 py-2 bg-[#3a4660] text-white rounded-lg hover:bg-[#2d3851] transition-colors text-sm font-medium"
+                        >
+                          Go to CV Management
+                        </button>
                       </div>
                     ) : (
                       <div className="grid gap-3 max-h-64 overflow-y-auto">
@@ -560,8 +567,15 @@ export default function AICVChecker() {
                       </div>
                     ) : savedJobs.length === 0 ? (
                       <div className="text-center py-8 text-gray-500">
-                        <p className="mb-2">You haven't saved any jobs yet.</p>
-                        <p className="text-sm">Go to job search and save jobs you're interested in.</p>
+                        <BriefcaseBusiness className="w-12 h-12 mx-auto mb-3 text-gray-400" />
+                        <p className="mb-2 font-medium">You haven't saved any jobs yet.</p>
+                        <p className="text-sm mb-4">Go to job search and save jobs you're interested in.</p>
+                        <button
+                          onClick={() => router.push('/jobs-detail')}
+                          className="px-4 py-2 bg-[#3a4660] text-white rounded-lg hover:bg-[#2d3851] transition-colors text-sm font-medium"
+                        >
+                          Find Jobs
+                        </button>
                       </div>
                     ) : (
                       <div className="grid gap-3 max-h-64 overflow-y-auto">

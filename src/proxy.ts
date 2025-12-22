@@ -192,7 +192,15 @@ export default function proxy(request: NextRequest) {
   if (request.nextUrl.pathname.startsWith('/candidate')) {
     // ✨ Allow unauthenticated access to print pages (for PDF export)
     if (request.nextUrl.pathname.startsWith('/candidate/cv/print/')) {
-      safeLog.middleware('✅ [MIDDLEWARE] Print page - allowing unauthenticated access', {
+      safeLog.middleware('✅ [MIDDLEWARE] CV print page - allowing unauthenticated access', {
+        path: request.nextUrl.pathname,
+      });
+      return NextResponse.next();
+    }
+
+    // ✨ Allow unauthenticated access to AI CV analysis print page (for PDF export)
+    if (request.nextUrl.pathname.startsWith('/candidate/ai-cv-result/print')) {
+      safeLog.middleware('✅ [MIDDLEWARE] AI CV result print page - allowing unauthenticated access', {
         path: request.nextUrl.pathname,
       });
       return NextResponse.next();
