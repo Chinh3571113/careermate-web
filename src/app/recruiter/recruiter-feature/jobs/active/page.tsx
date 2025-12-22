@@ -223,7 +223,8 @@ export default function ManageJobsPage() {
     setShowRecommendationsModal(true);
     setIsLoadingRecommendations(true);
     try {
-      const response = await getRecommendedCandidates(job.id, 20, 0.3);
+      // Don't pass minMatchScore - let backend use default (0.0) to show all applicants
+      const response = await getRecommendedCandidates(job.id, 20);
       if (response.code === 0 || response.code === 200) {
         setRecommendations(response.result.recommendations);
         if (response.result.recommendations.length === 0) {
