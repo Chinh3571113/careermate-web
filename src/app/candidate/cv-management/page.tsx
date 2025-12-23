@@ -150,6 +150,28 @@ const CVManagementPage = () => {
     }
   }, [headerHeight]);
 
+  // Listen for CV updates from CVPreview and refresh the list
+  useEffect(() => {
+    const handleCVUpdated = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      console.log("🔔 Received cvUpdated event:", customEvent.detail);
+      
+      toast.success("CV list updated!", { id: "cv-updated" });
+      
+      // Refresh the CV data from API
+      if (refresh) {
+        console.log("🔄 Refreshing CV list...");
+        refresh();
+      }
+    };
+
+    window.addEventListener('cvUpdated', handleCVUpdated);
+
+    return () => {
+      window.removeEventListener('cvUpdated', handleCVUpdated);
+    };
+  }, [refresh]);
+
   // ✅ Memoize current CVs based on active tab to avoid recalculation on every render
   const currentCVs = useMemo(() => {
     switch (activeTab) {
@@ -172,6 +194,54 @@ const CVManagementPage = () => {
 
   // Handler for Create CV button
   const handleCreateCV = useCallback(async () => {
+    // Get current editing resume from Zustand store
+    const currentEditingResumeId = useCVStore.getState().currentEditingResumeId;
+    const untypedResumeId = useCVStore.getState().untypedResumeId;
+
+    // Check if there's a currently editing CV
+    if (currentEditingResumeId || untypedResumeId) {
+      // Find the current editing CV
+      const allCVs = [...uploadedCVs, ...builtCVs, ...draftCVs];
+      const currentCV = allCVs.find(cv => 
+        cv.id === currentEditingResumeId || cv.id === untypedResumeId
+      );
+
+      if (currentCV) {
+        console.log('📋 Found current editing CV:', currentCV.id, 'type:', currentCV.type);
+
+        // Case 1: CV has empty/null type -> Show DRAFT conversion dialog
+        // Check if type is empty, null, or undefined (untyped resume)
+        const cvType = currentCV.type as string | undefined | null;
+        if (!cvType || cvType === '') {
+          console.log('⚠️ Current CV has empty type, showing DRAFT conversion dialog');
+          // Use the actions hook to handle this
+          actionsHook.setPendingAction({ 
+            type: 'edit', 
+            cv: { ...currentCV, id: 'new-cv-creation' } as CV 
+          });
+          actionsHook.setShowDraftConversionConfirm(true);
+          return;
+        }
+
+        // Case 2: CV has type "DRAFT" or "WEB" -> Show switch CV confirmation
+        if (cvType === 'DRAFT' || cvType === 'WEB') {
+          console.log('⚠️ Currently editing CV with type:', cvType, '- showing switch confirmation');
+          actionsHook.setPendingAction({ 
+            type: 'edit', 
+            cv: { ...currentCV, id: 'new-cv-creation' } as CV 
+          });
+          actionsHook.setShowSwitchCVConfirm(true);
+          return;
+        }
+      }
+    }
+
+    // No blocking conditions, proceed with CV creation
+    await proceedWithCVCreation();
+  }, [uploadedCVs, builtCVs, draftCVs, actionsHook]);
+
+  // Separate function to handle actual CV creation
+  const proceedWithCVCreation = useCallback(async () => {
     // Check package limits
     const builtCVCount = builtCVs.length;
 
@@ -228,6 +298,20 @@ const CVManagementPage = () => {
       toast.error(error?.message || 'Failed to create CV. Please try again.', { id: 'create-cv' });
     }
   }, [builtCVs.length, currentPackage, router]);
+
+  // Listen for the custom event from useCVActions to proceed with CV creation
+  useEffect(() => {
+    const handleProceedWithCVCreation = () => {
+      console.log("📢 Received proceedWithCVCreation event");
+      proceedWithCVCreation();
+    };
+
+    window.addEventListener('proceedWithCVCreation', handleProceedWithCVCreation);
+
+    return () => {
+      window.removeEventListener('proceedWithCVCreation', handleProceedWithCVCreation);
+    };
+  }, [proceedWithCVCreation]);
 
   // Loading state - use skeleton
   if (loading) {

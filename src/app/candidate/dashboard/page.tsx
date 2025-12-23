@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import CVSidebar from "@/components/layout/CVSidebar";
 import Link from "next/link";
-import { FileText, Briefcase, Mail, Receipt, FolderOpen } from "lucide-react";
+import { FileText, Briefcase, Mail, Receipt, FolderOpen, BriefcaseBusiness } from "lucide-react";
 import { useLayout } from "@/contexts/LayoutContext";
 import { useAuthStore } from "@/store/use-auth-store";
 import { useResumeData } from "@/hooks/useResumeData";
@@ -19,6 +19,7 @@ import { useProfileCompletion } from "@/hooks/useProfileCompletion";
 import { ProfileProgressCircle } from "@/components/ui/profile-progress-circle";
 import { useCVStore } from "@/stores/cvStore";
 import api from "@/lib/api";
+
 
 export default function CandidateDashboard() {
   const { headerHeight } = useLayout();
@@ -347,18 +348,22 @@ export default function CandidateDashboard() {
                       </>
                     ) : (
                       <>
-                        <h1 className="text-2xl font-semibold text-gray-900 mb-1">
+                        <h1 className="text-2xl font-semibold text-gray-900 mb-2">
                           {displayName}
                         </h1>
-                        <p className="text-sm text-gray-600 mb-1">
-                          💼 {profileTitle || 'Update your title'}
-                        </p>
-                        <p className="text-sm text-gray-500">
-                          ✉️ {userEmail || user?.email || 'No email'}
-                        </p>
+                        <div className="space-y-1">
+                          <p className="text-sm text-gray-600 flex items-center gap-2">
+                            <BriefcaseBusiness className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                            <span>{profileTitle || 'Update your title'}</span>
+                          </p>
+                          <p className="text-sm text-gray-600 flex items-center gap-2">
+                            <Mail className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                            <span>{userEmail || user?.email || 'No email'}</span>
+                          </p>
+                        </div>
                         <Link
                           href="/candidate/cm-profile"
-                          className="text-sm text-blue-600 hover:text-blue-700 font-medium mt-1 inline-block"
+                          className="text-sm text-blue-600 hover:text-blue-700 font-medium mt-2 inline-block"
                         >
                           Update your profile →
                         </Link>
@@ -391,7 +396,7 @@ export default function CandidateDashboard() {
                     <div className="flex-1 min-w-0">
                       <h3 className="font-medium text-gray-900 truncate">{defaultCV.name}</h3>
                       <p className="text-sm text-gray-500">
-                        {defaultCV.type === 'UPLOADED' ? 'Uploaded CV' : 'Built CV'} • {defaultCV.fileSize || 'N/A'}
+                        {defaultCV.type === 'UPLOADED' ? 'Uploaded CV' : 'Built CV'}
                       </p>
                     </div>
                     <Link
@@ -474,30 +479,56 @@ export default function CandidateDashboard() {
                 {/* CV Templates grid */}
                 <div className="flex-1 min-w-[260px]">
                   <div className="grid grid-cols-3 gap-4">
-                    {/* Template 1 */}
-                    <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-2 flex flex-col items-center justify-center min-h-[180px]">
-                      <div className="w-full h-24 bg-gray-100 rounded mb-2"></div>
-                      <div className="w-3/4 h-3 bg-gray-200 rounded mb-1"></div>
-                      <div className="w-1/2 h-2 bg-gray-100 rounded"></div>
-                    </div>
-                    {/* Template 2 */}
-                    <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-2 flex flex-col items-center justify-center min-h-[180px]">
-                      <div className="w-full h-24 bg-gray-100 rounded mb-2"></div>
-                      <div className="w-3/4 h-3 bg-gray-200 rounded mb-1"></div>
-                      <div className="w-1/2 h-2 bg-gray-100 rounded"></div>
-                    </div>
+                    {/* Template 1 - Modern */}
+                    <Link
+                      href="/cv-templates"
+                      className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                    >
+                      <div className="aspect-[3/4] relative bg-gradient-to-br from-blue-50 to-white">
+                        <img
+                          src="/images/cvtemp/modern.png"
+                          alt="Modern CV Template"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="p-2">
+                        <p className="text-xs font-medium text-gray-700 truncate">Modern</p>
+                        <p className="text-[10px] text-gray-500">Professional design</p>
+                      </div>
+                    </Link>
+                    
+                    {/* Template 2 - Elegant */}
+                    <Link
+                      href="/cv-templates"
+                      className="rounded-xl border border-gray-200 bg-white shadow-sm overflow-hidden hover:shadow-md transition-shadow cursor-pointer"
+                    >
+                      <div className="aspect-[3/4] relative bg-gradient-to-br from-purple-50 to-white">
+                        <img
+                          src="/images/cvtemp/elegant.png"
+                          alt="Elegant CV Template"
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                      <div className="p-2">
+                        <p className="text-xs font-medium text-gray-700 truncate">Elegant</p>
+                        <p className="text-[10px] text-gray-500">Sophisticated look</p>
+                      </div>
+                    </Link>
+                    
                     {/* Explore CV templates */}
-                    <div className="rounded-xl border border-gray-200 bg-white shadow-sm p-2 flex flex-col items-center justify-center min-h-[180px] relative cursor-pointer group">
+                    <Link
+                      href="/cv-templates"
+                      className="rounded-xl border border-gray-200 bg-white shadow-sm p-2 flex flex-col items-center justify-center min-h-[180px] relative cursor-pointer group hover:shadow-md transition-shadow"
+                    >
                       <div className="flex flex-col items-center justify-center h-full w-full">
-                        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-50 mb-2">
-                          <span className="text-gray-600 text-xl">⊕</span>
+                        <div className="flex items-center justify-center w-10 h-10 rounded-full bg-gray-50 mb-2 group-hover:bg-blue-50 transition-colors">
+                          <span className="text-gray-600 text-xl group-hover:text-blue-600 transition-colors">⊕</span>
                         </div>
-                        <span className="text-gray-600 font-semibold text-base text-center">
+                        <span className="text-gray-600 font-semibold text-base text-center group-hover:text-blue-600 transition-colors">
                           Explore CV templates
                         </span>
                       </div>
-                      <span className="absolute inset-0 rounded-xl border-2 border-gray-500 opacity-0 group-hover:opacity-100 transition"></span>
-                    </div>
+                    </Link>
                   </div>
                 </div>
               </div>

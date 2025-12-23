@@ -57,6 +57,12 @@ interface CVData {
     description: string;
     period: string;
   }>;
+  
+  awards?: Array<{
+    name: string;
+    organization: string;
+    date: string;
+  }>;
 }
 
 // ========================================
@@ -525,6 +531,19 @@ function VintageTemplate({ data }: { data: CVData }) {
               <div key={index} className="vintage-language-item">
                 <span className="vintage-language-name">{lang.name}</span>
                 <span className="vintage-language-level">({lang.level})</span>
+              </div>
+            ))}
+          </section>
+        )}
+
+        {/* Awards */}
+        {data.awards && data.awards.length > 0 && (
+          <section className="vintage-section">
+            <h2 className="vintage-section-title">Awards</h2>
+            {data.awards.map((award, index) => (
+              <div key={index} className="vintage-cert-item">
+                <p className="vintage-cert-name">{award.name}</p>
+                <p className="vintage-cert-issuer">{award.organization} • {award.date}</p>
               </div>
             ))}
           </section>

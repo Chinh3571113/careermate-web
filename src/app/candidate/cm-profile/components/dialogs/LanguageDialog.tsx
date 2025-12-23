@@ -58,7 +58,7 @@ export default function LanguageDialog({
                     <DialogTitle>Foreign Languages</DialogTitle>
                 </DialogHeader>
 
-                <div className="space-y-4">
+                <div className="space-y-3">
                     <div className="grid grid-cols-[1fr,1fr,auto] gap-2">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">

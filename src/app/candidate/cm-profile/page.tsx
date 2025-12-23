@@ -187,9 +187,12 @@ export default function CMProfile() {
     const totalSkillsCount = coreSkillsCount + softSkillsCount;
 
     return {
-      workExperience: {
-        count: workExpHook.workExperiences.length,
-        maxCount: 3
+      aboutMe: {
+        hasAny: aboutMeHook.aboutMeText.trim().length > 0
+      },
+      workExperience: { 
+        count: workExpHook.workExperiences.length, 
+        maxCount: 3 
       },
       education: {
         hasAny: educationHook.educations.length > 0
@@ -198,18 +201,27 @@ export default function CMProfile() {
         totalCount: totalSkillsCount,
         maxCount: 10
       },
-      certificates: {
-        hasAny: certificatesHook.certificates.length > 0
+      languages: {
+        hasAny: languagesHook.languages.length > 0
+      },
+      projects: {
+        hasAny: projectsHook.projects.length > 0
+      },
+      certificates: { 
+        hasAny: certificatesHook.certificates.length > 0 
       },
       awards: {
         hasAny: awardsHook.awards.length > 0
       }
     };
   }, [
+    aboutMeHook.aboutMeText,
     workExpHook.workExperiences.length,
     educationHook.educations.length,
     skillsHook.coreSkillGroups,
     skillsHook.softSkillGroups,
+    languagesHook.languages.length,
+    projectsHook.projects.length,
     certificatesHook.certificates.length,
     awardsHook.awards.length
   ]);
@@ -1133,6 +1145,7 @@ export default function CMProfile() {
             onToggleSection={toggleSection}
             onPreviewClick={handlePreviewCV}
             sectionCompletion={sectionCompletion}
+            onAddAboutMe={() => aboutMeHook.setIsAboutMeOpen(true)}
             onAddWorkExperience={() => workExpHook.openWorkExpDialog()}
             onAddEducation={() => educationHook.openEducationDialog()}
             onAddSkills={() => {
@@ -1141,6 +1154,8 @@ export default function CMProfile() {
               setOriginalSkills([]);
               skillsHook.setIsSkillDialogOpen(true);
             }}
+            onAddLanguages={() => languagesHook.openLanguageDialog()}
+            onAddProjects={() => projectsHook.openProjectDialog()}
             onAddCertificates={() => certificatesHook.openCertDialog()}
             onAddAwards={() => awardsHook.openAwardsDialog()}
           />

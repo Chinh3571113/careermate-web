@@ -3,6 +3,7 @@ import { Building2 } from "lucide-react";
 import { VscRemoteExplorer } from 'react-icons/vsc';
 import { TbArrowsExchange } from 'react-icons/tb';
 import type { IconType } from 'react-icons';
+import { RiMoneyDollarCircleLine } from 'react-icons/ri';
 
 interface JobCardProps {
   id: number;
@@ -78,7 +79,7 @@ const JobCard: React.FC<JobCardProps> = ({
           {salaryRange && (
             <div className="mb-3">
               <span className="salary-badge inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-bold text-xs shadow-md hover:shadow-lg transform hover:scale-105 transition-all duration-200">
-                💰 {salaryRange}
+                <RiMoneyDollarCircleLine size={15} />{salaryRange}
               </span>
             </div>
           )}

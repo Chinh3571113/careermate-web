@@ -1,4 +1,4 @@
-import { Plus, Trash2 } from "lucide-react";
+import { SquarePlus, Trash2 } from "lucide-react";
 import { FiEdit } from "react-icons/fi";
 import { SkillGroup, SkillItem } from "./types";
 
@@ -27,16 +27,18 @@ export default function SkillsSection({
     popoverOpen,
     setPopoverOpen
 }: SkillsSectionProps) {
+    const isEmpty = coreSkillGroups.length === 0 && softSkillItems.length === 0;
+    
     return (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center justify-between mb-4">
+        <div className={`bg-white rounded-xl shadow-sm border border-gray-200 ${isEmpty ? 'p-4' : 'p-6'}`}>
+            <div className="flex items-center justify-between mb-3">
                 <h2 className="text-lg font-semibold text-gray-900">Skills</h2>
                 <div className="relative">
                     <button
                         onClick={() => setPopoverOpen(!popoverOpen)}
                         className="text-gray-600 hover:text-gray-700 p-2"
                     >
-                        <Plus className="w-4 h-4" />
+                        <SquarePlus className="w-4 h-4" />
                     </button>
                     {popoverOpen && (
                         <>
@@ -53,7 +55,7 @@ export default function SkillsSection({
                                         onAddCoreSkills();
                                     }}
                                 >
-                                    <Plus className="w-4 h-4 text-green-500" />
+                                    <SquarePlus className="w-4 h-4 text-green-500" />
                                     Core skills
                                 </button>
                                 <button
@@ -63,7 +65,7 @@ export default function SkillsSection({
                                         onAddSoftSkills();
                                     }}
                                 >
-                                    <Plus className="w-4 h-4 text-green-500" />
+                                    <SquarePlus className="w-4 h-4 text-green-500" />
                                     Soft skills
                                 </button>
                             </div>
@@ -74,7 +76,7 @@ export default function SkillsSection({
 
             {/* Only show hint if no skills exist */}
             {coreSkillGroups.length === 0 && softSkillItems.length === 0 && (
-                <p className="text-gray-400 text-sm italic">
+                <p className="text-gray-400 text-sm italic mt-1">
                     Showcase your skills and proficiencies
                 </p>
             )}

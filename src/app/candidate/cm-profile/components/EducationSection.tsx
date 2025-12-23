@@ -1,4 +1,4 @@
-import { Plus, Trash2 } from "lucide-react";
+import { SquarePlus, Trash2 } from "lucide-react";
 import { FiEdit } from "react-icons/fi";
 import { Education } from "./types";
 
@@ -15,9 +15,11 @@ export default function EducationSection({
     onEdit,
     onRemove
 }: EducationSectionProps) {
+    const isEmpty = educations.length === 0;
+    
     return (
-        <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-            <div className="flex items-center justify-between mb-4">
+        <div className={`bg-white rounded-xl shadow-sm border border-gray-200 ${isEmpty ? 'p-4' : 'p-6'}`}>
+            <div className="flex items-center justify-between mb-3">
                 <h2 className="text-lg font-semibold text-gray-900">
                     Education
                 </h2>
@@ -25,12 +27,12 @@ export default function EducationSection({
                     onClick={onAdd}
                     className="text-gray-600 hover:text-gray-700 p-2"
                 >
-                    <Plus className="w-4 h-4" />
+                    <SquarePlus className="w-4 h-4" />
                 </button>
             </div>
 
             {educations.length === 0 ? (
-                <p className="text-gray-400 text-sm italic">
+                <p className="text-gray-400 text-sm italic mt-1">
                     Add your education background
                 </p>
             ) : (

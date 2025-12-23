@@ -38,7 +38,7 @@ export default function CertificateDialog({
                     </DialogTitle>
                 </DialogHeader>
 
-                <div className="space-y-4">
+                <div className="space-y-3">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
                             Certificate Name <span className="text-red-500">*</span>

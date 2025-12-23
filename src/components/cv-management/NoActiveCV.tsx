@@ -1,4 +1,4 @@
-import { FileX, Upload, FileText, AlertCircle } from "lucide-react";
+import { FileX, Upload, FileText, AlertCircle, FilePlus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface NoActiveCVProps {
@@ -59,7 +59,7 @@ export const NoActiveCV = ({
               variant="outline"
               className="border-[#3a4660] text-[#3a4660] hover:bg-[#3a4660] hover:text-white"
             >
-              <FileText className="mr-2 h-4 w-4" />
+              <FilePlus className="mr-2 h-4 w-4" />
               Build New CV
             </Button>
           </div>

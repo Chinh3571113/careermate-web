@@ -1007,6 +1007,14 @@ export default function CVPreview({
       toast.success("CV saved successfully!", { id: loadingToast });
 
       // ========================================
+      // 🔔 Notify cv-management page to refresh CV list
+      // ========================================
+      console.log("🔔 Dispatching cvUpdated event to refresh CV list");
+      window.dispatchEvent(new CustomEvent('cvUpdated', { 
+        detail: { resumeId, downloadURL } 
+      }));
+
+      // ========================================
       // ✅ FIX: Download Firebase file using blob fetch to bypass CORS
       // Firebase URLs need to be fetched as blob first before triggering download
       // ========================================
@@ -3200,7 +3208,7 @@ export default function CVPreview({
         {isDownloading && (
           <div className="flex items-center justify-center gap-2 px-4 py-2 bg-gradient-to-r from-green-50 to-emerald-50 border-b border-green-200">
             <div className="w-4 h-4 border-2 border-green-500 border-t-transparent rounded-full animate-spin" />
-            <span className="text-sm font-medium text-green-700">Đang tạo & lưu CV...</span>
+            <span className="text-sm font-medium text-green-700">Your CV is being generate, it may take up to 10-20s</span>
           </div>
         )}
         <div className="flex items-center justify-between p-4">

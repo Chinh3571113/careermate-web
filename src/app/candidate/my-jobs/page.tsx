@@ -422,10 +422,12 @@ const MyJobsPage = () => {
           {/* Main Content */}
           <section className="space-y-6 min-w-0 transition-all duration-300">
             <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <h1 className="text-2xl font-semibold text-gray-900 mb-6 flex items-center gap-2">
-                {/* <BriefcaseBusiness className="w-6 h-6" /> */}
-                Job Activities
-              </h1>
+              <div className="mb-6">
+                <h1 className="text-2xl font-semibold text-gray-900">Job Activities</h1>
+                <p className="text-sm text-gray-600 mt-1">
+                  Track and manage your job applications and saved positions
+                </p>
+              </div>
 
               {/* Tabs */}
               <div className="flex border-b border-gray-200 mb-6">
