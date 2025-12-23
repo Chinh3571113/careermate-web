@@ -144,19 +144,19 @@ export default function CompleteRecruiterPageContent({
               <Building2 className="w-8 h-8 text-sky-600" />
             </div>
             <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              Hoàn Tất Hồ Sơ Recruiter
+              Complete Recruiter Profile
             </h1>
             <p className="text-gray-600">
-              Vui lòng điền thông tin doanh nghiệp để hoàn tất đăng ký
+              Please fill in your organization information to complete registration
             </p>
           </div>
 
           <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
             <p className="text-sm text-blue-700">
-              Đăng nhập bằng: <strong>{email}</strong>
+              Logged in as: <strong>{email}</strong>
             </p>
             <p className="text-xs text-blue-600 mt-1">
-              Tài khoản của bạn sẽ được admin xem xét trước khi kích hoạt.
+              Your account will be reviewed by an admin before activation.
             </p>
           </div>
 
@@ -392,8 +392,8 @@ export default function CompleteRecruiterPageContent({
           </form>
 
           <p className="text-sm text-gray-500 text-center mt-6">
-            Thông tin của bạn sẽ được xem xét bởi admin. Bạn sẽ nhận được email
-            khi tài khoản được phê duyệt.
+            Your information will be reviewed by admin. You will receive an email
+            when your account is approved.
           </p>
         </div>
       </div>

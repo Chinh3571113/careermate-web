@@ -136,7 +136,7 @@ const useSignUpRecruiterHook = () => {
         console.log("✅ [SIGNUP] Registration successful!");
         
         // Successful registration
-        toast.success("Đăng ký thành công! Tài khoản của bạn đang chờ phê duyệt.");
+        toast.success("Registration successful! Your account is pending approval.");
         
         // Store user info in localStorage
         if (typeof window !== "undefined") {
