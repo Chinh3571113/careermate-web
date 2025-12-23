@@ -33,7 +33,7 @@ export function OAuthCallbackContent() {
       if (profileCompleted === "false") {
         // Recruiter needs to complete profile with organization info
         console.log("📝 [OAuth Callback] Recruiter profile incomplete, redirecting to complete registration");
-        toast("Vui lòng điền thông tin doanh nghiệp để hoàn tất đăng ký");
+        toast("Please fill in your organization information to complete registration");
         router.replace(`/auth/oauth/complete-recruiter?email=${encodeURIComponent(email || '')}`);
         return;
       }
@@ -70,8 +70,8 @@ export function OAuthCallbackContent() {
             });
 
             const message = profile.rejectionReason
-              ? `Tài khoản bị từ chối: ${profile.rejectionReason}`
-              : `Tài khoản của bạn đã bị từ chối. Vui lòng liên hệ hỗ trợ.`;
+              ? `Account rejected: ${profile.rejectionReason}`
+              : `Your account has been rejected. Please contact support.`;
             toast.error(message);
 
             // Redirect to rejected page with reason AND tokens
@@ -83,7 +83,7 @@ export function OAuthCallbackContent() {
           // Handle PENDING status
           if (profile.accountStatus === "PENDING" || accountStatus.toLowerCase() === 'pending') {
             console.log("⏳ [OAuth Callback] Recruiter account pending approval");
-            toast("Tài khoản đang chờ phê duyệt. Vui lòng chờ chúng tôi xác nhận và sẽ thông báo lại sau.");
+            toast("Account pending approval. Please wait for our confirmation.");
             router.replace(`/auth/account-pending`);
             return;
           }
@@ -91,7 +91,7 @@ export function OAuthCallbackContent() {
           // Handle ACTIVE/APPROVED status
           if (profile.accountStatus === "ACTIVE" || profile.accountStatus === "APPROVED" || accountStatus.toLowerCase() === 'active' || accountStatus.toLowerCase() === 'approved') {
             console.log("✅ [OAuth Callback] Recruiter login successful (active status)");
-            toast.success("Đăng nhập thành công!");
+            // Don't show toast here - it will be shown in the success page
             const successUrl = `/auth/oauth/success?token=${encodeURIComponent(accessToken)}&email=${encodeURIComponent(email || "")}${refreshToken ? `&refreshToken=${encodeURIComponent(refreshToken)}` : ""}`;
             router.replace(successUrl);
             return;
@@ -100,8 +100,8 @@ export function OAuthCallbackContent() {
           console.error("🔴 [OAuth Callback] Error fetching recruiter profile:", error);
           // If API call fails, fall back to URL params
           if (accountStatus.toLowerCase() === 'rejected') {
-            toast.error("Tài khoản của bạn đã bị từ chối. Vui lòng liên hệ hỗ trợ.");
-            const rejectedUrl = `/auth/account-rejected?reason=Không thể tải thông tin chi tiết&accessToken=${encodeURIComponent(accessToken)}&email=${encodeURIComponent(email || '')}${refreshToken ? `&refreshToken=${encodeURIComponent(refreshToken)}` : ''}`;
+            toast.error("Your account has been rejected. Please contact support.");
+            const rejectedUrl = `/auth/account-rejected?reason=Unable to load details&accessToken=${encodeURIComponent(accessToken)}&email=${encodeURIComponent(email || '')}${refreshToken ? `&refreshToken=${encodeURIComponent(refreshToken)}` : ''}`;
             router.replace(rejectedUrl);
             return;
           }
@@ -111,17 +111,17 @@ export function OAuthCallbackContent() {
       // Fallback handling based on URL params only
       if (accountStatus && accountStatus.toLowerCase() === 'pending') {
         console.log("⏳ [OAuth Callback] Recruiter account pending approval (fallback)");
-        toast("Tài khoản đang chờ phê duyệt. Vui lòng chờ chúng tôi xác nhận và sẽ thông báo lại sau.");
+        toast("Account pending approval. Please wait for our confirmation.");
         router.replace(`/auth/account-pending`);
       } else if ((accountStatus === "active" || accountStatus === "approved" || (accountStatus && accountStatus.toLowerCase() === 'active')) && accessToken) {
         console.log("✅ [OAuth Callback] Recruiter login successful (active status - fallback)");
-        toast.success("Đăng nhập thành công!");
+        // Don't show toast here - it will be shown in the success page
         const successUrl = `/auth/oauth/success?token=${encodeURIComponent(accessToken)}&email=${encodeURIComponent(email || "")}${refreshToken ? `&refreshToken=${encodeURIComponent(refreshToken)}` : ""}`;
         router.replace(successUrl);
       } else {
         // Other recruiter status (inactive, etc.)
         console.error("❌ [OAuth Callback] Recruiter account not active:", { accountStatus });
-        toast.error(`Trạng thái tài khoản: ${accountStatus}. Vui lòng liên hệ hỗ trợ.`);
+        toast.error(`Account status: ${accountStatus}. Please contact support.`);
         router.replace(`/auth/oauth/error?message=${encodeURIComponent(`Account status: ${accountStatus}`)}`);
       }
     };
@@ -132,13 +132,13 @@ export function OAuthCallbackContent() {
     } else if (success === "true" && accessToken) {
       // Non-recruiter (candidate) successful login
       console.log("✅ [OAuth Callback] Candidate login successful");
-      toast.success("Đăng nhập thành công!");
+      // Don't show toast here - it will be shown in the success page
       const successUrl = `/auth/oauth/success?token=${encodeURIComponent(accessToken)}&email=${encodeURIComponent(email || "")}${refreshToken ? `&refreshToken=${encodeURIComponent(refreshToken)}` : ""}`;
       router.replace(successUrl);
     } else {
       // Unknown or error state
       console.error("❌ [OAuth Callback] Error state:", { success, accountStatus, accountType, hasAccessToken: !!accessToken });
-      toast.error("Lỗi xác thực OAuth. Vui lòng thử lại.");
+      toast.error("OAuth authentication error. Please try again.");
       router.replace("/auth/oauth/error?message=OAuth%20callback%20error");
     }
   }, [searchParams, router]);
@@ -147,7 +147,7 @@ export function OAuthCallbackContent() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="text-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-sky-600 mx-auto mb-4"></div>
-        <p className="text-gray-600">Đang xử lý xác thực OAuth...</p>
+        <p className="text-gray-600">Processing OAuth authentication...</p>
       </div>
     </div>
   );

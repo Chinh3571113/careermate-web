@@ -783,30 +783,65 @@ export default function CMProfile() {
       clearTimeout(timeoutId);
 
       if (!response.ok) {
-        const errorData = await response.json().catch(() => null);
-        console.error('❌ Python API Error:', response.status, errorData);
-        throw new Error(errorData?.message || errorData?.detail || `Failed to analyze text (status ${response.status})`);
+        // Try to parse error response from backend
+        let errorMessage = `API Error: ${response.status}`;
+        let isValidationError = false;
+        try {
+          const errorData = await response.json();
+          
+          // Extract meaningful error message
+          if (errorData.error) {
+            errorMessage = errorData.error;
+            // Check if this is a validation error (400) vs server error (500)
+            isValidationError = response.status === 400;
+            // Add suggestion if available
+            if (errorData.suggestion) {
+              errorMessage += `. ${errorData.suggestion}`;
+            }
+          }
+          
+          // Only log to console for server errors, not validation errors
+          if (!isValidationError) {
+            console.error('❌ Python API Error:', response.status, errorData);
+          }
+        } catch {
+          // If JSON parsing fails, ignore
+        }
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
+
+      // Check if backend returned success: false (even with 200 status)
+      if (data.success === false) {
+        throw new Error(data.error || 'Failed to analyze text');
+      }
 
       // Sort by confidence and store results
       const sortedResults = (data.recommendations || data.roles || []).sort((a: any, b: any) => b.confidence - a.confidence);
       setRoleResults(sortedResults);
 
       if (sortedResults.length === 0) {
-        toast.error("No role recommendations found");
+        toast.error("No role recommendations found. Try describing your skills and experience.");
       } else {
         toast.success(`Found ${sortedResults.length} role recommendations!`);
       }
     } catch (error: any) {
-      console.error('Error analyzing text:', error);
+      // Only log unexpected errors to console
+      const isValidationError = error.message?.includes('Could not extract any skills') || 
+                                error.message?.includes('Text input is empty');
+      
+      if (!isValidationError && error.name !== 'AbortError') {
+        console.error('❌ Error analyzing text:', error.message || error);
+      }
 
-      // ✅ Better error messages
+      // ✅ User-friendly error messages
       if (error.name === 'AbortError') {
         toast.error("Request timed out. Please try again.");
       } else if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-        toast.error("Cannot connect to AI service. Please check if the service is running or try again later.");
+        toast.error("Cannot connect to AI service. Please check if the Python service is running.");
+      } else if (error.message.includes('Could not extract any skills')) {
+        toast.error("No skills detected. Please mention specific technologies, frameworks, or programming languages.");
       } else {
         toast.error(error.message || "Failed to analyze text. Please try again.");
       }

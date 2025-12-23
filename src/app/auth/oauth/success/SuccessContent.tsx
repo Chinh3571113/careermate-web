@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useAuthStore } from "@/store/use-auth-store";
 import toast from "react-hot-toast";
@@ -9,8 +9,12 @@ export function SuccessContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { setAuthFromTokens } = useAuthStore();
+  const hasProcessed = useRef(false);
 
   useEffect(() => {
+    // Prevent duplicate execution in React StrictMode
+    if (hasProcessed.current) return;
+    hasProcessed.current = true;
     const token = searchParams.get("token");
     const email = searchParams.get("email");
     const refreshToken = searchParams.get("refreshToken");

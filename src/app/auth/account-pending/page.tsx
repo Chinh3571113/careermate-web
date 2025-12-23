@@ -17,10 +17,10 @@ export default function AccountPendingPage() {
               <Clock className="w-12 h-12 text-white" />
             </div>
             <h1 className="text-4xl font-bold text-white mb-3">
-              Tài Khoản Đang Chờ Xét Duyệt
+              Account Pending Approval
             </h1>
             <p className="text-amber-50 text-lg">
-              Hồ sơ của bạn đang được quản trị viên xem xét
+              Your profile is being reviewed by our administrators
             </p>
           </div>
 

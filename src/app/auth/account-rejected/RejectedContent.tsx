@@ -139,10 +139,10 @@ export function RejectedContent() {
               <XCircle className="w-12 h-12 text-white" />
             </div>
             <h1 className="text-4xl font-bold text-white mb-3">
-              Tài Khoản Bị Từ Chối
+              Account Rejected
             </h1>
             <p className="text-red-50 text-lg">
-              Hồ sơ của bạn không đạt yêu cầu phê duyệt
+              Your profile did not meet the approval requirements
             </p>
           </div>
 
