@@ -780,6 +780,14 @@ export const useCVActions = (
     if (actionToPerform) {
       const { type, cv } = actionToPerform;
 
+      // Check if this is a "Build new CV" action
+      if (cv.id === 'new-cv-creation') {
+        console.log("🔄 Continuing with Build new CV after skipping DRAFT conversion");
+        // Trigger the callback passed from cv-management page
+        window.dispatchEvent(new CustomEvent('proceedWithCVCreation'));
+        return;
+      }
+
       if (type === 'sync') {
         console.log("🔄 Continuing sync after skip (direct call)");
         // Set current editing resume

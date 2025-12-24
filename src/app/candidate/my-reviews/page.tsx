@@ -460,15 +460,16 @@ export default function CandidateMyReviewsPage() {
   }
 
   return (
-    <main className="relative flex min-h-screen w-full max-w-full bg-[#faf9f8] overflow-x-hidden">
-      <div className="flex flex-1 max-w-7xl mx-auto px-4 sm:px-6 py-6 gap-6 w-full">
-        {/* Sidebar */}
-        <div className="hidden lg:block flex-shrink-0 sticky top-[calc(var(--sticky-offset,80px)+24px)] self-start">
-          <CVSidebar activePage="my-reviews" />
-        </div>
+    <main className="min-h-screen bg-gray-50">
+      <div className="mx-auto max-w-7xl px-4 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6">
+          {/* Sidebar */}
+          <aside className="hidden lg:block sticky top-24 self-start">
+            <CVSidebar activePage="my-reviews" />
+          </aside>
 
-        {/* Main Content */}
-        <div className="flex-1 min-w-0 space-y-6">
+          {/* Main Content */}
+          <div className="space-y-6 min-w-0">
           {/* Header */}
           <Card>
             <CardHeader>
@@ -530,51 +531,53 @@ export default function CandidateMyReviewsPage() {
           </div>
 
           {/* Tabs */}
-          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "submitted" | "applications")}>
-            <div className="flex flex-col sm:flex-row justify-between gap-4 mb-4">
-              <TabsList>
-                <TabsTrigger value="submitted" className="gap-2">
-                  <CheckCircle2 className="h-4 w-4" />
-                  Submitted ({reviews.length})
-                </TabsTrigger>
-                <TabsTrigger value="applications" className="gap-2">
-                  <Building2 className="h-4 w-4" />
-                  My Applications ({applications.length})
-                </TabsTrigger>
-              </TabsList>
+          <Card>
+            <CardContent className="pt-6">
+              <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "submitted" | "applications")}>
+                <div className="flex flex-col sm:flex-row justify-between gap-4 mb-6">
+                  <TabsList className="bg-gray-100">
+                    <TabsTrigger value="submitted" className="gap-2 data-[state=active]:bg-white">
+                      <CheckCircle2 className="h-4 w-4" />
+                      Submitted ({reviews.length})
+                    </TabsTrigger>
+                    <TabsTrigger value="applications" className="gap-2 data-[state=active]:bg-white">
+                      <Building2 className="h-4 w-4" />
+                      My Applications ({applications.length})
+                    </TabsTrigger>
+                  </TabsList>
 
-              {/* Filters */}
-              <div className="flex gap-2">
-                <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
-                  <Input
-                    placeholder="Search..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pl-9 w-48"
-                  />
+                  {/* Filters */}
+                  <div className="flex gap-2">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                      <Input
+                        placeholder="Search..."
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        className="pl-9 w-48"
+                      />
+                    </div>
+                    {activeTab === "submitted" && (
+                      <Select value={filterType} onValueChange={setFilterType}>
+                        <SelectTrigger className="w-40">
+                          <Filter className="h-4 w-4 mr-2" />
+                          <SelectValue placeholder="Filter" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Types</SelectItem>
+                          <SelectItem value="application">Application</SelectItem>
+                          <SelectItem value="interview">Interview</SelectItem>
+                          <SelectItem value="work">Work Experience</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
+                  </div>
                 </div>
-                {activeTab === "submitted" && (
-                  <Select value={filterType} onValueChange={setFilterType}>
-                    <SelectTrigger className="w-40">
-                      <Filter className="h-4 w-4 mr-2" />
-                      <SelectValue placeholder="Filter" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Types</SelectItem>
-                      <SelectItem value="application">Application</SelectItem>
-                      <SelectItem value="interview">Interview</SelectItem>
-                      <SelectItem value="work">Work Experience</SelectItem>
-                    </SelectContent>
-                  </Select>
-                )}
-              </div>
-            </div>
 
             {/* Submitted Reviews Tab */}
             <TabsContent value="submitted" className="mt-0">
               {filteredReviews.length === 0 ? (
-                <Card>
+                <Card className="border-0 shadow-none">
                   <CardContent className="py-12 text-center">
                     <Building2 className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                     <h3 className="font-medium text-gray-900 mb-2">No reviews yet</h3>
@@ -657,7 +660,7 @@ export default function CandidateMyReviewsPage() {
             {/* Applications Tab - Grouped Review Cards */}
             <TabsContent value="applications" className="mt-0">
               {filteredApplications.length === 0 ? (
-                <Card>
+                <Card className="border-0 shadow-none">
                   <CardContent className="py-12 text-center">
                     <Briefcase className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                     <h3 className="font-medium text-gray-900 mb-2">No applications yet</h3>
@@ -759,8 +762,11 @@ export default function CandidateMyReviewsPage() {
               )}
             </TabsContent>
           </Tabs>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
+    </div>
+  </div>
+</div>
 
       {/* Review Drawer */}
       {selectedApplication && effectiveCandidateId && selectedReviewType && (

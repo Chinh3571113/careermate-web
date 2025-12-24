@@ -84,7 +84,7 @@ export async function generatePDF(params: PDFGenerationParams): Promise<PDFGener
     // ========================================
     // 1. VALIDATE INPUT
     // ========================================
-    
+
     if (!cvData) {
       return { success: false, error: "CV data is required" };
     }
@@ -94,9 +94,9 @@ export async function generatePDF(params: PDFGenerationParams): Promise<PDFGener
     }
 
     if (!VALID_TEMPLATES.includes(templateId)) {
-      return { 
-        success: false, 
-        error: `Invalid template ID. Valid options: ${VALID_TEMPLATES.join(', ')}` 
+      return {
+        success: false,
+        error: `Invalid template ID. Valid options: ${VALID_TEMPLATES.join(', ')}`
       };
     }
 
@@ -116,11 +116,11 @@ export async function generatePDF(params: PDFGenerationParams): Promise<PDFGener
     // ========================================
     // 2. LAUNCH BROWSER
     // ========================================
-    
+
     if (isDev) {
       // Local development - Use full puppeteer with bundled Chromium
       const puppeteer = require("puppeteer");
-      
+
       browser = await puppeteer.launch({
         headless: true,
         args: [
@@ -141,22 +141,22 @@ export async function generatePDF(params: PDFGenerationParams): Promise<PDFGener
     } else {
       // Production - Handle different environments (Vercel/Railway/Docker)
       const puppeteerCore = require("puppeteer-core");
-      
+
       console.log("🔧 Configuring Chromium for production environment...");
-      
+
       // Check for Railway/Docker environment with system Chromium
       const systemChromiumPath = process.env.PUPPETEER_EXECUTABLE_PATH || process.env.CHROMIUM_PATH;
-      
+
       if (systemChromiumPath) {
         // Railway/Docker: Use system-installed Chromium
         console.log("📁 Using system Chromium at:", systemChromiumPath);
-        
+
         // Verify chromium exists
         const fs = require("fs");
         if (!fs.existsSync(systemChromiumPath)) {
           throw new Error(`System Chromium not found at: ${systemChromiumPath}`);
         }
-        
+
         browser = await puppeteerCore.launch({
           args: [
             "--disable-gpu",
@@ -167,8 +167,8 @@ export async function generatePDF(params: PDFGenerationParams): Promise<PDFGener
             "--no-zygote",
             "--single-process",
           ],
-          defaultViewport: { 
-            width: 794, 
+          defaultViewport: {
+            width: 794,
             height: 1123,
             deviceScaleFactor: 1,
           },
@@ -176,13 +176,13 @@ export async function generatePDF(params: PDFGenerationParams): Promise<PDFGener
           headless: true,
           ignoreHTTPSErrors: true,
         });
-        
+
         console.log("✅ Chromium browser launched (system binary)");
       } else {
         // Vercel/AWS Lambda: Use @sparticuz/chromium
         const chromium = (await import("@sparticuz/chromium")).default;
         const fs = require("fs");
-        
+
         // ========================================
         // ✅ FIX: Try multiple possible bin paths for Vercel
         // ========================================
@@ -192,7 +192,7 @@ export async function generatePDF(params: PDFGenerationParams): Promise<PDFGener
           path.join(__dirname, "..", "..", "node_modules", "@sparticuz", "chromium", "bin"),
           "/var/task/.next/server/node_modules/@sparticuz/chromium/bin",
         ];
-        
+
         let chromiumBin: string | null = null;
         for (const binPath of possibleBinPaths) {
           console.log(`🔍 Checking chromium bin path: ${binPath}`);
@@ -202,13 +202,13 @@ export async function generatePDF(params: PDFGenerationParams): Promise<PDFGener
             break;
           }
         }
-        
+
         if (!chromiumBin) {
           console.error("❌ Chromium bin not found in any expected location:");
           possibleBinPaths.forEach(p => console.error(`   - ${p}`));
           console.error("📁 Current working directory:", process.cwd());
           console.error("📁 __dirname:", __dirname);
-          
+
           // List directory contents for debugging
           try {
             const cwdContents = fs.readdirSync(process.cwd());
@@ -216,14 +216,14 @@ export async function generatePDF(params: PDFGenerationParams): Promise<PDFGener
           } catch (e) {
             console.error("❌ Cannot list CWD");
           }
-          
+
           throw new Error(
             `Chromium bin directory not found in any expected location.\n` +
             `Check next.config.ts outputFileTracingIncludes configuration.\n` +
             `CWD: ${process.cwd()}`
           );
         }
-        
+
         try {
           // Set font config to prevent font loading issues
           await chromium.font(
@@ -233,7 +233,7 @@ export async function generatePDF(params: PDFGenerationParams): Promise<PDFGener
         } catch (fontError: any) {
           console.warn("⚠️ Font configuration failed (non-critical):", fontError.message);
         }
-        
+
         // Get executable path using found bin directory
         let execPath;
         try {
@@ -244,7 +244,7 @@ export async function generatePDF(params: PDFGenerationParams): Promise<PDFGener
           console.log("💡 Bin directory:", chromiumBin);
           throw new Error(`Chromium setup failed: ${pathError.message}`);
         }
-        
+
         browser = await puppeteerCore.launch({
           args: [
             ...chromium.args,
@@ -256,8 +256,8 @@ export async function generatePDF(params: PDFGenerationParams): Promise<PDFGener
             "--no-zygote",
             "--single-process",
           ],
-          defaultViewport: { 
-            width: 794, 
+          defaultViewport: {
+            width: 794,
             height: 1123,
             deviceScaleFactor: 1,
           },
@@ -265,7 +265,7 @@ export async function generatePDF(params: PDFGenerationParams): Promise<PDFGener
           headless: true,
           ignoreHTTPSErrors: true,
         });
-        
+
         console.log("✅ Chromium browser launched (@sparticuz/chromium)");
       }
     }
@@ -278,25 +278,27 @@ export async function generatePDF(params: PDFGenerationParams): Promise<PDFGener
     // ========================================
     // 3. NAVIGATE TO PRINT PAGE
     // ========================================
-    
+
     const packageParam = userPackage ? `&package=${encodeURIComponent(userPackage)}` : '';
     const printUrl = `${BASE_URL}/candidate/cv/print/${templateId}?data=${encodeURIComponent(encodedData)}${packageParam}`;
-    
+
     console.log("🌐 Navigating to print page...");
 
     await page.goto(printUrl, {
       waitUntil: "networkidle2",
       timeout: 90000,
     });
-    
+
     console.log("✅ Page loaded successfully");
 
     // ========================================
     // 4. PREPARE FOR PDF GENERATION
     // ========================================
-    
-    await page.emulateMediaType("screen");
-    
+
+    // await page.emulateMediaType("screen");
+    await page.emulateMediaType("print");
+
+
     // Wait for fonts
     try {
       await page.evaluateHandle('document.fonts.ready');
@@ -311,9 +313,9 @@ export async function generatePDF(params: PDFGenerationParams): Promise<PDFGener
     // ========================================
     // 5. GENERATE PDF
     // ========================================
-    
+
     console.log("📄 Generating PDF...");
-    
+
     const pdf = await page.pdf({
       format: "A4",
       printBackground: true,
@@ -329,7 +331,7 @@ export async function generatePDF(params: PDFGenerationParams): Promise<PDFGener
     // ========================================
     // 6. CLEANUP & RETURN
     // ========================================
-    
+
     await browser.close();
     console.log("✅ Browser closed");
 

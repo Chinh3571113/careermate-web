@@ -116,8 +116,17 @@ export const useCVUpload = (
 
       console.log("✅ downloadUrl validation passed:", uploadedCv.downloadUrl);
 
-      // �🚀 STEP 2: Create resume entry in backend
-      const isActive = uploadedCVs.length === 0 && !defaultCV;
+      // 🚀 STEP 2: Create resume entry in backend
+      // Auto-set as default ONLY if this is the FIRST WEB/UPLOAD CV
+      // (Don't count DRAFT CVs)
+      const webAndUploadCount = uploadedCVs.length; // uploadedCVs already filtered by type
+      const isActive = webAndUploadCount === 0 && !defaultCV;
+      
+      console.log("📊 Auto-default check:", {
+        webAndUploadCount,
+        hasDefaultCV: !!defaultCV,
+        willSetAsDefault: isActive
+      });
       
       const payload = {
         aboutMe: "",
@@ -151,7 +160,15 @@ export const useCVUpload = (
       }
 
       console.log("✅ CV Upload Flow Complete!");
-      toast.success("CV uploaded successfully!");
+      
+      if (isActive) {
+        toast.success("CV uploaded and set as default!", { 
+          icon: "✨",
+          duration: 5000 
+        });
+      } else {
+        toast.success("CV uploaded successfully!");
+      }
 
     } catch (error: any) {
       console.error("❌ CV upload error:", {

@@ -214,7 +214,9 @@ export async function POST(req: NextRequest) {
     // ========================================
     
     // Emulate screen media type for better color rendering
-    await page.emulateMediaType("screen");
+    // await page.emulateMediaType("screen");
+    await page.emulateMediaType("print");
+
     console.log("✅ Media type set to 'screen'");
 
     // Wait for all fonts to be loaded

@@ -318,67 +318,71 @@ export default function CandidateEmploymentsPage() {
   }
 
   return (
-    <main className="mx-auto max-w-7xl px-4 py-6 md:px-6">
-        <div
-          className="grid grid-cols-1 lg:grid-cols-[16rem_minmax(0,1fr)] gap-6 items-start"
-          style={{
-            ["--sticky-offset" as any]: `${headerHeight || 0}px`,
-            ["--content-pad" as any]: "24px",
-          }}
-        >
-          <aside className="hidden lg:block sticky [top:calc(var(--sticky-offset)+var(--content-pad))] self-start">
+    <main className="min-h-screen bg-gray-50">
+      <div className="mx-auto max-w-7xl px-4 py-6">
+        <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6">
+          <aside className="hidden lg:block sticky top-24 self-start">
             <CVSidebar activePage="employments" />
           </aside>
 
           <section className="space-y-6 min-w-0">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
-              <div className="flex items-center justify-between mb-6">
-                <div>
-                  <h1 className="text-2xl font-semibold text-gray-900">My Employment</h1>
-                  <p className="text-sm text-gray-600 mt-1">
-                    Track your employment status and verification checkpoints
-                  </p>
+            <Card>
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-2xl">My Employment</CardTitle>
+                    <CardDescription>
+                      Track your employment status and verification checkpoints
+                    </CardDescription>
+                  </div>
+                  <Button variant="outline" onClick={loadEmployments} disabled={loading}>
+                    <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
+                    Refresh
+                  </Button>
                 </div>
-                <Button variant="outline" onClick={loadEmployments} disabled={loading}>
-                  <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
-                  Refresh
-                </Button>
-              </div>
+              </CardHeader>
+            </Card>
 
-              {/* Filter employments by status */}
-              {(() => {
-                const activeEmployments = employments.filter(e => e.application.status === 'WORKING');
-                const terminatedEmployments = employments.filter(e => e.application.status === 'TERMINATED');
-                
-                return (
-                  <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "active" | "terminated")}>
-                    <TabsList className="grid w-full grid-cols-2 mb-6">
-                      <TabsTrigger value="active" className="gap-2">
-                        <CheckCircle className="h-4 w-4" />
-                        Current ({activeEmployments.length})
-                      </TabsTrigger>
-                      <TabsTrigger value="terminated" className="gap-2">
-                        <XCircle className="h-4 w-4" />
-                        Past ({terminatedEmployments.length})
-                      </TabsTrigger>
-                    </TabsList>
+            {/* Filter employments by status */}
+            {(() => {
+              const activeEmployments = employments.filter(e => e.application.status === 'WORKING');
+              const terminatedEmployments = employments.filter(e => e.application.status === 'TERMINATED');
+              
+              return (
+                <Card>
+                  <CardContent className="pt-6">
+                    <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "active" | "terminated")}>
+                      <TabsList className="mb-6 bg-gray-100">
+                        <TabsTrigger value="active" className="gap-2 data-[state=active]:bg-white">
+                          <CheckCircle className="h-4 w-4" />
+                          Current ({activeEmployments.length})
+                        </TabsTrigger>
+                        <TabsTrigger value="terminated" className="gap-2 data-[state=active]:bg-white">
+                          <XCircle className="h-4 w-4" />
+                          Past ({terminatedEmployments.length})
+                        </TabsTrigger>
+                      </TabsList>
 
                     {/* Active Employments Tab */}
                     <TabsContent value="active" className="mt-0">
                       {activeEmployments.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-16">
-                          <div className="bg-gray-100 p-4 rounded-full mb-4">
-                            <Briefcase className="h-8 w-8 text-gray-400" />
-                          </div>
-                          <h3 className="text-lg font-medium text-gray-900 mb-2">No Active Employment</h3>
-                          <p className="text-gray-500 text-center mb-6">
-                            You don't have any active employment records.<br />
-                            Once you're hired, your employment will appear here.
-                          </p>
-                          <Link href="/candidate/my-jobs">
-                            <Button>View My Applications</Button>
-                          </Link>
-                        </div>
+                        <Card className="border-0 shadow-none">
+                          <CardContent className="py-16">
+                            <div className="flex flex-col items-center justify-center">
+                              <div className="bg-gray-100 p-4 rounded-full mb-4">
+                                <Briefcase className="h-8 w-8 text-gray-400" />
+                              </div>
+                              <h3 className="text-lg font-medium text-gray-900 mb-2">No Active Employment</h3>
+                              <p className="text-gray-500 text-center mb-6">
+                                You don't have any active employment records.<br />
+                                Once you're hired, your employment will appear here.
+                              </p>
+                              <Link href="/candidate/my-jobs">
+                                <Button>View My Applications</Button>
+                              </Link>
+                            </div>
+                          </CardContent>
+                        </Card>
                       ) : (
                         <div className="space-y-4">
                           {activeEmployments.map((employment) => {
@@ -535,15 +539,19 @@ export default function CandidateEmploymentsPage() {
                     {/* Terminated Employments Tab */}
                     <TabsContent value="terminated" className="mt-0">
                       {terminatedEmployments.length === 0 ? (
-                        <div className="flex flex-col items-center justify-center py-16">
-                          <div className="bg-gray-100 p-4 rounded-full mb-4">
-                            <XCircle className="h-8 w-8 text-gray-400" />
-                          </div>
-                          <h3 className="text-lg font-medium text-gray-900 mb-2">No Past Employment</h3>
-                          <p className="text-gray-500 text-center">
-                            You don't have any terminated employment records.
-                          </p>
-                        </div>
+                        <Card className="border-0 shadow-none">
+                          <CardContent className="py-16">
+                            <div className="flex flex-col items-center justify-center">
+                              <div className="bg-gray-100 p-4 rounded-full mb-4">
+                                <Briefcase className="h-8 w-8 text-gray-400" />
+                              </div>
+                              <h3 className="text-lg font-medium text-gray-900 mb-2">No Past Employment</h3>
+                              <p className="text-gray-500 text-center">
+                                Your employment history will appear here when terminated.
+                              </p>
+                            </div>
+                          </CardContent>
+                        </Card>
                       ) : (
                         <div className="space-y-4">
                           {terminatedEmployments.map((employment) => {
@@ -632,11 +640,13 @@ export default function CandidateEmploymentsPage() {
                       )}
                     </TabsContent>
                   </Tabs>
-                );
-              })()}
-            </div>
-          </section>
-        </div>
+                </CardContent>
+              </Card>
+            );
+          })()}
+        </section>
+      </div>
+    </div>
 
       {/* Confirmation Dialog */}
       <Dialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>
