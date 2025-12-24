@@ -18,7 +18,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
@@ -341,50 +340,71 @@ export default function CandidateEmploymentsPage() {
                   </Button>
                 </div>
               </CardHeader>
-            </Card>
 
-            {/* Filter employments by status */}
-            {(() => {
-              const activeEmployments = employments.filter(e => e.application.status === 'WORKING');
-              const terminatedEmployments = employments.filter(e => e.application.status === 'TERMINATED');
-              
-              return (
-                <Card>
-                  <CardContent className="pt-6">
-                    <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "active" | "terminated")}>
-                      <TabsList className="mb-6 bg-gray-100">
-                        <TabsTrigger value="active" className="gap-2 data-[state=active]:bg-white">
-                          <CheckCircle className="h-4 w-4" />
-                          Current ({activeEmployments.length})
-                        </TabsTrigger>
-                        <TabsTrigger value="terminated" className="gap-2 data-[state=active]:bg-white">
-                          <XCircle className="h-4 w-4" />
-                          Past ({terminatedEmployments.length})
-                        </TabsTrigger>
-                      </TabsList>
+              <CardContent>
+                {/* Filter employments by status */}
+                {(() => {
+                  const activeEmployments = employments.filter(e => e.application.status === 'WORKING');
+                  const terminatedEmployments = employments.filter(e => e.application.status === 'TERMINATED');
+                  
+                  return (
+                    <>
+                      {/* Tabs - Job Activities Style */}
+                      <div className="border-b border-gray-200 mb-6">
+                        <button
+                          onClick={() => setActiveTab("active")}
+                          className={`pb-3 px-1 mr-8 relative ${
+                            activeTab === "active"
+                              ? "text-gray-500 font-medium border-b-2 border-gray-500"
+                              : "text-gray-600 hover:text-gray-900"
+                          }`}
+                        >
+                          Current Employment
+                          <span className="ml-2 px-2 py-0.5 text-xs bg-gray-500 text-white rounded-full">
+                            {activeEmployments.length}
+                          </span>
+                        </button>
 
-                    {/* Active Employments Tab */}
-                    <TabsContent value="active" className="mt-0">
-                      {activeEmployments.length === 0 ? (
-                        <Card className="border-0 shadow-none">
-                          <CardContent className="py-16">
-                            <div className="flex flex-col items-center justify-center">
-                              <div className="bg-gray-100 p-4 rounded-full mb-4">
-                                <Briefcase className="h-8 w-8 text-gray-400" />
-                              </div>
-                              <h3 className="text-lg font-medium text-gray-900 mb-2">No Active Employment</h3>
-                              <p className="text-gray-500 text-center mb-6">
-                                You don't have any active employment records.<br />
-                                Once you're hired, your employment will appear here.
-                              </p>
-                              <Link href="/candidate/my-jobs">
-                                <Button>View My Applications</Button>
-                              </Link>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      ) : (
-                        <div className="space-y-4">
+                        <button
+                          onClick={() => setActiveTab("terminated")}
+                          className={`pb-3 px-1 mr-8 relative ${
+                            activeTab === "terminated"
+                              ? "text-gray-500 font-medium border-b-2 border-gray-500"
+                              : "text-gray-600 hover:text-gray-900"
+                          }`}
+                        >
+                          Past Employment
+                          <span className="ml-2 px-2 py-0.5 text-xs bg-gray-500 text-white rounded-full">
+                            {terminatedEmployments.length}
+                          </span>
+                        </button>
+                      </div>
+
+                      {/* Tab Content */}
+                      <div className="space-y-4">
+                        {/* Active Employments Tab */}
+                        {activeTab === "active" && (
+                          <>
+                            {activeEmployments.length === 0 ? (
+                              <Card className="border-0 shadow-none">
+                                <CardContent className="py-16">
+                                  <div className="flex flex-col items-center justify-center">
+                                    <div className="bg-gray-100 p-4 rounded-full mb-4">
+                                      <Briefcase className="h-8 w-8 text-gray-400" />
+                                    </div>
+                                    <h3 className="text-lg font-medium text-gray-900 mb-2">No Active Employment</h3>
+                                    <p className="text-gray-500 text-center mb-6">
+                                      You don't have any active employment records.<br />
+                                      Once you're hired, your employment will appear here.
+                                    </p>
+                                    <Link href="/candidate/my-jobs">
+                                      <Button>View My Applications</Button>
+                                    </Link>
+                                  </div>
+                                </CardContent>
+                              </Card>
+                            ) : (
+                              <div className="space-y-4">
                           {activeEmployments.map((employment) => {
                     const verificationNeeded = getVerificationStatus(employment.verification);
                     const isActive = employment.application.status === 'WORKING';
@@ -534,10 +554,12 @@ export default function CandidateEmploymentsPage() {
                           })}
                         </div>
                       )}
-                    </TabsContent>
+                    </>
+                  )}
 
                     {/* Terminated Employments Tab */}
-                    <TabsContent value="terminated" className="mt-0">
+                    {activeTab === "terminated" && (
+                      <>
                       {terminatedEmployments.length === 0 ? (
                         <Card className="border-0 shadow-none">
                           <CardContent className="py-16">
@@ -638,12 +660,14 @@ export default function CandidateEmploymentsPage() {
                           })}
                         </div>
                       )}
-                    </TabsContent>
-                  </Tabs>
-                </CardContent>
-              </Card>
+                    </>
+                  )}
+                </div>
+              </>
             );
           })()}
+        </CardContent>
+          </Card>
         </section>
       </div>
     </div>

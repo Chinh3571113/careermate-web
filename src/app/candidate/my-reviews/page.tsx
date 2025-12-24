@@ -22,7 +22,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Select,
   SelectContent,
@@ -533,18 +532,39 @@ export default function CandidateMyReviewsPage() {
           {/* Tabs */}
           <Card>
             <CardContent className="pt-6">
-              <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as "submitted" | "applications")}>
-                <div className="flex flex-col sm:flex-row justify-between gap-4 mb-6">
-                  <TabsList className="bg-gray-100">
-                    <TabsTrigger value="submitted" className="gap-2 data-[state=active]:bg-white">
-                      <CheckCircle2 className="h-4 w-4" />
-                      Submitted ({reviews.length})
-                    </TabsTrigger>
-                    <TabsTrigger value="applications" className="gap-2 data-[state=active]:bg-white">
-                      <Building2 className="h-4 w-4" />
-                      My Applications ({applications.length})
-                    </TabsTrigger>
-                  </TabsList>
+              <div className="flex flex-col sm:flex-row justify-between gap-4 mb-6">
+                {/* Tab Buttons - Job Activities Style */}
+                <div className="border-b border-gray-200">
+                  <button
+                    onClick={() => setActiveTab("submitted")}
+                    className={`pb-3 px-1 mr-8 relative ${
+                      activeTab === "submitted"
+                        ? "text-gray-500 font-medium border-b-2 border-gray-500"
+                        : "text-gray-600 hover:text-gray-900"
+                    }`}
+                  >
+                    <CheckCircle2 className="h-4 w-4 inline mr-2" />
+                    Submitted
+                    <span className="ml-2 px-2 py-0.5 text-xs bg-gray-500 text-white rounded-full">
+                      {reviews.length}
+                    </span>
+                  </button>
+
+                  <button
+                    onClick={() => setActiveTab("applications")}
+                    className={`pb-3 px-1 mr-8 relative ${
+                      activeTab === "applications"
+                        ? "text-gray-500 font-medium border-b-2 border-gray-500"
+                        : "text-gray-600 hover:text-gray-900"
+                    }`}
+                  >
+                    <Building2 className="h-4 w-4 inline mr-2" />
+                    My Applications
+                    <span className="ml-2 px-2 py-0.5 text-xs bg-gray-500 text-white rounded-full">
+                      {applications.length}
+                    </span>
+                  </button>
+                </div>
 
                   {/* Filters */}
                   <div className="flex gap-2">
@@ -574,9 +594,10 @@ export default function CandidateMyReviewsPage() {
                   </div>
                 </div>
 
-            {/* Submitted Reviews Tab */}
-            <TabsContent value="submitted" className="mt-0">
-              {filteredReviews.length === 0 ? (
+              {/* Submitted Reviews Tab */}
+              {activeTab === "submitted" && (
+                <>
+                  {filteredReviews.length === 0 ? (
                 <Card className="border-0 shadow-none">
                   <CardContent className="py-12 text-center">
                     <Building2 className="h-12 w-12 text-gray-300 mx-auto mb-4" />
@@ -655,11 +676,13 @@ export default function CandidateMyReviewsPage() {
                   ))}
                 </div>
               )}
-            </TabsContent>
+                </>
+              )}
 
-            {/* Applications Tab - Grouped Review Cards */}
-            <TabsContent value="applications" className="mt-0">
-              {filteredApplications.length === 0 ? (
+              {/* Applications Tab - Grouped Review Cards */}
+              {activeTab === "applications" && (
+                <>
+                  {filteredApplications.length === 0 ? (
                 <Card className="border-0 shadow-none">
                   <CardContent className="py-12 text-center">
                     <Briefcase className="h-12 w-12 text-gray-300 mx-auto mb-4" />
@@ -760,13 +783,13 @@ export default function CandidateMyReviewsPage() {
                   ))}
                 </div>
               )}
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
+                </>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
     </div>
-  </div>
-</div>
 
       {/* Review Drawer */}
       {selectedApplication && effectiveCandidateId && selectedReviewType && (
