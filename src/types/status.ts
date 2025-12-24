@@ -226,13 +226,13 @@ export const STATUS_CONFIGS: Record<JobApplicationStatus, StatusConfig> = {
 };
 
 /**
- * Status transition rules (Aligned with Backend v3.1)
+ * Status transition rules (Aligned with Backend v3.2)
  * 
- * NEW IN v3.1: Offer confirmation flow
+ * Offer confirmation flow:
  * APPROVED → Recruiter extends offer → OFFER_EXTENDED → Candidate confirms → WORKING
  * 
- * Auto-withdrawal: When a candidate is hired (ACCEPTED/WORKING), all their other 
- * pending applications are automatically withdrawn by the system.
+ * Platform-Neutral (v3.2): NO auto-withdrawal. Candidates can have multiple employments
+ * (freelance, part-time, consulting, etc.) and must manage applications manually.
  * 
  * Interview reminders: System sends 24-hour and 2-hour reminders before interviews.
  */
@@ -273,13 +273,10 @@ export const STATUS_TRANSITIONS: StatusTransition[] = [
   { from: 'WORKING', to: ['TERMINATED', 'BANNED'], actor: 'recruiter' },
   { from: 'WORKING', to: ['TERMINATED'], actor: 'candidate' },
   
-  // System-triggered transitions (auto-withdrawal when hired elsewhere)
-  { from: 'SUBMITTED', to: ['WITHDRAWN'], actor: 'system' },
-  { from: 'REVIEWING', to: ['WITHDRAWN'], actor: 'system' },
-  { from: 'INTERVIEW_SCHEDULED', to: ['WITHDRAWN'], actor: 'system' },
-  { from: 'INTERVIEWED', to: ['WITHDRAWN'], actor: 'system' },
-  { from: 'APPROVED', to: ['WITHDRAWN'], actor: 'system' },
-  { from: 'OFFER_EXTENDED', to: ['WITHDRAWN'], actor: 'system' },
+  // System-triggered transitions (v3.2: auto-withdrawal REMOVED - platform-neutral)
+  // Candidates manage their own applications. System only sets NO_RESPONSE.
+  // { from: 'SUBMITTED', to: ['WITHDRAWN'], actor: 'system' },  // REMOVED
+  // { from: 'REVIEWING', to: ['WITHDRAWN'], actor: 'system' },   // REMOVED
   
   // Terminal statuses (no transitions)
   { from: 'REJECTED', to: [], actor: 'recruiter' },
