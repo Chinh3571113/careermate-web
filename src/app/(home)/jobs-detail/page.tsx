@@ -1308,11 +1308,10 @@ ${jobData.recruiterInfo?.about || 'N/A'}
             <span className="absolute top-0 right-0 w-4 h-4 bg-red-500 border-2 border-white rounded-full"></span>
           </div>
 
-          {/* CHAT BOX — đã xoá khe hở trắng, dùng 1 nền gradient + bỏ rounded lồng nhau */}
+          {/* CHAT BOX — Commented out for now 
           {isChatOpen && (
             <div className="fixed bottom-6 right-6 z-50">
               <div className="rounded-2xl shadow-2xl w-96 h-[520px] flex flex-col overflow-hidden bg-gradient-to-b from-[#3a4660] via-gray-500 to-gray-400">
-                {/* header trong suốt, không bo góc riêng */}
                 <div className="p-4 text-white">
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -1359,7 +1358,6 @@ ${jobData.recruiterInfo?.about || 'N/A'}
                   </div>
                 </div>
 
-                {/* content bg trong suốt, bỏ rounded để không hở mép */}
                 <div className="flex-1 overflow-y-auto p-3">
                   <div className="p-4">
                     <div className="bg-white/10 text-white rounded-lg p-3 mb-6 shadow-md">
@@ -1403,7 +1401,6 @@ ${jobData.recruiterInfo?.about || 'N/A'}
                   </div>
                 </div>
 
-                {/* footer trong suốt + border mảnh, không bo riêng */}
                 <div className="border-t border-white/10 p-3">
                   <div className="flex justify-between">
                     <button className="px-4 py-2 bg-white/10 text-white rounded-md hover:bg-white/20">
@@ -1417,6 +1414,7 @@ ${jobData.recruiterInfo?.about || 'N/A'}
               </div>
             </div>
           )}
+          */}
         </div>
       </div>
 

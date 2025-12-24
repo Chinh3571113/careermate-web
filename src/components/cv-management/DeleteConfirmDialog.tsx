@@ -67,12 +67,12 @@ export const DeleteConfirmDialog = ({
                   <p className="font-semibold text-gray-900 truncate mb-1">{cv.name}</p>
                   <div className="flex items-center gap-2 text-xs text-gray-500">
                     <span>{new Date(cv.updatedAt).toLocaleDateString("en-US")}</span>
-                    {cv.fileSize && (
-                      <>
-                        <span className="text-gray-300">•</span>
-                        <span>{cv.fileSize}</span>
+                    {/* {cv.fileSize && (
+                      // <>
+                      //   <span className="text-gray-300">•</span>
+                      //   <span>{cv.fileSize}</span>
                       </>
-                    )}
+                    )} */}
                   </div>
                 </div>
               </div>

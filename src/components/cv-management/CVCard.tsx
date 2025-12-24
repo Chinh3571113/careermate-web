@@ -1,6 +1,7 @@
 import { CV } from "@/services/cvService";
 import { useState, useCallback } from "react";
 import toast from "react-hot-toast";
+import { FileText } from "lucide-react";
 
 interface CVCardProps {
   cv: CV;
@@ -99,19 +100,11 @@ export const CVCard = ({
             <p className="text-xs text-gray-500">Processing...</p>
           </div>
         ) : (
-          <svg
-            className="w-16 h-16 text-gray-300"
-            fill="none"
-            stroke="currentColor"
-            viewBox="0 0 24 24"
-          >
-            <path
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              strokeWidth={1.5}
-              d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
-            />
-          </svg>
+          // Use FileText icon for Upload and Draft CVs
+          <FileText 
+            className="w-16 h-16 text-gray-300" 
+            strokeWidth={1.5}
+          />
         )}
 
         {/* Hover Overlay */}
@@ -166,8 +159,8 @@ export const CVCard = ({
         {/* Syncing Status Banner */}
         {isSyncing && (
           <div className="flex items-center gap-1.5 px-2 py-1 mb-2 bg-blue-50 border border-blue-200 rounded text-blue-700">
-            <div className="w-3 h-3 border-2 border-blue-300 border-t-blue-600 rounded-full animate-spin"></div>
-            <span className="text-[10px] font-medium">Đang đồng bộ...</span>
+            {/* <div className="w-3 h-3 border-2 border-blue-300-t-blue-600 rounded-full animate-spin"></div> */}
+            <span className="text-[10px] font-medium">This action can take up to 20s...</span>
           </div>
         )}
 
