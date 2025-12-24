@@ -305,11 +305,11 @@ export default function ManageJobsPage() {
                       </button>
                     )}
                     
-                    {job.status === "ACTIVE" && (
+                    {(job.status === "ACTIVE" || job.status === "EXPIRED") && (
                       <button
                         onClick={() => router.push(`/recruiter/recruiter-feature/jobs/edit/${job.id}`)}
                         className="p-2 text-gray-600 hover:text-sky-600 hover:bg-white rounded-lg transition-colors"
-                        title="Edit Expiration Date"
+                        title={job.status === "EXPIRED" ? "Extend Expiration Date" : "Edit Expiration Date"}
                       >
                         <Calendar className="h-4 w-4" />
                       </button>

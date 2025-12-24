@@ -209,8 +209,8 @@ export function NotificationBell() {
         redirectUrl = '/recruiter/recruiter-feature/candidates/applications';
         console.log('✅ [Recruiter] Application received -> /recruiter/recruiter-feature/candidates/applications');
       }
-      else if (eventType === 'APPLICATION_AUTO_WITHDRAWN' || eventType === 'APPLICATION_WITHDRAWN') {
-        // Candidate withdrew or was auto-withdrawn (hired elsewhere)
+      else if (eventType === 'APPLICATION_WITHDRAWN') {
+        // Candidate manually withdrew their application
         redirectUrl = '/recruiter/recruiter-feature/candidates/applications';
         console.log('✅ [Recruiter] Application withdrawn -> /recruiter/recruiter-feature/candidates/applications');
       }
@@ -276,11 +276,8 @@ export function NotificationBell() {
         redirectUrl = '/recruiter/recruiter-feature/candidates/applications';
         console.log('❌ [Recruiter] Offer declined by candidate -> /recruiter/recruiter-feature/candidates/applications');
       }
-      else if (eventType === 'AUTO_WITHDRAW' || eventType === 'APPLICATION_AUTO_WITHDRAWN' || eventType === 'APPLICATIONS_AUTO_WITHDRAWN') {
-        // Application(s) auto-withdrawn because candidate was hired elsewhere
-        redirectUrl = '/candidate/my-jobs';
-        console.log('✅ [Candidate] Auto-withdraw notification -> /candidate/my-jobs');
-      }
+      // Note: Auto-withdrawal feature removed (v3.2) - platform is neutral
+      // Candidates can have multiple employments and manage applications manually
       else if (eventType === 'INTERVIEW_INVITATION' || eventType === 'INTERVIEW_SCHEDULED') {
         // Interview invitation/scheduled
         redirectUrl = '/candidate/interviews';

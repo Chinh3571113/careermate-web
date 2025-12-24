@@ -266,8 +266,8 @@ const MyJobsPage = () => {
           break;
           
         case 'confirm_offer':
-          // v3.1: Candidate confirms job offer using new endpoint
-          if (confirm('🎉 Are you sure you want to accept this job offer?\n\nOnce accepted:\n• You will be marked as employed\n• All your other pending applications will be automatically withdrawn\n• The company will contact you for onboarding')) {
+          // v3.2: Candidate confirms job offer - no auto-withdrawal (platform-neutral)
+          if (confirm('🎉 Are you sure you want to accept this job offer?\n\nOnce accepted:\n• You will be marked as employed\n• The company will contact you for onboarding\n• Your other applications will remain active (you can withdraw them manually if needed)')) {
             await confirmJobOffer(applicationId);
             toast.success('🎉 Congratulations! Job offer accepted! You are now employed.');
             const updatedApplications = await fetchMyJobApplications(candidateId!);
