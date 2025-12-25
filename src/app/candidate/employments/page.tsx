@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { 
@@ -82,6 +82,17 @@ export default function CandidateEmploymentsPage() {
   });
   const [submitting, setSubmitting] = useState(false);
   const [terminatingId, setTerminatingId] = useState<number | null>(null);
+
+  // Memoize filtered employments to prevent re-filtering on every render
+  const activeEmployments = useMemo(
+    () => employments.filter(e => e.application.status === 'WORKING'),
+    [employments]
+  );
+
+  const terminatedEmployments = useMemo(
+    () => employments.filter(e => e.application.status === 'TERMINATED'),
+    [employments]
+  );
 
   useEffect(() => {
     const initAuth = async () => {
@@ -317,14 +328,22 @@ export default function CandidateEmploymentsPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-50">
-      <div className="mx-auto max-w-7xl px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6">
-          <aside className="hidden lg:block sticky top-24 self-start">
-            <CVSidebar activePage="employments" />
-          </aside>
+    <main className="mx-auto max-w-7xl px-4 py-6 md:px-6">
+      {/* GRID 2 cột: sidebar | content */}
+      <div
+        className="grid grid-cols-1 lg:grid-cols-[16rem_minmax(0,1fr)] gap-6 items-start transition-all duration-300"
+        style={{
+          ["--sticky-offset" as any]: `${headerHeight || 0}px`,
+          ["--content-pad" as any]: "24px",
+        }}
+      >
+        {/* Sidebar trái: sticky + ẩn mobile */}
+        <aside className="hidden lg:block sticky [top:calc(var(--sticky-offset)+var(--content-pad))] self-start transition-all duration-300">
+          <CVSidebar activePage="employments" />
+        </aside>
 
-          <section className="space-y-6 min-w-0">
+        {/* Main Content */}
+        <section className="space-y-6 min-w-0 transition-all duration-300">
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between">
@@ -342,49 +361,50 @@ export default function CandidateEmploymentsPage() {
               </CardHeader>
 
               <CardContent>
-                {/* Filter employments by status */}
-                {(() => {
-                  const activeEmployments = employments.filter(e => e.application.status === 'WORKING');
-                  const terminatedEmployments = employments.filter(e => e.application.status === 'TERMINATED');
-                  
-                  return (
-                    <>
-                      {/* Tabs - Job Activities Style */}
-                      <div className="border-b border-gray-200 mb-6">
-                        <button
-                          onClick={() => setActiveTab("active")}
-                          className={`pb-3 px-1 mr-8 relative ${
-                            activeTab === "active"
-                              ? "text-gray-500 font-medium border-b-2 border-gray-500"
-                              : "text-gray-600 hover:text-gray-900"
-                          }`}
-                        >
-                          Current Employment
-                          <span className="ml-2 px-2 py-0.5 text-xs bg-gray-500 text-white rounded-full">
-                            {activeEmployments.length}
-                          </span>
-                        </button>
+                {/* Tabs - Job Activities Style */}
+                <div className="border-b border-gray-200 mb-6">
+                  <button
+                    onClick={() => setActiveTab("active")}
+                    className={`pb-3 px-1 mr-8 relative border-b-2 ${
+                      activeTab === "active"
+                        ? "text-black font-semibold border-black"
+                        : "text-gray-600 hover:text-gray-900 border-transparent"
+                    }`}
+                  >
+                    Current Employment
+                    <span className={`ml-2 px-2 py-0.5 text-xs rounded-full ${
+                      activeTab === "active" 
+                        ? "bg-black text-white" 
+                        : "bg-gray-500 text-white"
+                    }`}>
+                      {activeEmployments.length}
+                    </span>
+                  </button>
 
-                        <button
-                          onClick={() => setActiveTab("terminated")}
-                          className={`pb-3 px-1 mr-8 relative ${
-                            activeTab === "terminated"
-                              ? "text-gray-500 font-medium border-b-2 border-gray-500"
-                              : "text-gray-600 hover:text-gray-900"
-                          }`}
-                        >
-                          Past Employment
-                          <span className="ml-2 px-2 py-0.5 text-xs bg-gray-500 text-white rounded-full">
-                            {terminatedEmployments.length}
-                          </span>
-                        </button>
-                      </div>
+                  <button
+                    onClick={() => setActiveTab("terminated")}
+                    className={`pb-3 px-1 mr-8 relative border-b-2 ${
+                      activeTab === "terminated"
+                        ? "text-black font-semibold border-black"
+                        : "text-gray-600 hover:text-gray-900 border-transparent"
+                    }`}
+                  >
+                    Past Employment
+                    <span className={`ml-2 px-2 py-0.5 text-xs rounded-full ${
+                      activeTab === "terminated" 
+                        ? "bg-black text-white" 
+                        : "bg-gray-500 text-white"
+                    }`}>
+                      {terminatedEmployments.length}
+                    </span>
+                  </button>
+                </div>
 
-                      {/* Tab Content */}
-                      <div className="space-y-4">
-                        {/* Active Employments Tab */}
-                        {activeTab === "active" && (
-                          <>
+                {/* Tab Content */}
+                <div className="py-4">
+                  {/* Active Employments Tab */}
+                  {activeTab === "active" && (
+                    <div className="space-y-4">
                             {activeEmployments.length === 0 ? (
                               <Card className="border-0 shadow-none">
                                 <CardContent className="py-16">
@@ -554,12 +574,12 @@ export default function CandidateEmploymentsPage() {
                           })}
                         </div>
                       )}
-                    </>
+                    </div>
                   )}
 
-                    {/* Terminated Employments Tab */}
-                    {activeTab === "terminated" && (
-                      <>
+                  {/* Terminated Employments Tab */}
+                  {activeTab === "terminated" && (
+                    <div className="space-y-4">
                       {terminatedEmployments.length === 0 ? (
                         <Card className="border-0 shadow-none">
                           <CardContent className="py-16">
@@ -660,17 +680,13 @@ export default function CandidateEmploymentsPage() {
                           })}
                         </div>
                       )}
-                    </>
+                    </div>
                   )}
                 </div>
-              </>
-            );
-          })()}
-        </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
         </section>
       </div>
-    </div>
 
       {/* Confirmation Dialog */}
       <Dialog open={confirmDialogOpen} onOpenChange={setConfirmDialogOpen}>

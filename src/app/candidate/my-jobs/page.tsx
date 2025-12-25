@@ -433,26 +433,36 @@ const MyJobsPage = () => {
               <div className="flex border-b border-gray-200 mb-6">
                 <button
                   onClick={() => handleTabChange("applied")}
-                  className={`pb-3 px-1 mr-8 relative ${activeTab === "applied"
-                    ? "text-gray-500 font-medium border-b-2 border-gray-500"
-                    : "text-gray-600 hover:text-gray-900"
-                    }`}
+                  className={`pb-3 px-1 mr-8 relative border-b-2 ${
+                    activeTab === "applied"
+                      ? "text-black font-semibold border-black"
+                      : "text-gray-600 hover:text-gray-900 border-transparent"
+                  }`}
                 >
                   Applied Jobs
-                  <span className="ml-2 px-2 py-0.5 text-xs bg-gray-500 text-white rounded-full">
+                  <span className={`ml-2 px-2 py-0.5 text-xs rounded-full ${
+                    activeTab === "applied"
+                      ? "bg-black text-white"
+                      : "bg-gray-500 text-white"
+                  }`}>
                     {jobApplications.length}
                   </span>
                 </button>
 
                 <button
                   onClick={() => handleTabChange("saved")}
-                  className={`pb-3 px-1 mr-8 relative ${activeTab === "saved"
-                    ? "text-gray-500 font-medium border-b-2 border-gray-500"
-                    : "text-gray-600 hover:text-gray-900"
-                    }`}
+                  className={`pb-3 px-1 mr-8 relative border-b-2 ${
+                    activeTab === "saved"
+                      ? "text-black font-semibold border-black"
+                      : "text-gray-600 hover:text-gray-900 border-transparent"
+                  }`}
                 >
                   Saved Jobs
-                  <span className="ml-2 px-2 py-0.5 text-xs bg-gray-500 text-white rounded-full">
+                  <span className={`ml-2 px-2 py-0.5 text-xs rounded-full ${
+                    activeTab === "saved"
+                      ? "bg-black text-white"
+                      : "bg-gray-500 text-white"
+                  }`}>
                     {savedJobs.length}
                   </span>
                 </button>
