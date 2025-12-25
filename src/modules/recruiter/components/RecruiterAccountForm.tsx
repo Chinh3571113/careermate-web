@@ -1,41 +1,50 @@
 "use client";
 
 import Image from "next/image";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Toggle } from "./RecruiterToggle";
-import { AvatarPicker } from "./AvatarPicker";
 import ChangePasswordDialog from "./ChangePasswordDialog";
 import { ProfileService } from "../services/profileService";
 import type { Recruiter } from "@/types/recruiter";
 import { useAuthStore } from "@/store/use-auth-store";
 import toast from "react-hot-toast";
+import api from "@/lib/api";
+import { Loader2, Upload, User } from "lucide-react";
+import { useUserProfile, updateSharedAvatar } from "@/hooks/useUserProfile";
 
 export function RecruiterAccountForm() {
     const [openPwd, setOpenPwd] = useState(false);
     const [recruiterData, setRecruiterData] = useState<Recruiter | null>(null);
     const [loading, setLoading] = useState(true);
-    const { user } = useAuthStore();
+    const [uploadingAvatar, setUploadingAvatar] = useState(false);
+    const [savingUsername, setSavingUsername] = useState(false);
+    const { user, accessToken, isAuthenticated } = useAuthStore();
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     const [formData, setFormData] = useState({
         username: "",
         email: "",
-        phoneNumber: "",
-        contactPerson: "",
     });
 
     useEffect(() => {
         const fetchRecruiterData = async () => {
+            // Wait for auth store to be hydrated
+            if (!accessToken || !isAuthenticated) {
+                console.log('⏳ [RecruiterAccountForm] Waiting for auth...', { accessToken: !!accessToken, isAuthenticated });
+                return;
+            }
+            
             try {
                 setLoading(true);
                 if (user?.email) {
+                    console.log('🔄 [RecruiterAccountForm] Fetching recruiter data for:', user.email);
                     const data = await ProfileService.getRecruiterAccount(user.email);
                     if (data) {
+                        console.log('✅ [RecruiterAccountForm] Data loaded:', data);
                         setRecruiterData(data);
                         setFormData({
                             username: data.username || "",
                             email: data.email || "",
-                            phoneNumber: data.phoneNumber || "",
-                            contactPerson: data.contactPerson || "",
                         });
                     }
                 }
@@ -48,7 +57,7 @@ export function RecruiterAccountForm() {
         };
 
         fetchRecruiterData();
-    }, [user?.email]);
+    }, [user?.email, accessToken, isAuthenticated]);
 
     const handleInputChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -61,16 +70,86 @@ export function RecruiterAccountForm() {
     };
 
     const handleSavePersonalInfo = async () => {
+        if (!formData.username.trim()) {
+            toast.error("Username cannot be empty");
+            return;
+        }
         try {
-            await ProfileService.updateRecruiterAccount({
-                username: formData.username,
-                phoneNumber: formData.phoneNumber,
-                contactPerson: formData.contactPerson,
+            setSavingUsername(true);
+            const response = await api.put<{ code: number; result: any }>(
+                `/api/users/username?username=${encodeURIComponent(formData.username.trim())}`
+            );
+            if (response.data.code === 200) {
+                toast.success("Username updated successfully");
+                if (recruiterData) {
+                    setRecruiterData({ ...recruiterData, username: formData.username.trim() });
+                }
+            }
+        } catch (error: any) {
+            console.error("Error updating username:", error);
+            toast.error(error.response?.data?.message || "Failed to update username");
+        } finally {
+            setSavingUsername(false);
+        }
+    };
+
+    const handleAvatarClick = () => {
+        fileInputRef.current?.click();
+    };
+
+    const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        if (!file.type.startsWith("image/")) {
+            toast.error("Please select an image file");
+            return;
+        }
+
+        if (file.size > 2 * 1024 * 1024) {
+            toast.error("File size must be less than 2MB");
+            return;
+        }
+
+        try {
+            setUploadingAvatar(true);
+
+            const formDataUpload = new FormData();
+            formDataUpload.append("image", file);
+
+            const uploadResponse = await api.post<{
+                code: number;
+                result: { imageUrl: string };
+            }>("/api/upload/avatar", formDataUpload, {
+                headers: { "Content-Type": "multipart/form-data" },
             });
-            toast.success("Personal information updated successfully");
-        } catch (error) {
-            console.error("Error updating personal info:", error);
-            toast.error("Failed to update personal information");
+
+            if (uploadResponse.data.code === 1000 && uploadResponse.data.result.imageUrl) {
+                const imageUrl = uploadResponse.data.result.imageUrl;
+
+                const updateResponse = await api.put<{ code: number; result: any }>(
+                    `/api/users/avatar?avatarUrl=${encodeURIComponent(imageUrl)}`
+                );
+
+                if (updateResponse.data.code === 200) {
+                    toast.success("Avatar updated successfully");
+                    if (recruiterData) {
+                        setRecruiterData({ ...recruiterData, avatarUrl: imageUrl });
+                    }
+                    // Update shared avatar state immediately (updates header)
+                    updateSharedAvatar(imageUrl);
+                }
+            } else {
+                toast.error("Failed to upload avatar");
+            }
+        } catch (error: any) {
+            console.error("Error uploading avatar:", error);
+            toast.error(error.response?.data?.message || "Failed to upload avatar");
+        } finally {
+            setUploadingAvatar(false);
+            if (fileInputRef.current) {
+                fileInputRef.current.value = "";
+            }
         }
     };
 
@@ -78,7 +157,8 @@ export function RecruiterAccountForm() {
         return (
             <section className="rounded-lg border bg-white p-6 shadow-sm shadow-sky-100">
                 <div className="flex items-center justify-center py-12">
-                    <p className="text-sm text-gray-500">Loading...</p>
+                    <Loader2 className="h-8 w-8 animate-spin text-sky-600" />
+                    <p className="ml-3 text-sm text-gray-500">Loading...</p>
                 </div>
             </section>
         );
@@ -176,9 +256,17 @@ export function RecruiterAccountForm() {
                             <button
                                 type="button"
                                 onClick={handleSavePersonalInfo}
-                                className="inline-flex h-9 items-center rounded-md bg-sky-600 px-4 text-sm font-medium text-white hover:bg-sky-700"
+                                disabled={savingUsername}
+                                className="inline-flex h-9 items-center rounded-md bg-sky-600 px-4 text-sm font-medium text-white hover:bg-sky-700 disabled:opacity-50"
                             >
-                                Save changes
+                                {savingUsername ? (
+                                    <>
+                                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                        Saving...
+                                    </>
+                                ) : (
+                                    "Save changes"
+                                )}
                             </button>
                         </div>
                     </form>
@@ -187,53 +275,53 @@ export function RecruiterAccountForm() {
                 <aside className="space-y-6">
                     <div className="rounded-md bg-sky-50 p-4 text-center">
                         <p className="mb-4 text-sm font-medium text-sky-900">Profile avatar</p>
-                        <div className="mx-auto mb-4 h-28 w-28 overflow-hidden rounded-full border">
-                            <Image
-                                src={recruiterData?.logoUrl || "/globe.svg"}
-                                alt="Avatar"
-                                width={112}
-                                height={112}
-                                className="h-full w-full object-cover"
-                            />
-                        </div>
-                        <AvatarPicker />
-                        <p className="mt-2 text-xs text-muted-foreground">Recommended size 1000x1000px, ≤ 1MB</p>
-                    </div>
-
-                    {recruiterData && (
-                        <div className="rounded-md bg-white border p-4">
-                            <h3 className="text-sm font-semibold text-sky-900 mb-3">Account Status</h3>
-                            <div className="space-y-2 text-xs">
-                                <div className="flex justify-between">
-                                    <span className="text-gray-600">Status:</span>
-                                    <span
-                                        className={`font-medium ${
-                                            recruiterData.accountStatus === "ACTIVE"
-                                                ? "text-green-600"
-                                                : recruiterData.accountStatus === "PENDING"
-                                                ? "text-yellow-600"
-                                                : "text-red-600"
-                                        }`}
-                                    >
-                                        {recruiterData.accountStatus}
-                                    </span>
+                        <div 
+                            className="mx-auto mb-4 h-28 w-28 overflow-hidden rounded-full border-2 border-sky-200 relative cursor-pointer group"
+                            onClick={handleAvatarClick}
+                        >
+                            {recruiterData?.avatarUrl ? (
+                                <Image
+                                    src={recruiterData.avatarUrl}
+                                    alt="Avatar"
+                                    width={112}
+                                    height={112}
+                                    className="h-full w-full object-cover"
+                                />
+                            ) : (
+                                <div className="h-full w-full flex items-center justify-center bg-gray-100">
+                                    <User className="h-12 w-12 text-gray-400" />
                                 </div>
-                                <div className="flex justify-between">
-                                    <span className="text-gray-600">Role:</span>
-                                    <span className="font-medium">{recruiterData.accountRole}</span>
-                                </div>
-                                {recruiterData.rating > 0 && (
-                                    <div className="flex justify-between">
-                                        <span className="text-gray-600">Rating:</span>
-                                        <span className="font-medium">{recruiterData.rating}/5</span>
-                                    </div>
+                            )}
+                            {/* Hover overlay */}
+                            <div className="absolute inset-0 bg-black/50 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                {uploadingAvatar ? (
+                                    <Loader2 className="h-6 w-6 text-white animate-spin" />
+                                ) : (
+                                    <Upload className="h-6 w-6 text-white" />
                                 )}
                             </div>
                         </div>
-                    )}
+                        <input
+                            ref={fileInputRef}
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={handleAvatarChange}
+                        />
+                        <button
+                            type="button"
+                            onClick={handleAvatarClick}
+                            disabled={uploadingAvatar}
+                            className="inline-flex h-9 items-center rounded-md border border-sky-200 px-3 text-sm font-medium text-sky-800 hover:bg-sky-600 hover:text-white disabled:opacity-50"
+                        >
+                            {uploadingAvatar ? "Uploading..." : "Change avatar"}
+                        </button>
+                        <p className="mt-2 text-xs text-muted-foreground">Recommended size 1000×1000px, ≤ 2MB</p>
+                    </div>
                 </aside>
             </div>
-            <ChangePasswordDialog open={openPwd} onClose={() => setOpenPwd(false)} />
+
+            <ChangePasswordDialog open={openPwd} onOpenChange={setOpenPwd} />
         </section>
     );
 }

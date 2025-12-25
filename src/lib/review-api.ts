@@ -3,7 +3,7 @@
  * Handles application, interview, and work experience reviews
  */
 
-import api from '@/lib/api';
+import api, { publicApi } from '@/lib/api';
 
 // ==================== Types & Interfaces ====================
 
@@ -351,7 +351,7 @@ export const getCompanyReviews = async (
 };
 
 /**
- * Get company review statistics
+ * Get company review statistics (PUBLIC - no auth required)
  * GET /api/v1/reviews/company/{recruiterId}/statistics
  */
 export const getCompanyStatistics = async (
@@ -359,7 +359,7 @@ export const getCompanyStatistics = async (
 ): Promise<CompanyStatisticsResponse> => {
   try {
     console.log(`📊 [GET STATISTICS] Recruiter: ${recruiterId}`);
-    const response = await api.get<ApiResponse<CompanyStatisticsResponse>>(
+    const response = await publicApi.get<ApiResponse<CompanyStatisticsResponse>>(
       `/api/v1/reviews/company/${recruiterId}/statistics`
     );
     console.log('✅ [GET STATISTICS] Response:', response.data);
@@ -371,7 +371,7 @@ export const getCompanyStatistics = async (
 };
 
 /**
- * Get company overall rating
+ * Get company overall rating (PUBLIC - no auth required)
  * GET /api/v1/reviews/company/{recruiterId}/rating
  */
 export const getCompanyRating = async (
@@ -379,7 +379,7 @@ export const getCompanyRating = async (
 ): Promise<number> => {
   try {
     console.log(`⭐ [GET RATING] Recruiter: ${recruiterId}`);
-    const response = await api.get<ApiResponse<number>>(
+    const response = await publicApi.get<ApiResponse<number>>(
       `/api/v1/reviews/company/${recruiterId}/rating`
     );
     console.log('✅ [GET RATING] Response:', response.data);

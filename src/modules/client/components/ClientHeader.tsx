@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { ChevronDown, Menu, X, User, LogOut } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useAuthStore } from "@/store/use-auth-store";
@@ -156,10 +157,13 @@ export default function ClientHeader() {
       >
         <div className="max-w-7xl mx-auto flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
           <Link href="/" className="flex items-center space-x-2">
-            <img
+            <Image
               src="/images/general/newlogo.png"
               alt="Logo"
+              width={56}
+              height={56}
               className="h-14 w-auto"
+              priority
             />
             <span className="text-xl font-bold">CareerMate</span>
           </Link>
@@ -198,10 +202,13 @@ export default function ClientHeader() {
 
           {/* Logo */}
           <Link href="/" className="flex items-center gap-2 flex-shrink-0">
-            <img
+            <Image
               src="/images/general/newlogo.png"
               alt="Logo"
+              width={40}
+              height={40}
               className="h-8 lg:h-10 w-auto"
+              priority
             />
             <span className="text-lg lg:text-xl font-bold text-white whitespace-nowrap">
               CareerMate

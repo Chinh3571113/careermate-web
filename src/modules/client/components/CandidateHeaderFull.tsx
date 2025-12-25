@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { ChevronDown, Menu, X, User, LogOut } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { useAuthStore } from "@/store/use-auth-store";
@@ -145,7 +146,13 @@ export function CandidateHeader() {
                     {/* Logo */}
                     <div className="flex items-center">
                         <Link href="/" className="flex items-center space-x-2">
-                            <img src="/images/general/newlogo.png" alt="Logo" className="h-14 w-auto" />
+                            <Image
+                                src="/images/general/newlogo.png"
+                                alt="Logo"
+                                width={56}
+                                height={56}
+                                className="h-14 w-auto"
+                            />
                             <span className="text-xl font-bold text-[#ffffff]">CareerMate</span>
                         </Link>
                     </div>

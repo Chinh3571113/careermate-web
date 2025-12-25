@@ -420,7 +420,7 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
     }
 
     return (
-        <div className="min-h-screen bg-gray-50">
+        <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-blue-50">
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 <div className="grid grid-cols-1 lg:grid-cols-7 gap-8">
                     {/* Main Content */}
@@ -430,64 +430,67 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
                             <Button
                                 variant="outline"
                                 onClick={() => router.push('/blog')}
-                                className="flex items-center"
+                                className="flex items-center hover:bg-slate-100 transition-colors"
                             >
                                 <ArrowLeft className="w-4 h-4 mr-2" />
                                 Back to Blog
                             </Button>
                         </div>
 
-                        {/* Blog Header */}
-                        <div className="mb-8">
-                            <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
-                                <div className="flex items-center gap-1">
-                                    <Calendar className="w-4 h-4" />
-                                    {formatDate(blog.createdAt)}
-                                </div>
-                                <div className="flex items-center gap-1">
-                                    <Clock className="w-4 h-4" />
-                                    5 min read
-                                </div>
-                                <div className="flex items-center gap-1">
-                                    <Eye className="w-4 h-4" />
-                                    {blog.viewCount || 0} views
-                                </div>
-                            </div>
-
-                            <h1 className="text-4xl font-bold text-gray-900 mb-4 leading-tight">
-                                {blog.title}
-                            </h1>
-
-                            <div className="flex items-center justify-between mb-6">
-                                <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 bg-gray-600 rounded-full flex items-center justify-center">
-                                        <User className="w-6 h-6 text-white" />
+                        {/* Blog Content Card */}
+                        <article className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                            {/* Blog Header */}
+                            <div className="p-6 sm:p-8 border-b border-gray-100">
+                                <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
+                                    <div className="flex items-center gap-1 bg-gray-50 px-3 py-1 rounded-full">
+                                        <Calendar className="w-4 h-4" />
+                                        {formatDate(blog.createdAt)}
                                     </div>
-                                    <div>
-                                        <p className="font-medium text-gray-900">{blog.authorName || 'Unknown Author'}</p>
-                                        <p className="text-sm text-gray-500">Content Creator</p>
+                                    <div className="flex items-center gap-1 bg-gray-50 px-3 py-1 rounded-full">
+                                        <Clock className="w-4 h-4" />
+                                        5 min read
+                                    </div>
+                                    <div className="flex items-center gap-1 bg-gray-50 px-3 py-1 rounded-full">
+                                        <Eye className="w-4 h-4" />
+                                        {blog.viewCount || 0} views
                                     </div>
                                 </div>
 
-                                <div className="flex items-center gap-2">
-                                    <Button variant="outline" size="sm">
-                                        <Share2 className="w-4 h-4 mr-2" />
-                                        Share
-                                    </Button>
-                                    <Button variant="outline" size="sm">
-                                        <Bookmark className="w-4 h-4 mr-2" />
-                                        Save
-                                    </Button>
+                                <h1 className="text-3xl sm:text-4xl font-bold text-gray-900 mb-6 leading-tight">
+                                    {blog.title}
+                                </h1>
+
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-violet-600 rounded-full flex items-center justify-center shadow-md">
+                                            <User className="w-6 h-6 text-white" />
+                                        </div>
+                                        <div>
+                                            <p className="font-semibold text-gray-900">{blog.authorName || 'Unknown Author'}</p>
+                                            <p className="text-sm text-gray-500">Content Creator</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex items-center gap-2">
+                                        <Button variant="outline" size="sm" className="hover:bg-blue-50 hover:text-blue-600 hover:border-blue-200">
+                                            <Share2 className="w-4 h-4 mr-2" />
+                                            Share
+                                        </Button>
+                                        <Button variant="outline" size="sm" className="hover:bg-amber-50 hover:text-amber-600 hover:border-amber-200">
+                                            <Bookmark className="w-4 h-4 mr-2" />
+                                            Save
+                                        </Button>
+                                    </div>
                                 </div>
                             </div>
 
                             {/* Thumbnail */}
                             {blog.thumbnailUrl && !blog.thumbnailUrl.startsWith('blob:') ? (
-                                <div className="mb-8">
+                                <div className="aspect-video w-full">
                                     <img
                                         src={blog.thumbnailUrl}
                                         alt={blog.title}
-                                        className="w-full h-64 object-cover rounded-lg shadow-lg"
+                                        className="w-full h-full object-cover"
                                         onError={(e) => {
                                             console.error('❌ Image failed to load:', blog.thumbnailUrl);
                                             console.error('❌ Image error:', e);
@@ -497,19 +500,17 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
                                         }}
                                     />
                                 </div>
-                            ) : (
-                                <div className="mb-8 p-8 bg-gray-100 rounded-lg text-center">
-                                    <p className="text-gray-500">No thumbnail available</p>
-                                </div>
-                            )}
+                            ) : null}
 
                             {/* Blog Content */}
-                            <div className="prose prose-lg max-w-none">
-                                <div dangerouslySetInnerHTML={{ __html: blog.content }} />
+                            <div className="p-6 sm:p-8">
+                                <div className="prose prose-lg max-w-none prose-headings:text-gray-900 prose-p:text-gray-700 prose-a:text-blue-600 prose-strong:text-gray-900">
+                                    <div dangerouslySetInnerHTML={{ __html: blog.content }} />
+                                </div>
                             </div>
 
                             {/* Rating Section */}
-                            <div className="mt-12 p-6 bg-white rounded-lg border">
+                            <div className="p-6 sm:p-8 border-t border-gray-100 bg-gradient-to-r from-amber-50 to-orange-50">
                                 <h3 className="text-lg font-semibold mb-4">Rate this article</h3>
                                 <div className="flex items-center gap-2">
                                     {[1, 2, 3, 4, 5].map((star) => (
@@ -539,9 +540,10 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
                                     </p>
                                 )}
                             </div>
+                        </article>
 
-                            {/* Comments Section */}
-                            <div className="mt-12">
+                        {/* Comments Section - Outside the article card */}
+                        <div className="mt-8">
                                 <Card>
                                     <CardHeader>
                                         <CardTitle className="flex items-center gap-2">
@@ -734,7 +736,6 @@ export default function BlogPostPage({ params }: BlogPostPageProps) {
                                 </Card>
                             </div>
                         </div>
-                    </div>
 
                     {/* Sidebar */}
                     <div className="lg:col-span-2 space-y-6">
