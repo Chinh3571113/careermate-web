@@ -58,6 +58,12 @@ const nextConfig = {
         port: "",
         pathname: "/**",
       },
+      {
+        protocol: "https",
+        hostname: "storage.googleapis.com",
+        port: "",
+        pathname: "/**",
+      },
     ],
     // Image optimization settings
     formats: ["image/webp", "image/avif"],

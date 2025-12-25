@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState, useRef } from "react";
+import Image from "next/image";
 import { ProfileDropdown } from "@/components/profile/ProfileDropdown";
 import { useAuthStore } from "@/store/use-auth-store";
 import {
@@ -146,9 +147,11 @@ export default function RecruiterHomePage() {
               {/* Logo */}
               <div className="flex items-center">
                 <Link href="/" className="flex items-center space-x-2">
-                  <img
+                  <Image
                     src="/images/general/newlogo.png"
                     alt="Logo"
+                    width={56}
+                    height={56}
                     className="h-14 w-auto"
                   />
                   <span className="text-xl font-bold text-[#ffffff]">

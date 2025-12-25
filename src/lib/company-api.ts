@@ -1,4 +1,4 @@
-import api from '@/lib/api';
+import api, { publicApi } from '@/lib/api';
 
 // ==================== COMPANY LIST API ====================
 
@@ -31,14 +31,14 @@ export interface CompanyListParams {
 }
 
 /**
- * Fetch list of companies with pagination
+ * Fetch list of companies with pagination (PUBLIC - no auth required)
  * GET /api/job-postings/company
  */
 export const fetchCompanies = async (params: CompanyListParams = {}): Promise<CompanyListResponse> => {
   const { page = 0, size = 12, companyAddress } = params;
   
   try {
-    const response = await api.get<any>('/api/job-postings/company', {
+    const response = await publicApi.get<any>('/api/job-postings/company', {
       params: {
         page,
         size,
@@ -86,12 +86,12 @@ export interface CompanyDetailResponse {
 }
 
 /**
- * Fetch company detail by recruiter ID
+ * Fetch company detail by recruiter ID (PUBLIC - no auth required)
  * GET /api/job-postings/company/{recruiterId}
  */
 export const fetchCompanyDetail = async (recruiterId: number): Promise<CompanyDetailResponse> => {
   try {
-    const response = await api.get<CompanyDetailResponse>(`/api/job-postings/company/${recruiterId}`);
+    const response = await publicApi.get<CompanyDetailResponse>(`/api/job-postings/company/${recruiterId}`);
     console.log('✅ Company detail response:', response.data);
     return response.data;
   } catch (error: any) {
@@ -111,14 +111,14 @@ export interface CompanyJobsParams {
 }
 
 /**
- * Fetch job postings of a specific company
+ * Fetch job postings of a specific company (PUBLIC - no auth required)
  * GET /api/job-postings/company/list/{recruiterId}
  */
 export const fetchCompanyJobs = async (params: CompanyJobsParams) => {
   const { recruiterId, page = 0, size = 10, keyword, candidateId = 0 } = params;
   
   try {
-    const response = await api.get<any>(`/api/job-postings/company/list/${recruiterId}`, {
+    const response = await publicApi.get<any>(`/api/job-postings/company/list/${recruiterId}`, {
       params: {
         page,
         size,

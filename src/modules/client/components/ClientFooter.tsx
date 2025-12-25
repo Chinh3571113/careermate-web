@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { Facebook, Twitter, Linkedin, Instagram } from "lucide-react";
 
 export function ClientFooter() {
@@ -12,11 +13,15 @@ export function ClientFooter() {
                     <div className="col-span-1 md:col-span-2">
                         <div className="flex items-center space-x-2 mb-4">
                             <div className="w-8 h-auto items-center justify-center">
-                                <span className="text-white font-bold text-sm"><img
-                                    src="/images/general/newlogo.png"
-                                    alt="Logo"
-                                    className="h-auto w-auto"
-                                /></span>
+                                <span className="text-white font-bold text-sm">
+                                    <Image
+                                        src="/images/general/newlogo.png"
+                                        alt="Logo"
+                                        width={32}
+                                        height={32}
+                                        className="h-auto w-auto"
+                                    />
+                                </span>
                             </div>
                             <span className="text-xl font-bold">CareerMate</span>
                         </div>
