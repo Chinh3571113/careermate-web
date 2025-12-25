@@ -11,14 +11,12 @@ export async function GET(request: NextRequest) {
 
   try {
     const searchParams = request.nextUrl.searchParams;
-    const keyword = searchParams.get("keyword");
+    const keyword = searchParams.get("keyword") || ""; // Default to empty string
     const type = searchParams.get("type");
 
     console.log('🌐 [API /api/jdskill] Params:', { keyword, type });
 
     // Validate required parameters (allow empty keyword for fetching all)
-    // No keyword validation - allow empty string
-
     if (!type || (type !== "core" && type !== "soft")) {
       return NextResponse.json(
         { error: "Invalid type parameter. Must be 'core' or 'soft'" },
