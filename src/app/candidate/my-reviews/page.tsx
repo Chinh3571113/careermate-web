@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import {
   Star,
@@ -37,6 +37,7 @@ import {
 } from "@/components/ui/tooltip";
 import { toast } from "sonner";
 import { useAuthStore } from "@/store/use-auth-store";
+import { useLayout } from "@/contexts/LayoutContext";
 import CVSidebar from "@/components/layout/CVSidebar";
 import {
   getCandidateReviews,
@@ -219,6 +220,7 @@ function ReviewTypeSection({ type, status, onWrite, onEdit, onDelete }: ReviewTy
 
 export default function CandidateMyReviewsPage() {
   const router = useRouter();
+  const { headerHeight } = useLayout();
   const authCandidateId = useAuthStore((s) => s.candidateId);
   const authUserId = useAuthStore((s) => s.user?.id);
   const authIsLoading = useAuthStore((s) => s.isLoading);
@@ -412,24 +414,28 @@ export default function CandidateMyReviewsPage() {
     }
   };
 
-  // Filter reviews
-  const filteredReviews = reviews.filter((r) => {
-    const matchesSearch =
-      searchQuery === "" ||
-      r.companyName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      r.jobTitle?.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesType = filterType === "all" || r.reviewType.includes(filterType.toUpperCase());
-    return matchesSearch && matchesType;
-  });
+  // Filter reviews with useMemo to prevent re-filtering on every render
+  const filteredReviews = useMemo(() => {
+    return reviews.filter((r) => {
+      const matchesSearch =
+        searchQuery === "" ||
+        r.companyName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        r.jobTitle?.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesType = filterType === "all" || r.reviewType.includes(filterType.toUpperCase());
+      return matchesSearch && matchesType;
+    });
+  }, [reviews, searchQuery, filterType]);
 
-  // Filter applications
-  const filteredApplications = applications.filter((app) => {
-    const matchesSearch =
-      searchQuery === "" ||
-      app.companyName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      app.jobTitle.toLowerCase().includes(searchQuery.toLowerCase());
-    return matchesSearch;
-  });
+  // Filter applications with useMemo
+  const filteredApplications = useMemo(() => {
+    return applications.filter((app) => {
+      const matchesSearch =
+        searchQuery === "" ||
+        app.companyName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        app.jobTitle.toLowerCase().includes(searchQuery.toLowerCase());
+      return matchesSearch;
+    });
+  }, [applications, searchQuery]);
 
   // Calculate stats
   const availableCount = applications.reduce((count, app) => {
@@ -443,12 +449,25 @@ export default function CandidateMyReviewsPage() {
   // Loading state
   if (loading) {
     return (
-      <main className="relative flex min-h-screen w-full max-w-full bg-[#faf9f8] overflow-x-hidden">
-        <div className="flex flex-1 max-w-7xl mx-auto px-4 sm:px-6 py-6 gap-6 w-full">
-          <div className="hidden lg:block flex-shrink-0 sticky top-[calc(var(--sticky-offset,80px)+24px)] self-start">
-            <CVSidebar activePage="my-reviews" />
-          </div>
-          <div className="flex-1 min-w-0 space-y-4">
+      <main className="mx-auto max-w-7xl px-4 py-6 md:px-6">
+        <div
+          className="grid grid-cols-1 lg:grid-cols-[16rem_minmax(0,1fr)] gap-6 items-start transition-all duration-300"
+          style={{
+            ["--sticky-offset" as any]: `${headerHeight || 0}px`,
+            ["--content-pad" as any]: "24px",
+          }}
+        >
+          {/* Sidebar Skeleton */}
+          <aside className="hidden lg:block sticky [top:calc(var(--sticky-offset)+var(--content-pad))] self-start transition-all duration-300">
+            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 space-y-2">
+              {[1, 2, 3, 4, 5].map((i) => (
+                <div key={i} className="h-10 bg-gray-200 rounded animate-pulse" />
+              ))}
+            </div>
+          </aside>
+
+          {/* Main Content Skeleton */}
+          <div className="flex-1 min-w-0 space-y-4 transition-all duration-300">
             <Skeleton className="h-12 w-full" />
             <Skeleton className="h-64 w-full" />
             <Skeleton className="h-32 w-full" />
@@ -459,16 +478,22 @@ export default function CandidateMyReviewsPage() {
   }
 
   return (
-    <main className="min-h-screen bg-gray-50">
-      <div className="mx-auto max-w-7xl px-4 py-6">
-        <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-6">
-          {/* Sidebar */}
-          <aside className="hidden lg:block sticky top-24 self-start">
-            <CVSidebar activePage="my-reviews" />
-          </aside>
+    <main className="mx-auto max-w-7xl px-4 py-6 md:px-6">
+      {/* GRID 2 cột: sidebar | content */}
+      <div
+        className="grid grid-cols-1 lg:grid-cols-[16rem_minmax(0,1fr)] gap-6 items-start transition-all duration-300"
+        style={{
+          ["--sticky-offset" as any]: `${headerHeight || 0}px`,
+          ["--content-pad" as any]: "24px",
+        }}
+      >
+        {/* Sidebar trái: sticky + ẩn mobile */}
+        <aside className="hidden lg:block sticky [top:calc(var(--sticky-offset)+var(--content-pad))] self-start transition-all duration-300">
+          <CVSidebar activePage="my-reviews" />
+        </aside>
 
-          {/* Main Content */}
-          <div className="space-y-6 min-w-0">
+        {/* Main Content */}
+        <div className="space-y-6 min-w-0 transition-all duration-300">
           {/* Header */}
           <Card>
             <CardHeader>
@@ -537,30 +562,38 @@ export default function CandidateMyReviewsPage() {
                 <div className="border-b border-gray-200">
                   <button
                     onClick={() => setActiveTab("submitted")}
-                    className={`pb-3 px-1 mr-8 relative ${
+                    className={`pb-3 px-1 mr-8 relative border-b-2 ${
                       activeTab === "submitted"
-                        ? "text-gray-500 font-medium border-b-2 border-gray-500"
-                        : "text-gray-600 hover:text-gray-900"
+                        ? "text-black font-semibold border-black"
+                        : "text-gray-600 hover:text-gray-900 border-transparent"
                     }`}
                   >
                     <CheckCircle2 className="h-4 w-4 inline mr-2" />
                     Submitted
-                    <span className="ml-2 px-2 py-0.5 text-xs bg-gray-500 text-white rounded-full">
+                    <span className={`ml-2 px-2 py-0.5 text-xs rounded-full ${
+                      activeTab === "submitted" 
+                        ? "bg-black text-white" 
+                        : "bg-gray-500 text-white"
+                    }`}>
                       {reviews.length}
                     </span>
                   </button>
 
                   <button
                     onClick={() => setActiveTab("applications")}
-                    className={`pb-3 px-1 mr-8 relative ${
+                    className={`pb-3 px-1 mr-8 relative border-b-2 ${
                       activeTab === "applications"
-                        ? "text-gray-500 font-medium border-b-2 border-gray-500"
-                        : "text-gray-600 hover:text-gray-900"
+                        ? "text-black font-semibold border-black"
+                        : "text-gray-600 hover:text-gray-900 border-transparent"
                     }`}
                   >
                     <Building2 className="h-4 w-4 inline mr-2" />
                     My Applications
-                    <span className="ml-2 px-2 py-0.5 text-xs bg-gray-500 text-white rounded-full">
+                    <span className={`ml-2 px-2 py-0.5 text-xs rounded-full ${
+                      activeTab === "applications" 
+                        ? "bg-black text-white" 
+                        : "bg-gray-500 text-white"
+                    }`}>
                       {applications.length}
                     </span>
                   </button>
@@ -789,7 +822,6 @@ export default function CandidateMyReviewsPage() {
           </Card>
         </div>
       </div>
-    </div>
 
       {/* Review Drawer */}
       {selectedApplication && effectiveCandidateId && selectedReviewType && (

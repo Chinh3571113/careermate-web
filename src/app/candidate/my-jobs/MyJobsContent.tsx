@@ -393,26 +393,34 @@ const MyJobsPage = () => {
               <div className="flex border-b border-gray-200 mb-6">
                 <button
                   onClick={() => handleTabChange("applied")}
-                  className={`pb-3 px-1 mr-8 relative ${activeTab === "applied"
-                    ? "text-gray-500 font-medium border-b-2 border-gray-500"
+                  className={`pb-3 px-1 mr-8 relative transition-all duration-200 ${activeTab === "applied"
+                    ? "text-gray-900 font-semibold border-b-2 border-gray-900"
                     : "text-gray-600 hover:text-gray-900"
                     }`}
                 >
                   Applied Jobs
-                  <span className="ml-2 px-2 py-0.5 text-xs bg-gray-500 text-white rounded-full">
+                  <span className={`ml-2 px-2 py-0.5 text-xs rounded-full transition-all duration-200 ${
+                    activeTab === "applied" 
+                      ? "bg-gray-900 text-white" 
+                      : "bg-gray-500 text-white"
+                  }`}>
                     {jobApplications.length}
                   </span>
                 </button>
 
                 <button
                   onClick={() => handleTabChange("saved")}
-                  className={`pb-3 px-1 mr-8 relative ${activeTab === "saved"
-                    ? "text-gray-500 font-medium border-b-2 border-gray-500"
+                  className={`pb-3 px-1 mr-8 relative transition-all duration-200 ${activeTab === "saved"
+                    ? "text-gray-900 font-semibold border-b-2 border-gray-900"
                     : "text-gray-600 hover:text-gray-900"
                     }`}
                 >
                   Saved Jobs
-                  <span className="ml-2 px-2 py-0.5 text-xs bg-gray-500 text-white rounded-full">
+                  <span className={`ml-2 px-2 py-0.5 text-xs rounded-full transition-all duration-200 ${
+                    activeTab === "saved" 
+                      ? "bg-gray-900 text-white" 
+                      : "bg-gray-500 text-white"
+                  }`}>
                     {savedJobs.length}
                   </span>
                 </button>
