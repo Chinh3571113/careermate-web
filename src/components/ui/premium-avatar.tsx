@@ -47,6 +47,14 @@ export function PremiumAvatar({
   // Use the hook to resolve storage paths to download URLs
   const resolvedUrl = useFileUrl(src);
   
+  // Debug logging
+  console.log('🖼️ [PremiumAvatar] Debug:', {
+    src,
+    resolvedUrl,
+    size,
+    isPremium,
+  });
+  
   const baseSize = sizeClasses[size];
   const iconSize = iconSizes[size];
 

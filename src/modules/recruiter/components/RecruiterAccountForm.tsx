@@ -10,7 +10,6 @@ import { useAuthStore } from "@/store/use-auth-store";
 import toast from "react-hot-toast";
 import api from "@/lib/api";
 import { Loader2, Upload, User } from "lucide-react";
-import { useUserProfile, updateSharedAvatar } from "@/hooks/useUserProfile";
 
 export function RecruiterAccountForm() {
     const [openPwd, setOpenPwd] = useState(false);
@@ -18,7 +17,7 @@ export function RecruiterAccountForm() {
     const [loading, setLoading] = useState(true);
     const [uploadingAvatar, setUploadingAvatar] = useState(false);
     const [savingUsername, setSavingUsername] = useState(false);
-    const { user, accessToken, isAuthenticated } = useAuthStore();
+    const { user, accessToken, isAuthenticated, isLoading: authLoading, setRecruiterAvatarUrl } = useAuthStore();
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     const [formData, setFormData] = useState({
@@ -28,24 +27,34 @@ export function RecruiterAccountForm() {
 
     useEffect(() => {
         const fetchRecruiterData = async () => {
-            // Wait for auth store to be hydrated
+            // Wait for auth store to be fully hydrated (not loading anymore)
+            if (authLoading) {
+                console.log('⏳ [RecruiterAccountForm] Auth store still loading...');
+                return;
+            }
+            
+            // Check if authenticated after auth is loaded
             if (!accessToken || !isAuthenticated) {
-                console.log('⏳ [RecruiterAccountForm] Waiting for auth...', { accessToken: !!accessToken, isAuthenticated });
+                console.log('⏳ [RecruiterAccountForm] Not authenticated yet', { accessToken: !!accessToken, isAuthenticated });
+                setLoading(false);
                 return;
             }
             
             try {
                 setLoading(true);
-                if (user?.email) {
-                    console.log('🔄 [RecruiterAccountForm] Fetching recruiter data for:', user.email);
-                    const data = await ProfileService.getRecruiterAccount(user.email);
-                    if (data) {
-                        console.log('✅ [RecruiterAccountForm] Data loaded:', data);
-                        setRecruiterData(data);
-                        setFormData({
-                            username: data.username || "",
-                            email: data.email || "",
-                        });
+                console.log('🔄 [RecruiterAccountForm] Fetching recruiter data...');
+                // Use ProfileService which calls /api/recruiter/profile (JWT-based, no email needed)
+                const data = await ProfileService.getRecruiterAccount();
+                if (data) {
+                    console.log('✅ [RecruiterAccountForm] Data loaded:', data);
+                    setRecruiterData(data);
+                    setFormData({
+                        username: data.username || "",
+                        email: data.email || "",
+                    });
+                    // Also update the avatar in auth store
+                    if (data.avatarUrl) {
+                        setRecruiterAvatarUrl(data.avatarUrl);
                     }
                 }
             } catch (error) {
@@ -57,7 +66,7 @@ export function RecruiterAccountForm() {
         };
 
         fetchRecruiterData();
-    }, [user?.email, accessToken, isAuthenticated]);
+    }, [accessToken, isAuthenticated, authLoading, setRecruiterAvatarUrl]);
 
     const handleInputChange = (
         e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -136,8 +145,8 @@ export function RecruiterAccountForm() {
                     if (recruiterData) {
                         setRecruiterData({ ...recruiterData, avatarUrl: imageUrl });
                     }
-                    // Update shared avatar state immediately (updates header)
-                    updateSharedAvatar(imageUrl);
+                    // Update avatar in auth store (updates header immediately)
+                    setRecruiterAvatarUrl(imageUrl);
                 }
             } else {
                 toast.error("Failed to upload avatar");
@@ -153,7 +162,7 @@ export function RecruiterAccountForm() {
         }
     };
 
-    if (loading) {
+    if (authLoading || loading) {
         return (
             <section className="rounded-lg border bg-white p-6 shadow-sm shadow-sky-100">
                 <div className="flex items-center justify-center py-12">

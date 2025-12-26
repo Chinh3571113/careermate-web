@@ -3,15 +3,15 @@
 import Link from "next/link";
 import Image from "next/image";
 import { ChevronDown, Menu, X, User, LogOut } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import { useAuthStore } from "@/store/use-auth-store";
 import { useClientAuth } from "@/hooks/useClientAuth";
 import { decodeJWT } from "@/lib/auth-admin";
 import toast from "react-hot-toast";
 import { ProfileDropdown } from "@/components/profile/ProfileDropdown";
 import UserTypeSelectionModal from "@/components/auth/UserTypeSelectionModal";
-import { useUserProfile } from "@/hooks/useUserProfile";
 import { getCurrentUser } from "@/lib/user-api";
+import api from "@/lib/api";
 
 export default function RecruiterHeader() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -19,14 +19,33 @@ export default function RecruiterHeader() {
   const [isHydrated, setIsHydrated] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [userInfo, setUserInfo] = useState<{ name: string; email: string; username?: string } | null>(null);
+  const [localAvatarUrl, setLocalAvatarUrl] = useState<string | null>(null);
   const userMenuRef = useRef<HTMLDivElement>(null);
 
   // Lấy trạng thái auth đã chuẩn hoá từ hook client
   const { mounted, isAuthenticated, accessToken, role } = useClientAuth();
-  const { logout, user } = useAuthStore();
-  
-  // Lấy username và avatar từ database
-  const { username, avatarUrl } = useUserProfile();
+  const { logout, user, recruiterAvatarUrl, setRecruiterAvatarUrl } = useAuthStore();
+
+  // Fetch recruiter avatar directly
+  const fetchRecruiterAvatar = useCallback(async () => {
+    if (!accessToken || !isAuthenticated) return;
+    
+    const isRecruiter = role?.toUpperCase().includes("RECRUITER");
+    if (!isRecruiter) return;
+
+    try {
+      console.log('🔄 [RecruiterHeader Client] Fetching recruiter profile for avatar...');
+      const response = await api.get<{ code: number; result: { avatarUrl?: string } }>('/api/recruiter/profile');
+      
+      if (response.data?.result?.avatarUrl) {
+        console.log('✅ [RecruiterHeader Client] Avatar URL:', response.data.result.avatarUrl);
+        setLocalAvatarUrl(response.data.result.avatarUrl);
+        setRecruiterAvatarUrl(response.data.result.avatarUrl);
+      }
+    } catch (error) {
+      console.error('❌ [RecruiterHeader Client] Error fetching avatar:', error);
+    }
+  }, [accessToken, isAuthenticated, role, setRecruiterAvatarUrl]);
 
   // Debug log
   console.log("🔍 RecruiterHeader State:", {
@@ -37,6 +56,8 @@ export default function RecruiterHeader() {
     hasUser: !!user,
     userName: user?.name,
     userEmail: user?.email,
+    recruiterAvatarUrl,
+    localAvatarUrl,
   });
 
   // Đánh dấu đã hydrate (tránh SSR mismatch)
@@ -88,6 +109,13 @@ export default function RecruiterHeader() {
 
     fetchCurrentUser();
   }, [accessToken, isAuthenticated]);
+
+  // Fetch recruiter avatar on mount
+  useEffect(() => {
+    if (!localAvatarUrl && !recruiterAvatarUrl) {
+      fetchRecruiterAvatar();
+    }
+  }, [localAvatarUrl, recruiterAvatarUrl, fetchRecruiterAvatar]);
 
   // Đóng dropdown khi click ra ngoài / nhấn ESC
   useEffect(() => {
@@ -221,14 +249,14 @@ export default function RecruiterHeader() {
             {isAuthenticated && user ? (
               <>
                 <span className="sm:block text-gray-300 hover:text-white transition-colors hidden text-xs md:inline">
-                  For Recruiter {userInfo?.username || username || user?.username || "abc"}
+                  For Recruiter {userInfo?.username || user?.username || "abc"}
                 </span>
 
                 <ProfileDropdown
-                  userName={userInfo?.username || username || user?.username || userInfo?.name || "User"}
+                  userName={userInfo?.username || user?.username || userInfo?.name || "User"}
                   userEmail={userInfo?.email || user?.email}
                   role={role || undefined}
-                  userAvatar={avatarUrl || undefined}
+                  userAvatar={localAvatarUrl || recruiterAvatarUrl || undefined}
                 />
               </>
             ) : (

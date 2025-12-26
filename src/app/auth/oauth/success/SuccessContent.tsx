@@ -61,7 +61,7 @@ export function SuccessContent() {
 
         // Redirect based on role
         if (role === "RECRUITER" || role === "ROLE_RECRUITER") {
-          router.push("/recruiter/recruiter-feature/jobs");
+          router.push("/recruiter");
         } else {
           router.push("/");
         }

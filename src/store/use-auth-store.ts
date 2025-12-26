@@ -90,6 +90,7 @@ interface AuthState {
     title: string;
     image: string;
   } | null; // ✅ Add profile for avatar sync
+  recruiterAvatarUrl: string | null; // ✅ Add recruiter avatar URL
 
   // Actions
   setLoading: (v: boolean) => void;
@@ -103,7 +104,9 @@ interface AuthState {
   clearAuth: () => void;
   setCandidateId: (candidateId: number | null) => void; // ✅ Add setter for candidateId
   fetchCandidateProfile: () => Promise<void>; // ✅ Add method to fetch profile
+  fetchRecruiterProfile: () => Promise<void>; // ✅ Add method to fetch recruiter profile
   setProfile: (profile: { fullName: string; title: string; image: string } | null) => void; // ✅ Add setter for profile
+  setRecruiterAvatarUrl: (url: string | null) => void; // ✅ Add setter for recruiter avatar
 
   // API
   login: (
@@ -251,6 +254,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   role: initial.role,
   candidateId: null, // ✅ Initialize candidateId
   profile: null, // ✅ Initialize profile (for avatar sync)
+  recruiterAvatarUrl: null, // ✅ Initialize recruiter avatar URL
 
   // -------- Actions cơ bản để hook gọi --------
   setLoading: (v) => set({ isLoading: v }),
@@ -321,6 +325,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       user: null,
       candidateId: null, // ✅ Clear candidateId on logout
       profile: null, // ✅ Clear profile on logout
+      recruiterAvatarUrl: null, // ✅ Clear recruiter avatar on logout
     });
   },
 
@@ -332,6 +337,52 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   // ✅ Set profile (for avatar sync)
   setProfile: (profile) => {
     set({ profile });
+  },
+
+  // ✅ Set recruiter avatar URL
+  setRecruiterAvatarUrl: (url) => {
+    set({ recruiterAvatarUrl: url });
+  },
+
+  // ✅ Fetch recruiter profile from API to get avatar URL
+  fetchRecruiterProfile: async () => {
+    try {
+      const { isAuthenticated, role, accessToken } = get();
+      
+      // Only fetch if user is authenticated
+      if (!isAuthenticated || !accessToken) {
+        console.log('❌ [fetchRecruiterProfile] Not authenticated');
+        return;
+      }
+
+      // Only fetch for recruiters
+      const isRecruiter = role?.toUpperCase().includes("RECRUITER");
+      if (!isRecruiter) {
+        console.log('ℹ️ [fetchRecruiterProfile] User is not a recruiter, skipping');
+        return;
+      }
+      
+      try {
+        console.log('🔄 [fetchRecruiterProfile] Fetching profile...');
+        const api = (await import('@/lib/api')).default;
+        // ✅ Fixed API path: /api/recruiter/profile (not /api/recruiters/profile)
+        const response = await api.get<{ code: number; result: { avatarUrl?: string } }>('/api/recruiter/profile');
+        
+        console.log('📦 [fetchRecruiterProfile] Response:', response.data);
+        
+        if (response.data?.result?.avatarUrl) {
+          console.log('✅ [fetchRecruiterProfile] Avatar URL found:', response.data.result.avatarUrl);
+          set({ recruiterAvatarUrl: response.data.result.avatarUrl });
+        } else {
+          console.log('ℹ️ [fetchRecruiterProfile] No avatar URL in response');
+        }
+      } catch (profileError: any) {
+        console.error('❌ [fetchRecruiterProfile] Error:', profileError?.response?.data || profileError);
+      }
+      
+    } catch (error) {
+      console.error('Error fetching recruiter profile:', error);
+    }
   },
 
   // ✅ Fetch user profile from API to get real candidateId and profile data
@@ -438,10 +489,13 @@ export const useAuthStore = create<AuthState>((set, get) => ({
         user: userInfo,
       });
 
-      // ✅ Fetch user profile to get real userId
+      // ✅ Fetch user profile to get real userId/avatar
       // Fire and forget - don't block login flow
       get().fetchCandidateProfile().catch((err) => {
-        // Silent fail
+        // Silent fail for candidates
+      });
+      get().fetchRecruiterProfile().catch((err) => {
+        // Silent fail for recruiters
       });
 
       set({ isLoading: false });
