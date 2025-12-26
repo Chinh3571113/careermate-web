@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
+import Image from "next/image";
 import { ProfileDropdown } from "@/components/profile/ProfileDropdown";
 import { useAuthStore } from "@/store/use-auth-store";
 import {
@@ -18,6 +19,7 @@ import {
 import Link from "next/link";
 import { useClientAuth } from "@/hooks/useClientAuth";
 import { decodeJWT } from "@/lib/auth-admin";
+import api from "@/lib/api";
 
 // Animated Counter Component
 interface AnimatedCounterProps {
@@ -96,7 +98,8 @@ export default function RecruiterHomePage() {
 
   // Lấy trạng thái auth
   const { mounted, isAuthenticated, accessToken, role } = useClientAuth();
-  const { logout, user } = useAuthStore();
+  const { logout, user, recruiterAvatarUrl, setRecruiterAvatarUrl } = useAuthStore();
+  const [localAvatarUrl, setLocalAvatarUrl] = useState<string | null>(null);
 
   // Decode token CHỈ sau khi có accessToken ở client
   useEffect(() => {
@@ -126,6 +129,34 @@ export default function RecruiterHomePage() {
     }
   }, [accessToken, user]);
 
+  // Fetch recruiter avatar
+  const fetchRecruiterAvatar = useCallback(async () => {
+    if (!accessToken || !isAuthenticated) return;
+    
+    const isRecruiter = role?.toUpperCase().includes("RECRUITER");
+    if (!isRecruiter) return;
+
+    try {
+      console.log('🔄 [RecruiterHomePage] Fetching recruiter profile for avatar...');
+      const response = await api.get<{ code: number; result: { avatarUrl?: string } }>('/api/recruiter/profile');
+      
+      if (response.data?.result?.avatarUrl) {
+        console.log('✅ [RecruiterHomePage] Avatar URL:', response.data.result.avatarUrl);
+        setLocalAvatarUrl(response.data.result.avatarUrl);
+        setRecruiterAvatarUrl(response.data.result.avatarUrl);
+      }
+    } catch (error) {
+      console.error('❌ [RecruiterHomePage] Error fetching avatar:', error);
+    }
+  }, [accessToken, isAuthenticated, role, setRecruiterAvatarUrl]);
+
+  // Fetch avatar on mount
+  useEffect(() => {
+    if (!localAvatarUrl && !recruiterAvatarUrl && isAuthenticated) {
+      fetchRecruiterAvatar();
+    }
+  }, [localAvatarUrl, recruiterAvatarUrl, isAuthenticated, fetchRecruiterAvatar]);
+
   const handleConsultation = () => {
     // Handle consultation request
     console.log("Consultation requested for:", email);
@@ -135,6 +166,31 @@ export default function RecruiterHomePage() {
     // Handle start posting
     console.log("Start posting job");
   };
+
+  // Show loading state while auth is hydrating to prevent flash
+  if (!mounted) {
+    return (
+      <div className="min-h-screen bg-[#1b1b20f5]">
+        <header className="bg-[#1b1b20f5] sticky top-0 z-50">
+          <div className="container mx-auto px-4 py-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center space-x-2">
+                <div className="h-14 w-14 bg-white/20 rounded animate-pulse" />
+                <span className="text-xl font-bold text-[#ffffff]">Recruiter</span>
+              </div>
+              <div className="flex items-center space-x-4">
+                <div className="h-8 w-20 bg-white/20 rounded animate-pulse" />
+                <div className="h-8 w-24 bg-white/20 rounded animate-pulse" />
+              </div>
+            </div>
+          </div>
+        </header>
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -146,9 +202,11 @@ export default function RecruiterHomePage() {
               {/* Logo */}
               <div className="flex items-center">
                 <Link href="/" className="flex items-center space-x-2">
-                  <img
+                  <Image
                     src="/images/general/newlogo.png"
                     alt="Logo"
+                    width={56}
+                    height={56}
                     className="h-14 w-auto"
                   />
                   <span className="text-xl font-bold text-[#ffffff]">
@@ -203,14 +261,14 @@ export default function RecruiterHomePage() {
               {isAuthenticated && user ? (
                 <>
                   <span className="sm:block text-gray-300 hover:text-white transition-colors hidden text-xs md:inline">
-                    For Recruiter abc
+                    For Recruiter {userInfo?.username || user?.username || "User"}
                   </span>
 
                   <ProfileDropdown
-                    userName={user?.username || "User"} // Changed to use user.username
+                    userName={user?.username || userInfo?.username || "User"}
                     userEmail={user?.email || userInfo?.email}
                     role={role || undefined}
-                    userAvatar="https://encrypted-tbn1.gstatic.com/licensed-image?q=tbn:ANd9GcTPMg7sLIhRN7k0UrPxSsHzujqgLqdTq67Pj4vVqKmr4sFR0eH4h4h-sWjxVvi3vKOl47pyShZMal8qcNuipNE4fbSfblUL99EfUtDrBto"
+                    userAvatar={localAvatarUrl || recruiterAvatarUrl || undefined}
                   />
                 </>
               ) : (

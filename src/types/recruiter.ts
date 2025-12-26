@@ -2,9 +2,11 @@ export interface Recruiter {
   recruiterId: number;
   accountId: number;
   email: string;
+  username: string;
+  avatarUrl?: string; // Personal avatar from Account
   companyName: string;
   website: string;
-  logoUrl: string;
+  logoUrl: string; // Company logo
   about: string;
   companyEmail: string;
   contactPerson: string;

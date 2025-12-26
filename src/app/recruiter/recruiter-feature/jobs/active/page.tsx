@@ -24,6 +24,11 @@ import {
   Trash2,
   UserCheck,
   Sparkles,
+  DollarSign,
+  Package,
+  Tag,
+  Save,
+  PlusCircle,
 } from "lucide-react";
 import {
   getRecruiterJobPostings,
@@ -35,6 +40,9 @@ import {
   CreateJobPostRequest,
   getRecommendedCandidates,
   CandidateRecommendation,
+  createJobPost,
+  getSkills,
+  Skill,
 } from "@/lib/recruiter-api";
 import toast from "react-hot-toast";
 
@@ -68,6 +76,28 @@ export default function ManageJobsPage() {
   const [recommendations, setRecommendations] = useState<CandidateRecommendation[]>([]);
   const [isLoadingRecommendations, setIsLoadingRecommendations] = useState(false);
 
+  // Create Job Modal states
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [availableSkills, setAvailableSkills] = useState<Skill[]>([]);
+  const [isLoadingSkills, setIsLoadingSkills] = useState(false);
+  const [skillsError, setSkillsError] = useState<string | null>(null);
+  const [selectedSkillId, setSelectedSkillId] = useState("");
+  const [newSkillMustHave, setNewSkillMustHave] = useState(true);
+  const [formData, setFormData] = useState({
+    title: "",
+    description: "",
+    address: "",
+    expirationDate: "",
+    yearsOfExperience: "",
+    workModel: "",
+    salaryRange: "",
+    reason: "",
+    jobPackage: "",
+    skills: [] as Array<{ id: number; mustToHave: boolean; name?: string }>,
+  });
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
+
   useEffect(() => {
     fetchJobs();
   }, []);
@@ -75,6 +105,135 @@ export default function ManageJobsPage() {
   useEffect(() => {
     filterJobs();
   }, [jobs, activeTab, searchQuery]);
+
+  // Fetch skills when create modal opens
+  useEffect(() => {
+    if (showCreateModal && availableSkills.length === 0) {
+      fetchSkillsData();
+    }
+  }, [showCreateModal]);
+
+  const fetchSkillsData = async () => {
+    try {
+      setIsLoadingSkills(true);
+      setSkillsError(null);
+      const response = await getSkills();
+      if (response.code === 200 && response.result) {
+        setAvailableSkills(response.result);
+      } else {
+        setSkillsError(response.message || "Failed to load skills");
+      }
+    } catch (error: any) {
+      setSkillsError(error.message || "Failed to load skills");
+    } finally {
+      setIsLoadingSkills(false);
+    }
+  };
+
+  const handleFormChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+    // Clear error when user starts typing
+    if (formErrors[name]) {
+      setFormErrors((prev) => ({ ...prev, [name]: "" }));
+    }
+  };
+
+  const handleAddSkill = () => {
+    if (!selectedSkillId) {
+      toast.error("Please select a skill");
+      return;
+    }
+    const skillIdNum = parseInt(selectedSkillId);
+    if (formData.skills.some((s) => s.id === skillIdNum)) {
+      toast.error("Skill already added");
+      return;
+    }
+    const skillName = availableSkills.find((s) => s.id === skillIdNum)?.name || `Skill #${skillIdNum}`;
+    setFormData((prev) => ({
+      ...prev,
+      skills: [...prev.skills, { id: skillIdNum, mustToHave: newSkillMustHave, name: skillName }],
+    }));
+    setSelectedSkillId("");
+    if (formErrors.skills) {
+      setFormErrors((prev) => ({ ...prev, skills: "" }));
+    }
+  };
+
+  const handleRemoveSkill = (skillId: number) => {
+    setFormData((prev) => ({
+      ...prev,
+      skills: prev.skills.filter((s) => s.id !== skillId),
+    }));
+  };
+
+  const validateForm = () => {
+    const errors: Record<string, string> = {};
+    if (!formData.title.trim()) errors.title = "Job title is required";
+    if (!formData.description.trim()) errors.description = "Description is required";
+    if (!formData.address.trim()) errors.address = "Address is required";
+    if (!formData.expirationDate) errors.expirationDate = "Expiration date is required";
+    if (!formData.yearsOfExperience) errors.yearsOfExperience = "Experience is required";
+    if (!formData.workModel.trim()) errors.workModel = "Work model is required";
+    if (!formData.salaryRange.trim()) errors.salaryRange = "Salary range is required";
+    if (!formData.jobPackage.trim()) errors.jobPackage = "Privilege is required";
+    if (formData.skills.length === 0) errors.skills = "At least one skill is required";
+    return errors;
+  };
+
+  const handleCreateJobSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const errors = validateForm();
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      const jobPostData: CreateJobPostRequest = {
+        title: formData.title,
+        description: formData.description,
+        address: formData.address,
+        expirationDate: formData.expirationDate,
+        jdSkills: formData.skills.map((skill) => ({ id: skill.id, mustToHave: skill.mustToHave })),
+        yearsOfExperience: parseInt(formData.yearsOfExperience),
+        workModel: formData.workModel,
+        salaryRange: formData.salaryRange,
+        reason: formData.reason || "",
+        jobPackage: formData.jobPackage,
+      };
+
+      const response = await createJobPost(jobPostData);
+      if (response.code === 200 || response.code === 201 || response.code === 0) {
+        toast.success("Job post created successfully!");
+        setShowCreateModal(false);
+        // Reset form
+        setFormData({
+          title: "",
+          description: "",
+          address: "",
+          expirationDate: "",
+          yearsOfExperience: "",
+          workModel: "",
+          salaryRange: "",
+          reason: "",
+          jobPackage: "",
+          skills: [],
+        });
+        setFormErrors({});
+        // Refresh job list
+        fetchJobs();
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Failed to create job post");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   const fetchJobs = async () => {
     setIsLoading(true);
@@ -260,7 +419,7 @@ export default function ManageJobsPage() {
             <p className="text-gray-600 mt-1">View and manage all your job postings in one place</p>
           </div>
           <button
-            onClick={() => router.push("/recruiter/recruiter-feature/jobs/create")}
+            onClick={() => setShowCreateModal(true)}
             className="flex items-center gap-2 px-4 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition-colors"
           >
             <Plus className="h-5 w-5" />
@@ -330,22 +489,22 @@ export default function ManageJobsPage() {
             return (
               <div
                 key={job.id}
-                className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow overflow-hidden"
+                className="bg-white rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition-shadow overflow-hidden flex flex-col h-full"
               >
                 {/* Card Header */}
-                <div className="p-5 border-b border-gray-100">
+                <div className="p-5 border-b border-gray-100 flex-1">
                   <div className="flex items-start justify-between mb-3">
                     <h3 className="text-lg font-semibold text-gray-900 line-clamp-2 flex-1">
                       {job.title}
                     </h3>
-                    <span className={`ml-2 px-2 py-1 rounded-full text-xs font-medium ${getStatusBadge(job.status)}`}>
+                    <span className={`ml-2 px-2 py-1 rounded-full text-xs font-medium whitespace-nowrap ${getStatusBadge(job.status)}`}>
                       {job.status}
                     </span>
                   </div>
                   
                   <div className="space-y-2 text-sm text-gray-600">
                     <div className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4 text-gray-400" />
+                      <MapPin className="h-4 w-4 text-gray-400 flex-shrink-0" />
                       <span className="line-clamp-1">{job.address}</span>
                     </div>
                     <div className="flex items-center gap-2">
@@ -359,8 +518,8 @@ export default function ManageJobsPage() {
                   </div>
                 </div>
 
-                {/* Card Actions */}
-                <div className="p-4 bg-gray-50 flex items-center justify-between gap-2">
+                {/* Card Actions - Always at bottom */}
+                <div className="p-4 bg-gray-50 border-t border-gray-100 flex items-center justify-between gap-2 mt-auto">
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => {
@@ -524,193 +683,200 @@ export default function ManageJobsPage() {
 
       {/* Detail View Modal */}
       {showDetailModal && selectedJob && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
-          <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full p-6 my-8">
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="text-2xl font-bold text-gray-900">{selectedJob.title}</h2>
-              <button
-                onClick={() => {
-                  setShowDetailModal(false);
-                  setSelectedJob(null);
-                }}
-                className="p-2 text-gray-400 hover:text-gray-600 rounded-lg transition-colors"
-              >
-                <XCircle className="h-6 w-6" />
-              </button>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto my-4">
+            {/* Header */}
+            <div className="px-6 py-5 border-b border-gray-100">
+              <div className="flex items-start justify-between">
+                <div>
+                  <h2 className="text-xl font-bold text-gray-900 mb-2">{selectedJob.title}</h2>
+                  <div className="flex items-center gap-3">
+                    <span className={`px-2.5 py-1 rounded-md text-xs font-semibold ${getStatusBadge(selectedJob.status)}`}>
+                      {selectedJob.status}
+                    </span>
+                    <span className="text-sm text-gray-400">#{selectedJob.id}</span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => {
+                    setShowDetailModal(false);
+                    setSelectedJob(null);
+                  }}
+                  className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
             </div>
 
-            <div className="space-y-6">
-              {/* Status Badge */}
-              <div className="flex items-center gap-4">
-                <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusBadge(selectedJob.status)}`}>
-                  {selectedJob.status}
-                </span>
-                <span className="text-sm text-gray-500">
-                  ID: {selectedJob.id}
-                </span>
-              </div>
-
+            {/* Content */}
+            <div className="px-6 py-5 space-y-5">
               {/* Description */}
               <div>
-                <h3 className="text-sm font-semibold text-gray-700 mb-2">Description</h3>
-                <div className="text-gray-600 whitespace-pre-wrap bg-gray-50 p-4 rounded-lg">
-                  {selectedJob.description}
-                </div>
+                <h3 className="text-sm font-medium text-gray-500 mb-2">Description</h3>
+                <p className="text-gray-700 leading-relaxed">{selectedJob.description}</p>
               </div>
 
               {/* Location */}
-              <div>
-                <h3 className="text-sm font-semibold text-gray-700 mb-2">Location</h3>
-                <div className="flex items-center gap-2 text-gray-600">
-                  <MapPin className="h-4 w-4" />
-                  <span>{selectedJob.address}</span>
-                </div>
+              <div className="flex items-center gap-3 p-3 bg-slate-50 rounded-lg">
+                <MapPin className="h-4 w-4 text-slate-500" />
+                <span className="text-gray-700">{selectedJob.address}</span>
               </div>
 
-              {/* Skills */}
+              {/* Skills - Required skills sorted first */}
               {selectedJob.skills && selectedJob.skills.length > 0 && (
                 <div>
-                  <h3 className="text-sm font-semibold text-gray-700 mb-2">Required Skills</h3>
+                  <h3 className="text-sm font-medium text-gray-500 mb-3">Skills</h3>
                   <div className="flex flex-wrap gap-2">
-                    {selectedJob.skills.map((skill, index) => (
-                      <span 
-                        key={index}
-                        className={`px-3 py-1 rounded-full text-xs font-medium ${
-                          skill.mustToHave 
-                            ? 'bg-red-100 text-red-700' 
-                            : 'bg-blue-100 text-blue-700'
-                        }`}
-                      >
-                        {skill.name} {skill.mustToHave && '(Required)'}
-                      </span>
-                    ))}
+                    {[...selectedJob.skills]
+                      .sort((a, b) => (b.mustToHave ? 1 : 0) - (a.mustToHave ? 1 : 0))
+                      .map((skill, index) => (
+                        <span 
+                          key={index}
+                          className={`px-3 py-1.5 rounded-md text-sm font-medium ${
+                            skill.mustToHave 
+                              ? 'bg-rose-100 text-rose-700' 
+                              : 'bg-gray-100 text-gray-600'
+                          }`}
+                        >
+                          {skill.name}{skill.mustToHave && ' *'}
+                        </span>
+                      ))}
                   </div>
+                  <p className="text-xs text-gray-400 mt-2">* Required skill</p>
                 </div>
               )}
 
-              {/* Job Details Grid */}
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <h3 className="text-sm font-semibold text-gray-700 mb-1">Work Model</h3>
-                  <p className="text-gray-600">{selectedJob.workModel || 'N/A'}</p>
+              {/* Job Info Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div className="p-3 bg-slate-50 rounded-lg">
+                  <p className="text-xs text-gray-400 mb-1">Work Model</p>
+                  <p className="font-medium text-gray-900 text-sm">{selectedJob.workModel || 'N/A'}</p>
                 </div>
-                <div>
-                  <h3 className="text-sm font-semibold text-gray-700 mb-1">Experience Required</h3>
-                  <p className="text-gray-600">{selectedJob.yearsOfExperience} years</p>
+                <div className="p-3 bg-slate-50 rounded-lg">
+                  <p className="text-xs text-gray-400 mb-1">Experience</p>
+                  <p className="font-medium text-gray-900 text-sm">{selectedJob.yearsOfExperience} years</p>
                 </div>
-                <div>
-                  <h3 className="text-sm font-semibold text-gray-700 mb-1">Salary Range</h3>
-                  <p className="text-gray-600">{selectedJob.salaryRange}</p>
+                <div className="p-3 bg-slate-50 rounded-lg">
+                  <p className="text-xs text-gray-400 mb-1">Salary</p>
+                  <p className="font-medium text-gray-900 text-sm">{selectedJob.salaryRange}</p>
                 </div>
-                <div>
-                  <h3 className="text-sm font-semibold text-gray-700 mb-1">Job Package</h3>
-                  <p className="text-gray-600">{selectedJob.jobPackage || 'N/A'}</p>
+                <div className="p-3 bg-slate-50 rounded-lg">
+                  <p className="text-xs text-gray-400 mb-1">Package</p>
+                  <p className="font-medium text-gray-900 text-sm">{selectedJob.jobPackage || 'Standard'}</p>
                 </div>
               </div>
 
               {/* Dates */}
-              <div className="grid grid-cols-2 gap-4 pt-4 border-t border-gray-200">
-                <div>
-                  <h3 className="text-sm font-semibold text-gray-700 mb-1">Created Date</h3>
-                  <p className="text-gray-600">{new Date(selectedJob.createdDate).toLocaleDateString()}</p>
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-3 bg-emerald-50 rounded-lg">
+                  <p className="text-xs text-emerald-600 mb-1">Posted</p>
+                  <p className="font-medium text-gray-900 text-sm">
+                    {selectedJob.createdDate && !isNaN(new Date(selectedJob.createdDate).getTime()) 
+                      ? new Date(selectedJob.createdDate).toLocaleDateString() 
+                      : 'N/A'}
+                  </p>
                 </div>
-                <div>
-                  <h3 className="text-sm font-semibold text-gray-700 mb-1">Expiration Date</h3>
-                  <p className="text-gray-600">{new Date(selectedJob.expirationDate).toLocaleDateString()}</p>
+                <div className="p-3 bg-amber-50 rounded-lg">
+                  <p className="text-xs text-amber-600 mb-1">Expires</p>
+                  <p className="font-medium text-gray-900 text-sm">
+                    {new Date(selectedJob.expirationDate).toLocaleDateString()}
+                  </p>
                 </div>
               </div>
 
-              {/* Rejection Reason (only for REJECTED status) */}
+              {/* Rejection Reason */}
               {selectedJob.rejectionReason && selectedJob.status === 'REJECTED' && (
-                <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                  <h3 className="text-sm font-semibold text-red-700 mb-2">Rejection Reason</h3>
-                  <p className="text-red-600">{selectedJob.rejectionReason}</p>
+                <div className="p-4 bg-red-50 border border-red-100 rounded-lg">
+                  <h3 className="text-sm font-medium text-red-700 mb-1">Rejection Reason</h3>
+                  <p className="text-red-600 text-sm">{selectedJob.rejectionReason}</p>
                 </div>
               )}
 
-              {/* Benefits & Additional Information */}
+              {/* Benefits */}
               {selectedJob.reason && (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                  <h3 className="text-sm font-semibold text-blue-700 mb-2">Benefits & Additional Information</h3>
-                  <p className="text-gray-700 whitespace-pre-wrap">{selectedJob.reason}</p>
+                <div className="p-4 bg-blue-50 border border-blue-100 rounded-lg">
+                  <h3 className="text-sm font-medium text-blue-700 mb-1">Benefits & Additional Info</h3>
+                  <p className="text-gray-700 text-sm whitespace-pre-wrap">{selectedJob.reason}</p>
                 </div>
               )}
+            </div>
 
-              {/* Action Buttons */}
-              <div className="flex flex-wrap gap-3 pt-4 border-t border-gray-200">
-                {selectedJob.status === "ACTIVE" && (
-                  <button
-                    onClick={() => {
-                      setShowDetailModal(false);
-                      handleViewRecommendations(selectedJob);
-                    }}
-                    className="flex-1 min-w-[200px] px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2"
-                  >
-                    <Sparkles className="h-4 w-4" />
-                    View AI Recommendations
-                  </button>
-                )}
-                {canEdit(selectedJob.status) && (
-                  <button
-                    onClick={() => {
-                      setShowDetailModal(false);
-                      router.push(`/recruiter/recruiter-feature/jobs/edit/${selectedJob.id}`);
-                    }}
-                    className="flex-1 px-4 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition-colors flex items-center justify-center gap-2"
-                  >
-                    <Pencil className="h-4 w-4" />
-                    Edit Job
-                  </button>
-                )}
-                {selectedJob.status === "ACTIVE" && (
-                  <button
-                    onClick={() => {
-                      setShowDetailModal(false);
-                      setNewExpirationDate(selectedJob.expirationDate);
-                      setShowEditDateModal(true);
-                    }}
-                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
-                  >
-                    <Calendar className="h-4 w-4" />
-                    Edit Expiration
-                  </button>
-                )}
-                {canPause(selectedJob.status) && (
-                  <button
-                    onClick={() => {
-                      setShowDetailModal(false);
-                      handleAction(selectedJob, 'pause');
-                    }}
-                    className="flex-1 px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors flex items-center justify-center gap-2"
-                  >
-                    <Pause className="h-4 w-4" />
-                    Pause
-                  </button>
-                )}
-                {canResume(selectedJob.status) && (
-                  <button
-                    onClick={() => {
-                      setShowDetailModal(false);
-                      handleAction(selectedJob, 'resume');
-                    }}
-                    className="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
-                  >
-                    <Play className="h-4 w-4" />
-                    Resume
-                  </button>
-                )}
-                {canClose(selectedJob.status) && (
-                  <button
-                    onClick={() => {
-                      setShowDetailModal(false);
-                      handleAction(selectedJob, 'close');
-                    }}
-                    className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
-                  >
-                    <CheckCircle className="h-4 w-4" />
-                    Close
-                  </button>
-                )}
+            {/* Footer Actions */}
+            <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 rounded-b-xl">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex flex-wrap gap-2">
+                  {canPause(selectedJob.status) && (
+                    <button
+                      onClick={() => {
+                        setShowDetailModal(false);
+                        handleAction(selectedJob, 'pause');
+                      }}
+                      className="px-3 py-1.5 text-amber-600 hover:bg-amber-100 rounded-md transition-colors text-sm font-medium"
+                    >
+                      Pause
+                    </button>
+                  )}
+                  {canResume(selectedJob.status) && (
+                    <button
+                      onClick={() => {
+                        setShowDetailModal(false);
+                        handleAction(selectedJob, 'resume');
+                      }}
+                      className="px-3 py-1.5 text-emerald-600 hover:bg-emerald-100 rounded-md transition-colors text-sm font-medium"
+                    >
+                      Resume
+                    </button>
+                  )}
+                  {canClose(selectedJob.status) && (
+                    <button
+                      onClick={() => {
+                        setShowDetailModal(false);
+                        handleAction(selectedJob, 'close');
+                      }}
+                      className="px-3 py-1.5 text-blue-600 hover:bg-blue-100 rounded-md transition-colors text-sm font-medium"
+                    >
+                      Close
+                    </button>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {selectedJob.status === "ACTIVE" && (
+                    <>
+                      <button
+                        onClick={() => {
+                          setShowDetailModal(false);
+                          setNewExpirationDate(selectedJob.expirationDate);
+                          setShowEditDateModal(true);
+                        }}
+                        className="px-3 py-1.5 border border-gray-200 text-gray-600 hover:bg-gray-100 rounded-md transition-colors text-sm font-medium"
+                      >
+                        Extend
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowDetailModal(false);
+                          handleViewRecommendations(selectedJob);
+                        }}
+                        className="px-3 py-1.5 bg-violet-600 text-white hover:bg-violet-700 rounded-md transition-colors text-sm font-medium flex items-center gap-1.5"
+                      >
+                        <Sparkles className="h-3.5 w-3.5" />
+                        AI Match
+                      </button>
+                    </>
+                  )}
+                  {canEdit(selectedJob.status) && (
+                    <button
+                      onClick={() => {
+                        setShowDetailModal(false);
+                        router.push(`/recruiter/recruiter-feature/jobs/edit/${selectedJob.id}`);
+                      }}
+                      className="px-3 py-1.5 bg-slate-700 text-white hover:bg-slate-800 rounded-md transition-colors text-sm font-medium"
+                    >
+                      Edit
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           </div>
@@ -1008,6 +1174,278 @@ export default function ManageJobsPage() {
                 </div>
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Create Job Modal */}
+      {showCreateModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto my-4">
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+              <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                <PlusCircle className="h-5 w-5 text-sky-600" />
+                Create Job Post
+              </h2>
+              <button
+                onClick={() => setShowCreateModal(false)}
+                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleCreateJobSubmit} className="px-6 py-5 space-y-4">
+              {/* Job Title */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Job Title <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="title"
+                  value={formData.title}
+                  onChange={handleFormChange}
+                  className={`w-full p-2.5 border rounded-lg ${formErrors.title ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-sky-500 focus:border-transparent`}
+                  placeholder="e.g. Frontend Developer"
+                />
+                {formErrors.title && <p className="text-sm text-red-600 mt-1">{formErrors.title}</p>}
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Description <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  name="description"
+                  value={formData.description}
+                  onChange={handleFormChange}
+                  rows={3}
+                  className={`w-full p-2.5 border rounded-lg ${formErrors.description ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-sky-500 focus:border-transparent`}
+                  placeholder="Describe the job responsibilities and requirements..."
+                />
+                {formErrors.description && <p className="text-sm text-red-600 mt-1">{formErrors.description}</p>}
+              </div>
+
+              {/* Address */}
+              <div>
+                <label className="flex items-center text-sm font-medium text-gray-700 mb-1">
+                  <MapPin className="w-4 h-4 mr-1 text-gray-400" /> Address <span className="text-red-500 ml-1">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="address"
+                  value={formData.address}
+                  onChange={handleFormChange}
+                  className={`w-full p-2.5 border rounded-lg ${formErrors.address ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-sky-500 focus:border-transparent`}
+                  placeholder="e.g. Ho Chi Minh City, Vietnam"
+                />
+                {formErrors.address && <p className="text-sm text-red-600 mt-1">{formErrors.address}</p>}
+              </div>
+
+              {/* Grid: Experience & Work Model */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="flex items-center text-sm font-medium text-gray-700 mb-1">
+                    <Clock className="w-4 h-4 mr-1 text-gray-400" /> Experience <span className="text-red-500 ml-1">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    name="yearsOfExperience"
+                    value={formData.yearsOfExperience}
+                    onChange={handleFormChange}
+                    min="0"
+                    className={`w-full p-2.5 border rounded-lg ${formErrors.yearsOfExperience ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-sky-500 focus:border-transparent`}
+                    placeholder="Years"
+                  />
+                  {formErrors.yearsOfExperience && <p className="text-sm text-red-600 mt-1">{formErrors.yearsOfExperience}</p>}
+                </div>
+                <div>
+                  <label className="flex items-center text-sm font-medium text-gray-700 mb-1">
+                    <Briefcase className="w-4 h-4 mr-1 text-gray-400" /> Work Model <span className="text-red-500 ml-1">*</span>
+                  </label>
+                  <select
+                    name="workModel"
+                    value={formData.workModel}
+                    onChange={handleFormChange}
+                    className={`w-full p-2.5 border rounded-lg ${formErrors.workModel ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-sky-500 focus:border-transparent`}
+                  >
+                    <option value="">Select...</option>
+                    <option value="Remote">Remote</option>
+                    <option value="Hybrid">Hybrid</option>
+                    <option value="Onsite">Onsite</option>
+                  </select>
+                  {formErrors.workModel && <p className="text-sm text-red-600 mt-1">{formErrors.workModel}</p>}
+                </div>
+              </div>
+
+              {/* Salary Range */}
+              <div>
+                <label className="flex items-center text-sm font-medium text-gray-700 mb-1">
+                  <DollarSign className="w-4 h-4 mr-1 text-gray-400" /> Salary Range <span className="text-red-500 ml-1">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="salaryRange"
+                  value={formData.salaryRange}
+                  onChange={handleFormChange}
+                  className={`w-full p-2.5 border rounded-lg ${formErrors.salaryRange ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-sky-500 focus:border-transparent`}
+                  placeholder="e.g. $1000 - $2000 USD"
+                />
+                {formErrors.salaryRange && <p className="text-sm text-red-600 mt-1">{formErrors.salaryRange}</p>}
+              </div>
+
+              {/* Grid: Expiration Date & Privilege */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="flex items-center text-sm font-medium text-gray-700 mb-1">
+                    <Calendar className="w-4 h-4 mr-1 text-gray-400" /> Expiration <span className="text-red-500 ml-1">*</span>
+                  </label>
+                  <input
+                    type="date"
+                    name="expirationDate"
+                    value={formData.expirationDate}
+                    onChange={handleFormChange}
+                    className={`w-full p-2.5 border rounded-lg ${formErrors.expirationDate ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-sky-500 focus:border-transparent`}
+                  />
+                  {formErrors.expirationDate && <p className="text-sm text-red-600 mt-1">{formErrors.expirationDate}</p>}
+                </div>
+                <div>
+                  <label className="flex items-center text-sm font-medium text-gray-700 mb-1">
+                    <Package className="w-4 h-4 mr-1 text-gray-400" /> Privilege <span className="text-red-500 ml-1">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="jobPackage"
+                    value={formData.jobPackage}
+                    onChange={handleFormChange}
+                    className={`w-full p-2.5 border rounded-lg ${formErrors.jobPackage ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-sky-500 focus:border-transparent`}
+                    placeholder="e.g. Health insurance, Gym"
+                  />
+                  {formErrors.jobPackage && <p className="text-sm text-red-600 mt-1">{formErrors.jobPackage}</p>}
+                </div>
+              </div>
+
+              {/* Skills */}
+              <div>
+                <label className="flex items-center text-sm font-medium text-gray-700 mb-1">
+                  <Tag className="w-4 h-4 mr-1 text-gray-400" /> Skills <span className="text-red-500 ml-1">*</span>
+                </label>
+                
+                {skillsError && (
+                  <div className="mb-2 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center justify-between">
+                    <p className="text-sm text-red-700">{skillsError}</p>
+                    <button
+                      type="button"
+                      onClick={fetchSkillsData}
+                      className="px-3 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700"
+                    >
+                      Retry
+                    </button>
+                  </div>
+                )}
+
+                <div className="flex gap-2 mb-2">
+                  <select
+                    value={selectedSkillId}
+                    onChange={(e) => setSelectedSkillId(e.target.value)}
+                    className="flex-1 p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500"
+                    disabled={isLoadingSkills || !!skillsError}
+                  >
+                    <option value="">
+                      {isLoadingSkills ? "Loading..." : availableSkills.length === 0 ? "No skills" : "Select a skill"}
+                    </option>
+                    {availableSkills.map((skill) => (
+                      <option key={skill.id} value={skill.id}>{skill.name}</option>
+                    ))}
+                  </select>
+                  <label className="flex items-center gap-2 px-3 border border-gray-300 rounded-lg bg-white">
+                    <input
+                      type="checkbox"
+                      checked={newSkillMustHave}
+                      onChange={(e) => setNewSkillMustHave(e.target.checked)}
+                      className="h-4 w-4 text-sky-600 rounded"
+                    />
+                    <span className="text-sm text-gray-700 whitespace-nowrap">Must Have</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleAddSkill}
+                    disabled={isLoadingSkills}
+                    className="px-3 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
+                </div>
+                {formErrors.skills && <p className="text-sm text-red-600 mb-2">{formErrors.skills}</p>}
+
+                {formData.skills.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {formData.skills.map((skill) => (
+                      <span
+                        key={skill.id}
+                        className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm ${
+                          skill.mustToHave ? "bg-rose-100 text-rose-700" : "bg-gray-100 text-gray-700"
+                        }`}
+                      >
+                        {skill.name}{skill.mustToHave && " *"}
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveSkill(skill.id)}
+                          className="ml-1 hover:text-red-600"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Reason (optional) */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Benefits & Additional Info (Optional)</label>
+                <textarea
+                  name="reason"
+                  value={formData.reason}
+                  onChange={handleFormChange}
+                  rows={2}
+                  className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-sky-500 focus:border-transparent"
+                  placeholder="Additional benefits or information about the job..."
+                />
+              </div>
+
+              {/* Actions */}
+              <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
+                <button
+                  type="button"
+                  onClick={() => setShowCreateModal(false)}
+                  className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="px-4 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 disabled:opacity-50 transition-colors flex items-center gap-2"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      Creating...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4" />
+                      Create Job Post
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

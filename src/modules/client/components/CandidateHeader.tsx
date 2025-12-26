@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { useAuthStore } from "@/store/use-auth-store";
 import { useClientAuth } from "@/hooks/useClientAuth";
@@ -122,9 +123,11 @@ export default function CandidateHeader() {
       >
         <div className="max-w-7xl mx-auto flex items-center justify-between h-16 px-4 sm:px-6 lg:px-8">
           <Link href="/" className="flex items-center space-x-2">
-            <img
+            <Image
               src="/images/general/newlogo.png"
               alt="Logo"
+              width={56}
+              height={56}
               className="h-14 w-auto"
             />
             <span className="text-xl font-bold">CareerMate</span>
@@ -151,9 +154,11 @@ export default function CandidateHeader() {
           {/* Logo */}
           <div className="flex items-center flex-shrink-0">
             <Link href="/" className="flex items-center gap-1.5 sm:gap-2">
-              <img
+              <Image
                 src="/images/general/newlogo.png"
                 alt="Logo"
+                width={40}
+                height={40}
                 className="h-8 sm:h-9 md:h-10 w-auto"
               />
               <span className="text-sm sm:text-base md:text-lg font-bold text-[#ffffff] whitespace-nowrap">

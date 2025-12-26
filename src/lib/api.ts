@@ -508,4 +508,23 @@ api.interceptors.response.use(
   }
 );
 
+// ========================================
+// ✅ PUBLIC API: For endpoints that don't require authentication
+// Used for: company statistics, ratings, public job listings
+// ========================================
+export const publicApi = axios.create({
+  baseURL,
+  timeout: 30000,
+  headers: { "Content-Type": "application/json" },
+});
+
+// Simple error logging for public API (no auth handling needed)
+publicApi.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    console.debug(`[Public API] Error: ${error.config?.url} - ${error.response?.status || 'Network Error'}`);
+    return Promise.reject(error);
+  }
+);
+
 export default api;

@@ -3,6 +3,7 @@
 import { TopEmployers } from "./TopEmployers";
 import { FeedbackButton } from "./FeedbackButton";
 import { useState, useEffect, useRef } from "react";
+import Image from "next/image";
 
 // Animated Counter Component
 function AnimatedCounter({ end, duration = 2000, suffix = "" }) {
@@ -77,9 +78,18 @@ export function CandidateHomePage() {
         {/* Added margin-top equal to header height */}
         {/* Hero Section */}
         <section 
-          className="relative text-white py-20 pb-32 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: "url('/images/general/job-search-bg.png')" }}
+          className="relative text-white py-20 pb-32 overflow-hidden"
         >
+          {/* Background Image with Next.js Image for optimization */}
+          <Image
+            src="/images/general/job-search-bg.png"
+            alt="Job search background"
+            fill
+            priority
+            quality={75}
+            className="object-cover object-center"
+            sizes="100vw"
+          />
           {/* Dark overlay for better text readability */}
           <div className="absolute inset-0 bg-black/60"></div>
           

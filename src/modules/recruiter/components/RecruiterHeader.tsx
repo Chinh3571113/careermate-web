@@ -1,22 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Link, Menu } from "lucide-react";
 import { ProfileDropdown } from "@/components/profile/ProfileDropdown";
 import { useAuthStore } from "@/store/use-auth-store";
 import { decodeJWT } from "@/lib/auth-admin";
 import { getCurrentUser } from "@/lib/user-api";
-import { NotificationBell } from "@/components/notifications";
-import { useUserProfile } from "@/hooks/useUserProfile";
+import api from "@/lib/api";
 
 interface RecruiterHeaderProps {
   sidebarOpen?: boolean;
 }
 
 export function RecruiterHeader({ sidebarOpen = false }: RecruiterHeaderProps) {
-  const { user } = useAuthStore();
-  const { isAuthenticated, accessToken, logout, role } = useAuthStore();
-  const { avatarUrl } = useUserProfile();
+  const { user, isAuthenticated, accessToken, role, recruiterAvatarUrl, setRecruiterAvatarUrl } = useAuthStore();
   const [isOpen, setIsOpen] = useState(() => {
     if (typeof window !== "undefined") {
       return localStorage.getItem("sidebar-open") === "true";
@@ -28,6 +25,28 @@ export function RecruiterHeader({ sidebarOpen = false }: RecruiterHeaderProps) {
     email: string;
     username?: string;
   } | null>(null);
+  const [localAvatarUrl, setLocalAvatarUrl] = useState<string | null>(null);
+
+  // Fetch recruiter avatar directly - more reliable than depending on auth store timing
+  const fetchRecruiterAvatar = useCallback(async () => {
+    if (!accessToken || !isAuthenticated) return;
+    
+    const isRecruiter = role?.toUpperCase().includes("RECRUITER");
+    if (!isRecruiter) return;
+
+    try {
+      console.log('🔄 [RecruiterHeader] Fetching recruiter profile for avatar...');
+      const response = await api.get<{ code: number; result: { avatarUrl?: string } }>('/api/recruiter/profile');
+      
+      if (response.data?.result?.avatarUrl) {
+        console.log('✅ [RecruiterHeader] Avatar URL:', response.data.result.avatarUrl);
+        setLocalAvatarUrl(response.data.result.avatarUrl);
+        setRecruiterAvatarUrl(response.data.result.avatarUrl);
+      }
+    } catch (error) {
+      console.error('❌ [RecruiterHeader] Error fetching avatar:', error);
+    }
+  }, [accessToken, isAuthenticated, role, setRecruiterAvatarUrl]);
 
   // Fetch current user info from API
   useEffect(() => {
@@ -63,6 +82,14 @@ export function RecruiterHeader({ sidebarOpen = false }: RecruiterHeaderProps) {
 
     fetchCurrentUser();
   }, [accessToken, isAuthenticated]);
+
+  // Fetch recruiter avatar on mount and when auth changes
+  useEffect(() => {
+    // Use local state first, then try to fetch
+    if (!localAvatarUrl && !recruiterAvatarUrl) {
+      fetchRecruiterAvatar();
+    }
+  }, [localAvatarUrl, recruiterAvatarUrl, fetchRecruiterAvatar]);
 
   useEffect(() => {
     const checkSidebarState = () => {
@@ -143,7 +170,7 @@ export function RecruiterHeader({ sidebarOpen = false }: RecruiterHeaderProps) {
                     userName={userInfo?.username || userInfo?.name || user?.email || "User"}
                     userEmail={userInfo?.email || user?.email}
                     role={role || undefined}
-                    userAvatar={avatarUrl || undefined}
+                    userAvatar={localAvatarUrl || recruiterAvatarUrl || undefined}
                   />
                 </>
               ) : (

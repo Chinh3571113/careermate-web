@@ -4,6 +4,7 @@ import { TopEmployers } from "./TopEmployers";
 import { FeedbackButton } from "./FeedbackButton";
 import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { 
   Star, 
   ChevronRight, 
@@ -180,9 +181,18 @@ export function ClientHomePage() {
         {/* Added margin-top equal to header height */}
         {/* Hero Section */}
         <section 
-          className="relative text-white py-12 sm:py-16 md:py-20 pb-20 sm:pb-28 md:pb-32 bg-cover bg-center bg-no-repeat"
-          style={{ backgroundImage: "url('/images/general/job-search-bg.png')" }}
+          className="relative text-white py-12 sm:py-16 md:py-20 pb-20 sm:pb-28 md:pb-32 overflow-hidden"
         >
+          {/* Background Image with Next.js Image for optimization */}
+          <Image
+            src="/images/general/job-search-bg.png"
+            alt="Job search background"
+            fill
+            priority
+            quality={75}
+            className="object-cover object-center"
+            sizes="100vw"
+          />
           {/* Dark overlay for better text readability */}
           <div className="absolute inset-0 bg-black/60"></div>
           

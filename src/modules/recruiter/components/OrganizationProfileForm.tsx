@@ -3,14 +3,17 @@
 import { useRef, useState, useEffect } from "react";
 import { useRecruiterProfile } from "../hooks/useRecruiterProfile";
 import { updateOrganization } from "@/lib/recruiter-api";
+import api from "@/lib/api";
 import toast from "react-hot-toast";
 import Image from "next/image";
-import { Building2, Loader2, ChevronDown, ChevronUp } from "lucide-react";
+import { Building2, Loader2, ChevronDown, ChevronUp, Upload } from "lucide-react";
 
 export function OrganizationProfileForm() {
   const { profile, loading: profileLoading, refetch } = useRecruiterProfile();
   const [saving, setSaving] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
   const [expandedFields, setExpandedFields] = useState<Record<string, boolean>>({});
+  const logoInputRef = useRef<HTMLInputElement>(null);
 
   const [formData, setFormData] = useState({
     companyName: "",
@@ -61,6 +64,60 @@ export function OrganizationProfileForm() {
       ...prev,
       [name]: value,
     }));
+  };
+
+  const handleLogoClick = () => {
+    logoInputRef.current?.click();
+  };
+
+  const handleLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file');
+      return;
+    }
+
+    // Validate file size (5MB limit for logos)
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('Logo must be less than 5MB');
+      return;
+    }
+
+    try {
+      setUploadingLogo(true);
+      const formDataUpload = new FormData();
+      formDataUpload.append('image', file);
+
+      const response = await api.post<{ code: number; result: { imageUrl: string } }>('/api/upload/logo', formDataUpload, {
+        headers: {
+          'Content-Type': 'multipart/form-data',
+        },
+      });
+
+      if (response.data.code === 1000 && response.data.result.imageUrl) {
+        // Update form data with new logo URL
+        setFormData(prev => ({
+          ...prev,
+          logoUrl: response.data.result.imageUrl,
+        }));
+        
+        toast.success('Logo uploaded! Remember to save changes.');
+      } else {
+        toast.error('Failed to upload logo');
+      }
+    } catch (error: any) {
+      console.error('Logo upload error:', error);
+      toast.error(error.response?.data?.message || 'Failed to upload logo');
+    } finally {
+      setUploadingLogo(false);
+      // Reset file input
+      if (logoInputRef.current) {
+        logoInputRef.current.value = '';
+      }
+    }
   };
 
   const handleSave = async () => {
@@ -304,42 +361,72 @@ export function OrganizationProfileForm() {
             />
           </fieldset>
 
-          {/* Company Logo URL - ĐÃ SỬA ĐỔI */}
+          {/* Company Logo - With Upload */}
           <fieldset className="space-y-2 md:col-span-2">
             <label className="block text-sm font-medium text-sky-900">
-              Company Logo URL
+              Company Logo
             </label>
             <div className="flex items-start gap-4">
-              {/* Logo Preview - Smaller and inline */}
+              {/* Hidden file input */}
+              <input
+                ref={logoInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleLogoChange}
+                className="hidden"
+              />
+              
+              {/* Logo Preview - Clickable for upload */}
               <div className="flex-shrink-0">
-                <div className="relative h-20 w-20 overflow-hidden rounded-lg border-2 border-gray-200 bg-gray-50">
+                <button
+                  type="button"
+                  onClick={handleLogoClick}
+                  disabled={uploadingLogo}
+                  className="relative h-24 w-24 overflow-hidden rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 hover:border-sky-400 hover:bg-sky-50 transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-sky-500 group"
+                >
                   {formData.logoUrl ? (
-                    <Image
-                      src={formData.logoUrl}
-                      alt={formData.companyName || "Company Logo"}
-                      fill
-                      className="object-cover"
-                    />
+                    <>
+                      <Image
+                        src={formData.logoUrl}
+                        alt={formData.companyName || "Company Logo"}
+                        fill
+                        className="object-cover"
+                      />
+                      {/* Hover overlay */}
+                      <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity">
+                        {uploadingLogo ? (
+                          <Loader2 className="h-6 w-6 text-white animate-spin" />
+                        ) : (
+                          <Upload className="h-6 w-6 text-white" />
+                        )}
+                      </div>
+                    </>
                   ) : (
-                    <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-sky-100 to-blue-100">
-                      <Building2 className="h-8 w-8 text-sky-600" />
+                    <div className="flex h-full w-full flex-col items-center justify-center gap-1">
+                      {uploadingLogo ? (
+                        <Loader2 className="h-6 w-6 text-sky-600 animate-spin" />
+                      ) : (
+                        <>
+                          <Building2 className="h-8 w-8 text-sky-400 group-hover:text-sky-600" />
+                          <span className="text-xs text-gray-500 group-hover:text-sky-600">Upload</span>
+                        </>
+                      )}
                     </div>
                   )}
-                </div>
+                </button>
               </div>
               
-              {/* Input field - LUÔN HIỂN THỊ */}
-              <div className="flex-1 space-y-1">
+              {/* URL input field and info */}
+              <div className="flex-1 space-y-2">
                 <input
                   type="url"
                   name="logoUrl"
                   value={formData.logoUrl}
                   onChange={handleInputChange}
                   className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
-                  placeholder="https://example.com/logo.png"
+                  placeholder="https://example.com/logo.png or upload an image"
                 />
                 
-                {/* Hiển thị URL đã được cắt ngắn nếu nó quá dài (không bắt buộc nhưng giúp hiển thị tốt hơn) */}
                 {formData.logoUrl && formData.logoUrl.length > 60 && (
                   <p className="text-xs text-gray-500 break-all">
                     URL: {truncateText(formData.logoUrl, 80)}
@@ -347,7 +434,7 @@ export function OrganizationProfileForm() {
                 )}
                 
                 <p className="text-xs text-gray-500">
-                  Recommended: Square image, minimum 200x200px
+                  Click logo to upload (max 5MB) or enter URL. Square image recommended.
                 </p>
               </div>
             </div>
@@ -571,8 +658,8 @@ export function OrganizationProfileForm() {
             </fieldset>
           )}
 
-          {/* Rating - Only show if has value and > 0 */}
-          {profile?.rating && profile.rating > 0 && (
+          {/* Rating - Only show if has valid rating > 0 */}
+          {profile?.rating != null && profile.rating > 0 && (
             <fieldset className="space-y-2 md:col-span-2">
               <label className="block text-sm font-medium text-sky-900">
                 Company Rating
