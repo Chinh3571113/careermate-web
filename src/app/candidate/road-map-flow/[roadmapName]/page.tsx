@@ -858,7 +858,7 @@ export default function RoadmapFlowPage() {
                                   <span className="font-medium text-gray-800 text-left">{subtopic.name}</span>
                                 </div>
                                 <span className="text-xs text-gray-500">
-                                  {subtopic.courses?.length || 0} courses
+                                  {/* {subtopic.courses?.length || 0} courses */}
                                 </span>
                               </button>
 
