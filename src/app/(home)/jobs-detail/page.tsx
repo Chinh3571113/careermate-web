@@ -1171,10 +1171,16 @@ ${jobData.recruiterInfo?.about || 'N/A'}
 
                     {/* Scrollable Content Area - scroll riêng trong card */}
                     <div
-                      className="overflow-y-auto flex-1"
+                      className="
+                                overflow-y-auto flex-1
+                                scrollbar-thin
+                                scrollbar-thumb-gray-300
+                                scrollbar-track-gray-100
+                                hover:scrollbar-thumb-gray-400
+                              "
                       style={{ maxHeight: "calc(100vh - 22rem)" }}
                     >
-                      <div className="p-6" style={{ paddingBottom: "6rem" }}>
+                      <div className="p-6 pb-24">
                         {/* NEW: meta bar tóm tắt compensation */}
                         {/* {(selectedJob.salaryRange ||
                           selectedJob.benefitSummary?.length) && (

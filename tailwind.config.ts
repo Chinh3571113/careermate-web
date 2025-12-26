@@ -19,6 +19,30 @@ const config: Config = {
           '&::-webkit-scrollbar': {
             display: 'none'
           }
+        },
+        '.scrollbar-thin': {
+          'scrollbar-width': 'thin',
+          '&::-webkit-scrollbar': {
+            width: '8px',
+            height: '8px'
+          }
+        },
+        '.scrollbar-thumb-gray-300': {
+          '&::-webkit-scrollbar-thumb': {
+            backgroundColor: '#d1d5db',
+            borderRadius: '4px'
+          }
+        },
+        '.scrollbar-track-gray-100': {
+          '&::-webkit-scrollbar-track': {
+            backgroundColor: '#f3f4f6',
+            borderRadius: '4px'
+          }
+        },
+        '.hover\\:scrollbar-thumb-gray-400:hover': {
+          '&::-webkit-scrollbar-thumb': {
+            backgroundColor: '#9ca3af'
+          }
         }
       })
     }

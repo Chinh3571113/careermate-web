@@ -29,8 +29,8 @@ const NAV_ITEMS: NavItem[] = [
         href: "/recruiter/jobs",
         icon: BriefcaseBusiness,
         subItems: [
-            { label: "Create job post", href: "/recruiter/recruiter-feature/jobs/create" },
-            { label: "Active jobs", href: "/recruiter/recruiter-feature/jobs/active" },
+            // { label: "Create job post", href: "/recruiter/recruiter-feature/jobs/create" },
+            { label: "Manage jobs", href: "/recruiter/recruiter-feature/jobs/active" },
             { label: "Job application", href: "/recruiter/recruiter-feature/jobs/applications" },
             // { label: "Draft jobs", href: "/recruiter/recruiter-feature/jobs/drafts" },
             { label: "Job templates", href: "/recruiter/recruiter-feature/jobs/templates" },
