@@ -30,7 +30,9 @@ import {
 import { toast } from "sonner";
 import {
   getDailyCalendar,
+  getWorkingHours,
   type DailyCalendarResponse,
+  type RecruiterWorkingHoursResponse,
 } from "@/lib/calendar-api";
 import { 
   scheduleInterview, 
@@ -127,6 +129,7 @@ function ScheduleInterviewContent() {
   const [timeSlots, setTimeSlots] = useState<TimeSlotInfo[]>([]);
   const [dailyCalendar, setDailyCalendar] = useState<DailyCalendarResponse | null>(null);
   const [currentWeekStart, setCurrentWeekStart] = useState<Date>(getWeekStart(new Date()));
+  const [workingHoursConfig, setWorkingHoursConfig] = useState<RecruiterWorkingHoursResponse[]>([]);
 
   const [form, setForm] = useState<InterviewForm>({
     jobApplyId: parseInt(applicationId || "0"),
@@ -197,6 +200,16 @@ function ScheduleInterviewContent() {
   const initializePage = async () => {
     try {
       setLoading(true);
+      
+      // Fetch working hours configuration for the recruiter
+      try {
+        const workingHours = await getWorkingHours();
+        setWorkingHoursConfig(workingHours);
+        console.log('📅 Working hours config:', workingHours);
+      } catch (e) {
+        console.error('Failed to fetch working hours:', e);
+        // Continue without working hours - all days will be shown as available
+      }
       
       let existingInterview: InterviewScheduleResponse | null = null;
       
@@ -293,14 +306,21 @@ function ScheduleInterviewContent() {
         } catch (e) {
           toast.error("Failed to load application details");
         }
-      }
-
-      if (!selectedDate) {
+        
+        // For new scheduling (not reschedule), default to today
+        const today = new Date();
+        const todayStr = formatDateForAPI(today);
+        setSelectedDate(todayStr);
+        setForm(prev => ({ ...prev, scheduledDate: todayStr }));
+      } else {
+        // No existing interview and no applicationId - just default to today
         const today = new Date();
         const todayStr = formatDateForAPI(today);
         setSelectedDate(todayStr);
         setForm(prev => ({ ...prev, scheduledDate: todayStr }));
       }
+      // Note: For reschedule mode (existingInterview found), selectedDate is already set above
+      // Do NOT override it with today's date here
     } catch (error) {
       console.error("Failed to initialize page:", error);
       toast.error("Failed to load page data");
@@ -600,6 +620,36 @@ function ScheduleInterviewContent() {
   }
 
   /**
+   * Get the day of week string from a Date object
+   * Returns: SUNDAY, MONDAY, TUESDAY, etc.
+   */
+  function getDayOfWeekString(date: Date): string {
+    const days = ['SUNDAY', 'MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY'];
+    return days[date.getDay()];
+  }
+
+  /**
+   * Check if a date is a configured working day
+   * Based on recruiter's working hours settings
+   */
+  function isWorkingDay(date: Date): boolean {
+    if (workingHoursConfig.length === 0) {
+      // No config - default to all days available (backwards compatibility)
+      return true;
+    }
+    
+    const dayOfWeek = getDayOfWeekString(date);
+    const dayConfig = workingHoursConfig.find(wh => wh.dayOfWeek === dayOfWeek);
+    
+    // If no config for this day, treat as non-working
+    if (!dayConfig) {
+      return false;
+    }
+    
+    return dayConfig.isWorkingDay === true;
+  }
+
+  /**
    * Check if a specific time slot is in the past
    * For today's date, compare with current time
    */
@@ -782,17 +832,22 @@ function ScheduleInterviewContent() {
                 {weekDates.map((date, index) => {
                   const dateStr = formatDateForAPI(date);
                   const isSelected = selectedDate === dateStr;
-                  const disabled = isDayFullyPassed(date);
+                  const isPastDay = isDayFullyPassed(date);
+                  const isNonWorkingDay = !isWorkingDay(date);
+                  const disabled = isPastDay || isNonWorkingDay;
 
                   return (
                     <button
                       key={index}
                       onClick={() => !disabled && handleDateSelect(date)}
                       disabled={disabled}
+                      title={isNonWorkingDay ? "Non-working day (not configured in calendar settings)" : undefined}
                       className={`
                         p-3 rounded-lg border text-center transition-colors
                         ${disabled 
-                          ? "bg-gray-200 border-gray-300 text-gray-400 cursor-not-allowed" 
+                          ? isNonWorkingDay 
+                            ? "bg-gray-100 border-gray-200 text-gray-400 cursor-not-allowed opacity-60" 
+                            : "bg-gray-200 border-gray-300 text-gray-400 cursor-not-allowed"
                           : isSelected 
                             ? "bg-primary text-primary-foreground border-primary" 
                             : "border-border hover:bg-accent"
@@ -802,6 +857,9 @@ function ScheduleInterviewContent() {
                     >
                       <div className="text-xs font-medium">{getDayName(date)}</div>
                       <div className="text-lg font-bold">{date.getDate()}</div>
+                      {isNonWorkingDay && !isPastDay && (
+                        <div className="text-[10px] text-gray-400 mt-0.5">Off</div>
+                      )}
                     </button>
                   );
                 })}
@@ -843,12 +901,39 @@ function ScheduleInterviewContent() {
                     </div>
                   </div>
                   
-                  {timeSlots.length === 0 ? (
-                    <div className="text-center py-8 text-muted-foreground border rounded-lg bg-muted/30">
-                      <Clock className="h-12 w-12 mx-auto mb-2 opacity-50" />
-                      <p className="font-medium">No time slots for this date</p>
-                    </div>
-                  ) : (
+                  {/* Check if selected date is a non-working day */}
+                  {(() => {
+                    const selectedDateObj = selectedDate ? new Date(selectedDate + 'T00:00:00') : null;
+                    const isNonWorkingDay = selectedDateObj && !isWorkingDay(selectedDateObj);
+                    
+                    if (isNonWorkingDay) {
+                      return (
+                        <div className="text-center py-8 text-muted-foreground border rounded-lg bg-gray-50">
+                          <AlertCircle className="h-12 w-12 mx-auto mb-2 text-gray-400" />
+                          <p className="font-medium">Non-Working Day</p>
+                          <p className="text-sm mt-1">This day is not configured as a working day in your calendar settings.</p>
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="mt-3"
+                            onClick={() => window.open('/recruiter/calendar/settings', '_blank')}
+                          >
+                            Configure Working Hours
+                          </Button>
+                        </div>
+                      );
+                    }
+                    
+                    if (timeSlots.length === 0) {
+                      return (
+                        <div className="text-center py-8 text-muted-foreground border rounded-lg bg-muted/30">
+                          <Clock className="h-12 w-12 mx-auto mb-2 opacity-50" />
+                          <p className="font-medium">No time slots for this date</p>
+                        </div>
+                      );
+                    }
+                    
+                    return (
                     <div className="grid grid-cols-4 gap-2">
                       {timeSlots.map((slot) => {
                         const isSelected = form.scheduledTime === slot.time;
@@ -930,7 +1015,8 @@ function ScheduleInterviewContent() {
                         );
                       })}
                     </div>
-                  )}
+                    );
+                  })()}
                   
                   {/* Summary */}
                   {timeSlots.length > 0 && (
