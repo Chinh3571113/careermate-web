@@ -151,15 +151,12 @@ export const transformJobPosting = (job: JobPosting) => {
     skills: job.skills.map(s => s.name),
     mustHaveSkills: mustHaveSkills, // ✅ Skills required
     niceToHaveSkills: niceToHaveSkills, // ✅ Skills nice to have
-    highlights: [
-      ...(mustHaveSkills.length > 0 ? [`Must have: ${mustHaveSkills.join(', ')}`] : []),
-      ...(job.reason ? [job.reason] : []) // ✅ Why you should join
-    ],
+    highlights: job.reason ? job.reason.split('\n').filter(line => line.trim() !== '') : [], // ✅ Chỉ lấy reason, không duplicate skills
     description: job.description ? job.description.split('\n').filter(line => line.trim() !== '') : [], // ✅ Full job description
     whyYouShouldJoin: job.reason || '', // ✅ Reason to join
     salaryRange: job.salaryRange,
     benefitSummary: job.jobPackage ? [job.jobPackage] : [],
-    benefits: job.jobPackage ? [job.jobPackage] : [],
+    benefits: job.jobPackage ? job.jobPackage.split('\n').filter(line => line.trim() !== '') : [], // ✅ Split benefits thành nhiều dòng
     isHot: job.jobPackage === 'Premium', // Mark premium jobs as hot
     isNegotiable: job.salaryRange.toLowerCase().includes('negotiable') || job.salaryRange.toLowerCase().includes('thỏa thuận'),
     companyType: job.recruiterInfo.about || '',

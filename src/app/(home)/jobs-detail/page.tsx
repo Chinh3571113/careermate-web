@@ -41,8 +41,11 @@ interface JobListing {
   experience: string;
   expertise: string;
   skills: string[];
+  mustHaveSkills?: string[]; // Skills bắt buộc
+  niceToHaveSkills?: string[]; // Skills tốt nếu có
   highlights: string[];
   description: string[];
+  whyYouShouldJoin?: string; // Lý do nên join (từ reason trong API)
   // NEW
   salaryRange?: string; // dải lương hiển thị chip + meta bar
   benefitSummary?: string[]; // tóm tắt 3–4 quyền lợi cho meta bar
@@ -1179,25 +1182,67 @@ ${jobData.recruiterInfo?.about || 'N/A'}
                             <h3 className="font-semibold text-gray-900 mb-3">
                               Skills:
                             </h3>
-                            <div className="flex flex-wrap gap-2 mb-4">
-                              {selectedJob.skills &&
-                                selectedJob.skills.length > 0 ? (
-                                selectedJob.skills.map((skill, index) => (
+                            
+                            {/* Must Have Skills */}
+                            {selectedJob.mustHaveSkills && selectedJob.mustHaveSkills.length > 0 && (
+                              <div className="mb-4">
+                                <p className="text-xs font-medium text-red-600 mb-2">Must have:</p>
+                                <div className="flex flex-wrap gap-2">
+                                  {selectedJob.mustHaveSkills.map((skill, index) => (
+                                    <span
+                                      key={index}
+                                      className="px-4 py-1 bg-red-50 border border-red-300 text-red-700 text-sm rounded-full shadow-sm font-medium"
+                                    >
+                                      {skill}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            
+                            {/* Nice to Have Skills */}
+                            {selectedJob.niceToHaveSkills && selectedJob.niceToHaveSkills.length > 0 && (
+                              <div className="mb-4">
+                                <p className="text-xs font-medium text-blue-600 mb-2">Nice to have:</p>
+                                <div className="flex flex-wrap gap-2">
+                                  {selectedJob.niceToHaveSkills.map((skill, index) => (
+                                    <span
+                                      key={index}
+                                      className="px-4 py-1 bg-blue-50 border border-blue-300 text-blue-700 text-sm rounded-full shadow-sm"
+                                    >
+                                      {skill}
+                                    </span>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                            
+                            {/* Fallback nếu không có phân loại */}
+                            {(!selectedJob.mustHaveSkills || selectedJob.mustHaveSkills.length === 0) &&
+                             (!selectedJob.niceToHaveSkills || selectedJob.niceToHaveSkills.length === 0) &&
+                             selectedJob.skills && selectedJob.skills.length > 0 && (
+                              <div className="flex flex-wrap gap-2 mb-4">
+                                {selectedJob.skills.map((skill, index) => (
                                   <span
                                     key={index}
                                     className="px-4 py-1 bg-white border border-gray-300 text-gray-700 text-sm rounded-full shadow-sm"
                                   >
                                     {skill}
                                   </span>
-                                ))
-                              ) : (
-                                <span className="text-sm text-gray-500">
-                                  No skills listed
-                                </span>
-                              )}
-                            </div>
+                                ))}
+                              </div>
+                            )}
+                            
+                            {/* No skills */}
+                            {(!selectedJob.mustHaveSkills || selectedJob.mustHaveSkills.length === 0) &&
+                             (!selectedJob.niceToHaveSkills || selectedJob.niceToHaveSkills.length === 0) &&
+                             (!selectedJob.skills || selectedJob.skills.length === 0) && (
+                              <span className="text-sm text-gray-500">
+                                No skills listed
+                              </span>
+                            )}
 
-                            <h3 className="font-semibold text-gray-900 mb-3">
+                            <h3 className="font-semibold text-gray-900 mb-3 mt-6">
                               Job Expertise:
                             </h3>
                             <p className="text-sm text-gray-900 mb-4 ml-2 font-medium">
@@ -1219,15 +1264,31 @@ ${jobData.recruiterInfo?.about || 'N/A'}
                               Why you'll love working here
                             </h3>
                             <ul className="space-y-3 text-sm ml-4">
-                              {selectedJob.highlights.map((item, index) => (
-                                <li
-                                  key={index}
-                                  className="flex items-start gap-2"
-                                >
-                                  <span className="w-1.5 h-1.5 bg-gray-900 rounded-full mt-2 flex-shrink-0"></span>
-                                  <span className="text-gray-900">{item}</span>
-                                </li>
-                              ))}
+                              {selectedJob.whyYouShouldJoin ? (
+                                selectedJob.whyYouShouldJoin.split('\n').filter(line => line.trim() !== '').map((item, index) => (
+                                  <li
+                                    key={index}
+                                    className="flex items-start gap-2"
+                                  >
+                                    <span className="w-1.5 h-1.5 bg-gray-700 rounded-full mt-2 flex-shrink-0"></span>
+                                    <span className="text-gray-700">{item.trim()}</span>
+                                  </li>
+                                ))
+                              ) : selectedJob.highlights && selectedJob.highlights.filter(h => !h.toLowerCase().startsWith('must have:')).length > 0 ? (
+                                selectedJob.highlights
+                                  .filter(h => !h.toLowerCase().startsWith('must have:'))
+                                  .map((item, index) => (
+                                    <li
+                                      key={index}
+                                      className="flex items-start gap-2"
+                                    >
+                                      <span className="w-1.5 h-1.5 bg-gray-700 rounded-full mt-2 flex-shrink-0"></span>
+                                      <span className="text-gray-700">{item}</span>
+                                    </li>
+                                  ))
+                              ) : (
+                                <li className="text-gray-500 text-sm">No information available</li>
+                              )}
                             </ul>
                           </div>
                         </div>
@@ -1236,19 +1297,21 @@ ${jobData.recruiterInfo?.about || 'N/A'}
                         {selectedJob.benefits &&
                           selectedJob.benefits.length > 0 && (
                             <div className="mb-6">
-                              <div className="flex items-center gap-2 mb-2">
+                              <div className="flex items-center gap-2 mb-4">
                                 <h3 className="font-semibold text-gray-900">
                                   Compensation & Benefits
                                 </h3>
                               </div>
-                              <ul className="space-y-2 text-sm text-gray-900 ml-4">
-                                {selectedJob.benefits.map((b, i) => (
+                              <ul className="space-y-3 text-sm ml-4">
+                                {selectedJob.benefits.flatMap((b) => 
+                                  b.split('\n').filter(line => line.trim() !== '')
+                                ).map((line, i) => (
                                   <li
                                     key={i}
                                     className="flex items-start gap-2"
                                   >
-                                    <span className="w-1.5 h-1.5 bg-gray-900 rounded-full mt-2 flex-shrink-0"></span>
-                                    <span>{b}</span>
+                                    <span className="w-1.5 h-1.5 bg-gray-700 rounded-full mt-2 flex-shrink-0"></span>
+                                    <span className="text-gray-700">{line.trim()}</span>
                                   </li>
                                 ))}
                               </ul>

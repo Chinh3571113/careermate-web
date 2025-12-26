@@ -25,25 +25,13 @@ const NAV_ITEMS: NavItem[] = [
         icon: LayoutGrid,
     },
     {
-        label: "Account",
-        href: "/recruiter/recruiter-feature/profile/account",
-        icon: IdCard,
-        subItems: [
-            { label: "Recruiter account", href: "/recruiter/recruiter-feature/profile/account" },
-            { label: "Organization profile", href: "/recruiter/recruiter-feature/profile/organization" },
-            { label: "Update history", href: "/recruiter/recruiter-feature/profile/update-history" },
-            { label: "Billing & plans", href: "/recruiter/recruiter-feature/profile/billing" },
-            { label: "Payment history", href: "/recruiter/transaction-history" },
-        ],
-    },
-    {
         label: "Candidates",
         href: "/recruiter/candidates/applications",
         icon: Users2,
         subItems: [
             { label: "Job applications", href: "/recruiter/recruiter-feature/candidates/applications" },
-            { label: "Saved candidates", href: "/recruiter/recruiter-feature/candidates/saved" },
-            { label: "Tag management", href: "/recruiter/recruiter-feature/candidates/tags" },
+            // { label: "Saved candidates", href: "/recruiter/recruiter-feature/candidates/saved" },
+            // { label: "Tag management", href: "/recruiter/recruiter-feature/candidates/tags" },
         ],
     },
     {
@@ -62,16 +50,16 @@ const NAV_ITEMS: NavItem[] = [
         href: "/recruiter/recruiter-feature/reviews",
         icon: MessageSquareText,
     },
-    {
-        label: "Services",
-        href: "/recruiter/services",
-        icon: Sparkles,
-        subItems: [
-            { label: "Premium features", href: "/recruiter/recruiter-feature/services/premium" },
-            { label: "Job boosting", href: "/recruiter/recruiter-feature/services/boost" },
-            { label: "Candidate search", href: "/recruiter/recruiter-feature/services/search" },
-        ],
-    },
+    // {
+    //     label: "Services",
+    //     href: "/recruiter/services",
+    //     icon: Sparkles,
+    //     subItems: [
+    //         { label: "Premium features", href: "/recruiter/recruiter-feature/services/premium" },
+    //         { label: "Job boosting", href: "/recruiter/recruiter-feature/services/boost" },
+    //         { label: "Candidate search", href: "/recruiter/recruiter-feature/services/search" },
+    //     ],
+    // },
     {
         label: "Uploaded Jobs",
         href: "/recruiter/jobs",
@@ -79,20 +67,32 @@ const NAV_ITEMS: NavItem[] = [
         subItems: [
             { label: "Create job post", href: "/recruiter/recruiter-feature/jobs/create" },
             { label: "Active jobs", href: "/recruiter/recruiter-feature/jobs/active" },
-            { label: "Draft jobs", href: "/recruiter/recruiter-feature/jobs/drafts" },
+            // { label: "Draft jobs", href: "/recruiter/recruiter-feature/jobs/drafts" },
             { label: "Job templates", href: "/recruiter/recruiter-feature/jobs/templates" },
         ],
     },
-    {
-        label: "Support",
-        href: "/recruiter/support",
-        icon: LifeBuoy,
+     {
+        label: "Account",
+        href: "/recruiter/recruiter-feature/profile/account",
+        icon: IdCard,
         subItems: [
-            { label: "Help center", href: "/recruiter/recruiter-feature/support/help" },
-            { label: "Contact support", href: "/recruiter/recruiter-feature/support/contact" },
-            { label: "Feature requests", href: "/recruiter/recruiter-feature/support/feedback" },
+            { label: "Recruiter account", href: "/recruiter/recruiter-feature/profile/account" },
+            { label: "Organization profile", href: "/recruiter/recruiter-feature/profile/organization" },
+            { label: "Update history", href: "/recruiter/recruiter-feature/profile/update-history" },
+            { label: "Billing & plans", href: "/recruiter/recruiter-feature/profile/billing" },
+            { label: "Payment history", href: "/recruiter/transaction-history" },
         ],
     },
+    // {
+    //     label: "Support",
+    //     href: "/recruiter/support",
+    //     icon: LifeBuoy,
+    //     subItems: [
+    //         { label: "Help center", href: "/recruiter/recruiter-feature/support/help" },
+    //         { label: "Contact support", href: "/recruiter/recruiter-feature/support/contact" },
+    //         { label: "Feature requests", href: "/recruiter/recruiter-feature/support/feedback" },
+    //     ],
+    // },
 ];
 
 export function RecruiterSidebar() {
