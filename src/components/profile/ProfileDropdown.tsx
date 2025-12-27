@@ -23,7 +23,6 @@ import { useAuthStore } from "@/store/use-auth-store";
 import { getMyInvoice } from "@/lib/invoice-api";
 import { getRecruiterInvoice } from "@/lib/recruiter-invoice-api";
 import { PremiumAvatar } from "@/components/ui/premium-avatar";
-import { NotificationBell } from "@/components/notifications";
 
 interface ProfileDropdownProps {
   userName?: string;
@@ -146,9 +145,6 @@ export function ProfileDropdown({
           <Moon className="w-5 h-5" />
         )}
       </button> */}
-
-      {/* Notifications Button - Real implementation */}
-      <NotificationBell />
 
       {/* Profile Dropdown */}
       <div className="relative" ref={dropdownRef}>

@@ -8,6 +8,7 @@ import { useClientAuth } from "@/hooks/useClientAuth";
 import { decodeJWT } from "@/lib/auth-admin";
 import toast from "react-hot-toast";
 import { ProfileDropdown } from "@/components/profile/ProfileDropdown";
+import { NotificationBell } from "@/components/notifications";
 import UserTypeSelectionModal from "@/components/auth/UserTypeSelectionModal";
 import { getCurrentUser } from "@/lib/user-api";
 
@@ -208,6 +209,8 @@ export default function CandidateHeader() {
                 <span className="hidden xl:block text-gray-300 text-[11px] whitespace-nowrap">
                   For Candidate
                 </span>
+
+                <NotificationBell />
 
                 <ProfileDropdown
                   userName={profile?.fullName || userInfo?.username || user?.username || userInfo?.name || user?.email || "User"}

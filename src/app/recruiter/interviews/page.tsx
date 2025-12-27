@@ -186,7 +186,8 @@ export default function RecruiterInterviewsPage() {
     if (!selectedInterview) return;
 
     try {
-      await cancelInterview(selectedInterview.id);
+      // Pass the reason to the API - use default if not provided
+      await cancelInterview(selectedInterview.id, cancelReason || "Cancelled by recruiter");
       toast.success("Interview cancelled");
       setCancelDialogOpen(false);
       setCancelReason("");
@@ -387,8 +388,21 @@ export default function RecruiterInterviewsPage() {
                     <div className="pt-2 border-t">
                       <p className="text-sm text-muted-foreground">
                         <MessageSquare className="h-4 w-4 inline mr-1" />
-                        {interview.preparationNotes}
+                        <span className="font-medium">Preparation Notes:</span> {interview.preparationNotes}
                       </p>
+                    </div>
+                  )}
+
+                  {/* Interviewer Notes - shown when notes exist */}
+                  {interview.interviewerNotes && (
+                    <div className="pt-2 border-t bg-amber-50 -mx-6 px-6 py-3">
+                      <div className="flex items-start gap-2">
+                        <MessageSquare className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+                        <div>
+                          <p className="text-sm font-medium text-amber-800">Interviewer Notes</p>
+                          <p className="text-sm text-amber-700 mt-1">{interview.interviewerNotes}</p>
+                        </div>
+                      </div>
                     </div>
                   )}
 
@@ -599,7 +613,7 @@ export default function RecruiterInterviewsPage() {
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label htmlFor="cancel-reason">Reason (optional)</Label>
+              <Label htmlFor="cancel-reason">Reason</Label>
               <Textarea
                 id="cancel-reason"
                 placeholder="Provide a reason for cancellation..."
@@ -607,6 +621,7 @@ export default function RecruiterInterviewsPage() {
                 onChange={(e) => setCancelReason(e.target.value)}
                 rows={4}
               />
+              <p className="text-xs text-muted-foreground">A default reason will be used if left empty</p>
             </div>
           </div>
           <DialogFooter>

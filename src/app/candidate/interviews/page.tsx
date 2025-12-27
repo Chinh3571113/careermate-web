@@ -67,11 +67,26 @@ function CandidateInterviewsContent() {
         const interview = result.interview;
         setSelectedInterview(interview);
         
-        // Open the confirm dialog if action is confirm AND interview is not yet confirmed
+        // Open the confirm dialog if action is confirm AND interview is eligible for confirmation
         if (action === 'confirm') {
+          // Check for invalid statuses first
+          if (interview.status === 'CANCELLED') {
+            toast.error("This interview has been cancelled");
+            window.history.replaceState({}, '', '/candidate/interviews');
+            return;
+          }
+          if (interview.status === 'COMPLETED') {
+            toast.info("This interview has already been completed");
+            window.history.replaceState({}, '', '/candidate/interviews');
+            return;
+          }
+          if (interview.status === 'NO_SHOW') {
+            toast.error("This interview was marked as no-show");
+            window.history.replaceState({}, '', '/candidate/interviews');
+            return;
+          }
           if (interview.candidateConfirmed || interview.status === 'CONFIRMED') {
             toast.info("This interview is already confirmed");
-            // Clear the URL params without triggering a re-render
             window.history.replaceState({}, '', '/candidate/interviews');
           } else {
             setConfirmDialogOpen(true);

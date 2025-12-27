@@ -238,11 +238,13 @@ export const STATUS_CONFIGS: Record<JobApplicationStatus, StatusConfig> = {
  */
 export const STATUS_TRANSITIONS: StatusTransition[] = [
   // From SUBMITTED - recruiter can schedule interview directly or review first
-  { from: 'SUBMITTED', to: ['REVIEWING', 'INTERVIEW_SCHEDULED', 'APPROVED', 'REJECTED', 'NO_RESPONSE', 'WITHDRAWN', 'BANNED'], actor: 'recruiter' },
+  // Note: BANNED not allowed here - only from WORKING/ACCEPTED (employee misconduct)
+  { from: 'SUBMITTED', to: ['REVIEWING', 'INTERVIEW_SCHEDULED', 'APPROVED', 'REJECTED', 'NO_RESPONSE', 'WITHDRAWN'], actor: 'recruiter' },
   { from: 'SUBMITTED', to: ['WITHDRAWN'], actor: 'candidate' },
   
   // From REVIEWING - can schedule interview, approve directly (for referrals), or reject
-  { from: 'REVIEWING', to: ['INTERVIEW_SCHEDULED', 'APPROVED', 'REJECTED', 'WITHDRAWN', 'BANNED'], actor: 'recruiter' },
+  // Note: BANNED not allowed here - only from WORKING/ACCEPTED (employee misconduct)
+  { from: 'REVIEWING', to: ['INTERVIEW_SCHEDULED', 'APPROVED', 'REJECTED', 'WITHDRAWN'], actor: 'recruiter' },
   { from: 'REVIEWING', to: ['WITHDRAWN'], actor: 'candidate' },
   { from: 'REVIEWING', to: ['NO_RESPONSE'], actor: 'system' },
   
@@ -250,7 +252,8 @@ export const STATUS_TRANSITIONS: StatusTransition[] = [
   { from: 'NO_RESPONSE', to: ['REVIEWING', 'REJECTED'], actor: 'recruiter' },
   
   // From INTERVIEW_SCHEDULED
-  { from: 'INTERVIEW_SCHEDULED', to: ['INTERVIEWED', 'APPROVED', 'REJECTED', 'WITHDRAWN', 'BANNED'], actor: 'recruiter' },
+  // Note: BANNED not allowed here - only from WORKING/ACCEPTED (employee misconduct)
+  { from: 'INTERVIEW_SCHEDULED', to: ['INTERVIEWED', 'APPROVED', 'REJECTED', 'WITHDRAWN'], actor: 'recruiter' },
   { from: 'INTERVIEW_SCHEDULED', to: ['WITHDRAWN'], actor: 'candidate' },
   
   // From INTERVIEWED - can approve, reject, or schedule another interview round
@@ -300,7 +303,7 @@ export const STATUS_ACTIONS: Record<JobApplicationStatus, StatusActions> = {
       { label: 'Schedule Interview', action: 'schedule_interview', variant: 'secondary', icon: 'Calendar' },
       { label: 'Approve', action: 'approve', variant: 'secondary', icon: 'ThumbsUp' },
       { label: 'Reject', action: 'reject', variant: 'destructive', icon: 'XCircle' },
-      { label: 'Ban', action: 'ban', variant: 'destructive', icon: 'Ban' },
+      // Note: Ban action removed - BANNED only allowed from WORKING/ACCEPTED (employee misconduct)
     ],
   },
   REVIEWING: {
@@ -311,7 +314,7 @@ export const STATUS_ACTIONS: Record<JobApplicationStatus, StatusActions> = {
       { label: 'Schedule Interview', action: 'schedule_interview', variant: 'default', icon: 'Calendar' },
       { label: 'Approve', action: 'approve', variant: 'secondary', icon: 'ThumbsUp' },
       { label: 'Reject', action: 'reject', variant: 'destructive', icon: 'XCircle' },
-      { label: 'Ban', action: 'ban', variant: 'destructive', icon: 'Ban' },
+      // Note: Ban action removed - BANNED only allowed from WORKING/ACCEPTED (employee misconduct)
     ],
   },
   NO_RESPONSE: {
@@ -333,7 +336,6 @@ export const STATUS_ACTIONS: Record<JobApplicationStatus, StatusActions> = {
     ],
     recruiter: [
       { label: 'View Interview', action: 'view_interview', variant: 'default', icon: 'Eye' },
-      { label: 'Complete Interview', action: 'complete_interview', variant: 'secondary', icon: 'CheckCircle' },
       { label: 'Reschedule', action: 'reschedule', variant: 'outline', icon: 'Calendar' },
       { label: 'Mark No-Show', action: 'mark_no_show', variant: 'destructive', icon: 'UserX' },
       { label: 'Cancel', action: 'cancel_interview', variant: 'destructive', icon: 'XCircle' },
@@ -392,6 +394,7 @@ export const STATUS_ACTIONS: Record<JobApplicationStatus, StatusActions> = {
     ],
     recruiter: [
       { label: 'Terminate Employment', action: 'terminate', variant: 'destructive', icon: 'Flag' },
+      { label: 'Ban Employee', action: 'ban', variant: 'destructive', icon: 'Ban' },
       { label: 'View Details', action: 'view_employment', variant: 'outline', icon: 'Eye' },
     ],
   },

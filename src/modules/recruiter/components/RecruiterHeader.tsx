@@ -7,6 +7,7 @@ import { useAuthStore } from "@/store/use-auth-store";
 import { decodeJWT } from "@/lib/auth-admin";
 import { getCurrentUser } from "@/lib/user-api";
 import api from "@/lib/api";
+import { NotificationBell } from "@/components/notifications";
 
 interface RecruiterHeaderProps {
   sidebarOpen?: boolean;
@@ -164,30 +165,33 @@ export function RecruiterHeader({ sidebarOpen = false }: RecruiterHeaderProps) {
                   For Recruiter {userInfo?.username || userInfo?.name || "abc"}
                 </span>
 
-                <ProfileDropdown
-                  userName={userInfo?.username || userInfo?.name || user?.email || "User"}
-                  userEmail={userInfo?.email || user?.email}
-                  role={role || undefined}
-                  userAvatar={localAvatarUrl || recruiterAvatarUrl || undefined}
-                />
-              </>
-            ) : (
-              <>
-                <Link
-                  href="/sign-in"
-                  className="px-3 py-1.5 md:px-4 md:py-2 text-sm md:text-base text-white hover:text-gray-300 transition-colors"
-                >
-                  Sign In
-                </Link>
-                <Link
-                  href="/sign-up"
-                  className="px-3 py-1.5 md:px-4 md:py-2 text-sm md:text-base bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  Sign Up
-                </Link>
-              </>
-            )}
-          </div>
+                  {/* Notification Bell with SSE */}
+                  <NotificationBell />
+
+                  <ProfileDropdown
+                    userName={userInfo?.username || userInfo?.name || user?.email || "User"}
+                    userEmail={userInfo?.email || user?.email}
+                    role={role || undefined}
+                    userAvatar={localAvatarUrl || recruiterAvatarUrl || undefined}
+                  />
+                </>
+              ) : (
+                <>
+                  <Link
+                    href="/sign-in"
+                    className="px-4 py-2 text-white hover:text-gray-300 transition-colors"
+                  >
+                    Sign In
+                  </Link>
+                  <Link
+                    href="/sign-up"
+                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    Sign Up
+                  </Link>
+                </>
+              )}
+            </div>
         </div>
       </div>
       <div className="border-b border-[#1f4171]"></div>
