@@ -5,6 +5,7 @@ import { X, Sparkles, Loader2, Briefcase, Star, Lock, Search, Tag } from "lucide
 import { checkJobRecommendationAccess } from "@/lib/entitlement-api";
 import { getJobRecommendations, type JobRecommendation } from "@/lib/job-recommendation-api";
 import { fetchCurrentCandidateProfile } from "@/lib/candidate-profile-api";
+import { getMatchLevelInfo } from "@/lib/job-match-utils";
 import api from "@/lib/api";
 import toast from "react-hot-toast";
 import { useRouter } from "next/navigation";
@@ -472,7 +473,7 @@ export default function JobRecommendModal({ isOpen, onClose }: JobRecommendModal
                       : 'border-transparent text-gray-600 hover:text-gray-900'
                   }`}
                 >
-                  Phù hợp nhất ({contentBasedJobs.length})
+                  Best Match ({contentBasedJobs.length})
                 </button>
                 <button
                   onClick={() => setActiveTab('recommended')}
@@ -482,7 +483,7 @@ export default function JobRecommendModal({ isOpen, onClose }: JobRecommendModal
                       : 'border-transparent text-gray-600 hover:text-gray-900'
                   }`}
                 >
-                  Recommend for you ({collaborativeJobs.length})
+                  Recommended for You ({collaborativeJobs.length})
                 </button>
                 <button
                   onClick={() => setActiveTab('hot')}
@@ -492,7 +493,7 @@ export default function JobRecommendModal({ isOpen, onClose }: JobRecommendModal
                       : 'border-transparent text-gray-600 hover:text-gray-900'
                   }`}
                 >
-                  Job Hot 🔥 ({hotJobs.length})
+                  Hot Jobs 🔥 ({hotJobs.length})
                 </button>
               </div>
 
@@ -517,9 +518,9 @@ export default function JobRecommendModal({ isOpen, onClose }: JobRecommendModal
                             </h3>
                             {job.final_score && (
                               <div className="flex items-center gap-1">
-                                <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                                <span className="text-sm font-medium text-gray-600">
-                                  {(job.final_score * 100).toFixed(0)}% Match
+                                <Star className={`w-4 h-4 fill-current ${getMatchLevelInfo(job.final_score).iconColor}`} />
+                                <span className={`text-sm font-medium ${getMatchLevelInfo(job.final_score).textColor}`}>
+                                  {getMatchLevelInfo(job.final_score).label}
                                 </span>
                               </div>
                             )}
@@ -550,7 +551,7 @@ export default function JobRecommendModal({ isOpen, onClose }: JobRecommendModal
                         )}
 
                         {/* Match Details */}
-                        {(job.semantic_similarity || job.skill_overlap !== undefined) && (
+                        {/* {(job.semantic_similarity || job.skill_overlap !== undefined) && (
                           <div className="flex items-center gap-4 text-xs text-gray-500 border-t border-gray-100 pt-3">
                             {job.semantic_similarity && (
                               <div>
@@ -565,7 +566,7 @@ export default function JobRecommendModal({ isOpen, onClose }: JobRecommendModal
                               </div>
                             )}
                           </div>
-                        )}
+                        )} */}
 
                         {/* View Button */}
                         <button
@@ -724,9 +725,9 @@ export default function JobRecommendModal({ isOpen, onClose }: JobRecommendModal
                             </h3>
                             {job.final_score && (
                               <div className="flex items-center gap-1">
-                                <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                                <span className="text-sm font-medium text-gray-600">
-                                  {(job.final_score * 100).toFixed(0)}% Match
+                                <Star className={`w-4 h-4 fill-current ${getMatchLevelInfo(job.final_score).iconColor}`} />
+                                <span className={`text-sm font-medium ${getMatchLevelInfo(job.final_score).textColor}`}>
+                                  {getMatchLevelInfo(job.final_score).label}
                                 </span>
                               </div>
                             )}
@@ -935,9 +936,9 @@ export default function JobRecommendModal({ isOpen, onClose }: JobRecommendModal
                         </h3>
                         {job.final_score && (
                           <div className="flex items-center gap-1">
-                            <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
-                            <span className="text-sm font-medium text-gray-600">
-                              {(job.final_score * 100).toFixed(0)}% Match
+                            <Star className={`w-4 h-4 fill-current ${getMatchLevelInfo(job.final_score).iconColor}`} />
+                            <span className={`text-sm font-medium ${getMatchLevelInfo(job.final_score).textColor}`}>
+                              {getMatchLevelInfo(job.final_score).label}
                             </span>
                           </div>
                         )}
@@ -968,7 +969,7 @@ export default function JobRecommendModal({ isOpen, onClose }: JobRecommendModal
                     )}
 
                     {/* Match Details */}
-                    {(job.semantic_similarity || job.skill_overlap !== undefined) && (
+                    {/* {(job.semantic_similarity || job.skill_overlap !== undefined) && (
                       <div className="flex items-center gap-4 text-xs text-gray-500 border-t border-orange-100 pt-3">
                         {job.semantic_similarity && (
                           <div>
@@ -983,7 +984,7 @@ export default function JobRecommendModal({ isOpen, onClose }: JobRecommendModal
                           </div>
                         )}
                       </div>
-                    )}
+                    )} */}
 
                     {/* View Button */}
                     <button
