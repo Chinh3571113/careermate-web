@@ -1292,7 +1292,10 @@ export default function ManageJobsPage() {
                         <button
                           onClick={() => {
                             setShowRecommendationsModal(false);
-                            router.push(`/recruiter/recruiter-feature/candidates/profile/${candidate.candidateId}`);
+                            // Redirect to applications page with candidate name and job filter
+                            const searchName = encodeURIComponent(candidate.candidateName);
+                            const jobId = selectedJob.id;
+                            router.push(`/recruiter/recruiter-feature/jobs/applications?search=${searchName}&jobId=${jobId}`);
                           }}
                           className="flex-1 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-colors flex items-center justify-center gap-2"
                         >

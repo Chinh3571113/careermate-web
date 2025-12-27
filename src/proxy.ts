@@ -124,7 +124,13 @@ export default function proxy(request: NextRequest) {
     });
 
     if (!validateToken(refreshToken)) {
-      return NextResponse.redirect(new URL('/sign-in', request.url));
+      // Include redirect param so user returns to admin page after login
+      return NextResponse.redirect(
+        new URL(
+          '/sign-in?redirect=' + encodeURIComponent(request.nextUrl.pathname),
+          request.url
+        )
+      );
     }
 
     if (!isAdmin(refreshToken!)) {
