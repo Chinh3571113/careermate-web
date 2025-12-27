@@ -9,6 +9,7 @@ import { useClientAuth } from "@/hooks/useClientAuth";
 import { decodeJWT } from "@/lib/auth-admin";
 import toast from "react-hot-toast";
 import { ProfileDropdown } from "@/components/profile/ProfileDropdown";
+import { NotificationBell } from "@/components/notifications";
 import UserTypeSelectionModal from "@/components/auth/UserTypeSelectionModal";
 import { getCurrentUser } from "@/lib/user-api";
 
@@ -247,12 +248,15 @@ export default function ClientHeader() {
         {/* Right side - Bell + Avatar / Auth buttons */}
         <div className="flex items-center gap-3 flex-shrink-0">
           {isAuthenticated && user ? (
-            <ProfileDropdown
-              userName={profile?.fullName || userInfo?.username || user?.username || userInfo?.name || "User"}
-              userEmail={userInfo?.email || user?.email}
-              role={role || undefined}
-              userAvatar={profile?.image || undefined}
-            />
+            <>
+              <NotificationBell />
+              <ProfileDropdown
+                userName={profile?.fullName || userInfo?.username || user?.username || userInfo?.name || "User"}
+                userEmail={userInfo?.email || user?.email}
+                role={role || undefined}
+                userAvatar={profile?.image || undefined}
+              />
+            </>
           ) : (
             <>
               <Link

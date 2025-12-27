@@ -135,6 +135,9 @@ export function AdminHeader({ sidebarOpen = false }: AdminHeaderProps) {
                   For Admin {userInfo?.username || userInfo?.name || "Admin"}
                 </span>
 
+                {/* Notification Bell with SSE */}
+                <NotificationBell />
+
                 <ProfileDropdown
                   userName={userInfo?.username || userInfo?.name || user?.email || "Admin"}
                   userEmail={userInfo?.email || user?.email}

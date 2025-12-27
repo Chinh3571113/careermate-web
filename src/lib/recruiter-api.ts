@@ -818,6 +818,11 @@ export interface JobApplication {
   recruiterPhone?: string;
   companyAddress?: string;
   contactPerson?: string;
+  // Interview history info - shows previous cancelled interviews
+  hasCancelledInterview?: boolean;
+  cancelledInterviewNotes?: string;
+  cancelledInterviewDate?: string;
+  totalInterviewRounds?: number;
 }
 
 export interface JobApplicationResponse {

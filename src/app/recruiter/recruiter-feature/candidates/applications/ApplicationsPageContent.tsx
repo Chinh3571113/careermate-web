@@ -1,9 +1,9 @@
 "use client";
 
-import { Search, Filter, Download, FileText, Calendar, MapPin, Clock, CheckCircle, XCircle, Eye, RefreshCw, AlertCircle } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Search, Filter, Download, FileText, Calendar, MapPin, Clock, CheckCircle, XCircle, Eye, RefreshCw, AlertCircle, ChevronDown, Briefcase } from "lucide-react";
+import { useEffect, useState, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { getJobApplications, getRecruiterApplications, getRecruiterApplicationsFiltered, approveJobApplication, rejectJobApplication, setReviewingJobApplication, JobApplication, updateJobApplicationStatus, extendJobOffer } from "@/lib/recruiter-api";
+import { getJobApplications, getRecruiterApplications, getRecruiterApplicationsFiltered, approveJobApplication, rejectJobApplication, setReviewingJobApplication, JobApplication, updateJobApplicationStatus, extendJobOffer, getRecruiterJobPostings, RecruiterJobPosting } from "@/lib/recruiter-api";
 import { StatusBadgeFull } from "@/components/shared/StatusBadge";
 import { getRecruiterActions, sortStatuses } from "@/lib/status-utils";
 import { JobApplicationStatus } from "@/types/status";
@@ -18,15 +18,24 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function ApplicationsPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [applications, setApplications] = useState<JobApplication[]>([]);
   const [filteredApplications, setFilteredApplications] = useState<JobApplication[]>([]);
+  const [jobPostings, setJobPostings] = useState<RecruiterJobPosting[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
+  const [selectedJobTitle, setSelectedJobTitle] = useState<string>("all");
   // Get jobPostingId from URL params if provided, otherwise fetch all
   const jobPostingIdParam = searchParams.get('jobPostingId');
   const [jobPostingId, setJobPostingId] = useState<number | null>(
@@ -45,7 +54,7 @@ export default function ApplicationsPageContent() {
   const [banReason, setBanReason] = useState("");
   const [actionLoading, setActionLoading] = useState(false);
 
-  // Available statuses for filtering (13 statuses)
+  // Commonly used statuses only - removed rarely used ones for better UX
   const availableStatuses: Array<JobApplicationStatus | 'ALL'> = [
     'ALL',
     'SUBMITTED',
@@ -54,12 +63,7 @@ export default function ApplicationsPageContent() {
     'INTERVIEWED',
     'APPROVED',
     'OFFER_EXTENDED',
-    'WORKING',
     'REJECTED',
-    'TERMINATED',
-    'NO_RESPONSE',
-    'WITHDRAWN',
-    'BANNED'
   ];
 
   // Handle recruiter actions
@@ -173,6 +177,18 @@ export default function ApplicationsPageContent() {
     }
   };
 
+  // Fetch job postings
+  const fetchJobPostings = async () => {
+    try {
+      const response = await getRecruiterJobPostings({ page: 0, size: 100 });
+      if (response.code === 0 || response.code === 200) {
+        setJobPostings(response.result.content || []);
+      }
+    } catch (error: any) {
+      console.error("Error fetching job postings:", error);
+    }
+  };
+
   // Fetch applications
   const fetchApplications = async () => {
     try {
@@ -208,27 +224,40 @@ export default function ApplicationsPageContent() {
   };
 
   useEffect(() => {
+    fetchJobPostings();
     fetchApplications();
   }, [jobPostingId]);
 
-  // Filter applications
+  // Filter applications with memoization
   useEffect(() => {
     let filtered = applications;
 
+    // Filter by search query
     if (searchQuery) {
+      const query = searchQuery.toLowerCase();
       filtered = filtered.filter(app =>
-        app.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        app.fullName.toLowerCase().includes(query) ||
         app.phoneNumber.includes(searchQuery) ||
-        app.preferredWorkLocation.toLowerCase().includes(searchQuery.toLowerCase())
+        app.jobTitle.toLowerCase().includes(query) ||
+        app.preferredWorkLocation.toLowerCase().includes(query)
       );
     }
 
+    // Filter by status
     if (selectedStatus !== "ALL") {
       filtered = filtered.filter(app => app.status === selectedStatus);
     }
 
+    // Filter by job title
+    if (selectedJobTitle !== "all" && selectedJobTitle) {
+      const selectedJob = jobPostings.find(job => job.id.toString() === selectedJobTitle);
+      if (selectedJob) {
+        filtered = filtered.filter(app => app.jobPostingId.toString() === selectedJobTitle);
+      }
+    }
+
     setFilteredApplications(filtered);
-  }, [searchQuery, selectedStatus, applications]);
+  }, [searchQuery, selectedStatus, selectedJobTitle, applications, jobPostings]);
 
   // Approve
   const handleApprove = async () => {
@@ -288,66 +317,81 @@ export default function ApplicationsPageContent() {
 
   return (
     <>
-      <header className="mb-6 flex items-center justify-between">
-        <div>
-          <h1 className="text-xl font-semibold text-sky-800">Job applications</h1>
-          <p className="text-sm text-gray-600 mt-1">Manage candidate applications for your job postings</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2">
-            <label className="text-sm text-gray-600">Job Posting ID:</label>
-            <input
-              type="number"
-              value={jobPostingId ?? ''}
-              onChange={(e) => setJobPostingId(e.target.value ? Number(e.target.value) : null)}
-              className="w-24 rounded-md border px-3 py-2 text-sm"
-              placeholder="All"
-            />
+      <header className="mb-6">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h1 className="text-2xl font-bold text-sky-800">Job Applications</h1>
+            <p className="text-sm text-gray-600 mt-1">Manage candidate applications for your job postings</p>
           </div>
           <button
             onClick={fetchApplications}
             disabled={isLoading}
-            className="inline-flex h-9 items-center gap-2 rounded-md bg-sky-600 px-4 text-sm font-medium text-white hover:bg-sky-700 disabled:opacity-50"
+            className="inline-flex h-9 items-center gap-2 rounded-md bg-sky-600 px-4 text-sm font-medium text-white hover:bg-sky-700 disabled:opacity-50 transition-colors"
           >
             <RefreshCw className={`h-4 w-4 ${isLoading ? 'animate-spin' : ''}`} />
             {isLoading ? 'Loading...' : 'Refresh'}
           </button>
         </div>
+
+        {/* Search and Filter Bar */}
+        <div className="flex flex-col sm:flex-row gap-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Search by name, phone, job title, or location..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full rounded-md border bg-white pl-9 pr-3 py-2 text-sm outline-none focus:ring-2 focus:ring-sky-500 focus:border-sky-500 transition-all"
+            />
+          </div>
+          
+          <Select value={selectedJobTitle} onValueChange={setSelectedJobTitle}>
+            <SelectTrigger className="w-full sm:w-[280px] bg-white">
+              <Briefcase className="h-4 w-4 mr-2 text-slate-500" />
+              <SelectValue placeholder="All Job Postings" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Job Postings</SelectItem>
+              {jobPostings.map((job) => (
+                <SelectItem key={job.id} value={job.id.toString()}>
+                  <div className="flex flex-col">
+                    <span className="font-medium">{job.title}</span>
+                    <span className="text-xs text-muted-foreground">{job.address}</span>
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
       </header>
 
-      {/* Filters */}
-      <div className="mb-6 rounded-lg bg-white p-4 shadow-sm shadow-sky-100">
-        <div className="mb-4 flex items-center gap-4">
-          <div className="flex-1">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Search by name, phone, or location..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full rounded-md border bg-background pl-9 pr-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
-              />
-            </div>
-          </div>
-        </div>
+      {/* Status Tabs */}
+      <div className="mb-6 rounded-lg bg-white p-3 shadow-sm shadow-sky-100">
 
-        {/* Tabs */}
-        <div className="flex items-center gap-1 border-b overflow-x-auto">
-          {availableStatuses.map(status => (
-            <button
-              key={status}
-              onClick={() => setSelectedStatus(status)}
-              className={`px-4 py-2 text-sm font-medium whitespace-nowrap ${
-                selectedStatus === status
-                  ? "border-b-2 border-sky-600 text-sky-700"
-                  : "text-slate-600 hover:text-slate-800"
-              }`}
-            >
-              {status === "ALL" ? "All" : status.replace(/_/g, ' ')}{" "}
-              <span className="ml-1 text-xs">({getStatusCount(status)})</span>
-            </button>
-          ))}
+        <div className="flex items-center gap-2 overflow-x-auto pb-2">
+          {availableStatuses.map(status => {
+            const count = getStatusCount(status);
+            const isActive = selectedStatus === status;
+            return (
+              <button
+                key={status}
+                onClick={() => setSelectedStatus(status)}
+                className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${
+                  isActive
+                    ? "bg-sky-600 text-white shadow-sm"
+                    : "bg-slate-50 text-slate-700 hover:bg-slate-100"
+                }`}
+              >
+                {status === "ALL" ? "All" : status.replace(/_/g, ' ')}{" "}
+                <span className={`ml-1.5 text-xs px-1.5 py-0.5 rounded ${
+                  isActive ? "bg-sky-700" : "bg-white text-slate-600"
+                }`}>
+                  {count}
+                </span>
+              </button>
+            );
+          })}
         </div>
       </div>
 
@@ -419,27 +463,27 @@ export default function ApplicationsPageContent() {
 
                     {/* Actions */}
                     <td className="px-4 py-4">
-                      <div className="flex items-center justify-center gap-2 flex-wrap">
-                        {/* View Details Button */}
+                      <div className="flex items-center justify-center gap-1.5">
+                        {/* View Details Button - Always visible */}
                         <button
                           onClick={() => {
                             setSelectedApplication(application);
                             setIsDetailDialogOpen(true);
                           }}
-                          className="p-2 rounded-full hover:bg-blue-100 text-blue-600 transition"
+                          className="p-1.5 rounded-md hover:bg-blue-50 text-blue-600 transition-colors border border-transparent hover:border-blue-200"
                           title="View details"
                         >
                           <Eye className="h-4 w-4" />
                         </button>
 
-                        {/* Dynamic Action Buttons based on status */}
-                        {getRecruiterActions(application.status).slice(0, 3).map((statusAction) => (
+                        {/* Dynamic Action Buttons based on status - Max 2 */}
+                        {getRecruiterActions(application.status).slice(0, 2).map((statusAction) => (
                           <Button
                             key={statusAction.action}
                             variant={statusAction.variant as any}
                             size="sm"
                             onClick={() => handleRecruiterAction(statusAction.action, application.id)}
-                            className="text-xs px-2 py-1 h-7"
+                            className="text-xs px-3 py-1 h-7 min-w-[60px]"
                           >
                             {statusAction.label}
                           </Button>
