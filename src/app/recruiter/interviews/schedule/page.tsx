@@ -939,15 +939,31 @@ function ScheduleInterviewContent() {
                         const isSelected = form.scheduledTime === slot.time;
                         const isPastSlot = selectedDate ? isTimeSlotPast(selectedDate, slot.time) : false;
                         
-                        // Duration preview
+                        // Duration preview - calculate how many slots the meeting covers
+                        // Formula: 1 slot for start + (duration / 15) additional slots
+                        // E.g., 60min = 1 + 60/15 = 5 slots total (start + 4 more)
+                        // E.g., 30min = 1 + 30/15 = 3 slots total (start + 2 more)
+                        // E.g., 45min = 1 + 45/15 = 4 slots total (start + 3 more)
                         let isInDurationPreview = false;
                         if (form.scheduledTime && !isSelected) {
                           const [selectedHour, selectedMin] = form.scheduledTime.split(':').map(Number);
                           const [slotHour, slotMin] = slot.time.split(':').map(Number);
                           const selectedMinutes = selectedHour * 60 + selectedMin;
                           const slotMinutes = slotHour * 60 + slotMin;
-                          const endMinutes = selectedMinutes + form.durationMinutes;
-                          isInDurationPreview = slotMinutes > selectedMinutes && slotMinutes < endMinutes;
+                          
+                          // Calculate slot index relative to selected time
+                          // Each slot is 15 minutes apart
+                          const slotOffset = (slotMinutes - selectedMinutes) / 15;
+                          
+                          // Total slots needed = 1 + (duration / 15)
+                          // For 60min: 1 + 4 = 5 slots (indices 0, 1, 2, 3, 4)
+                          // For 30min: 1 + 2 = 3 slots (indices 0, 1, 2)
+                          // For 45min: 1 + 3 = 4 slots (indices 0, 1, 2, 3)
+                          const totalSlots = 1 + Math.floor(form.durationMinutes / 15);
+                          
+                          // Slot is in preview if it's after the selected slot but within the range
+                          // slotOffset > 0 (not the selected slot) AND slotOffset < totalSlots
+                          isInDurationPreview = slotOffset > 0 && slotOffset < totalSlots;
                         }
                         
                         // Tooltip content

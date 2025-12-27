@@ -7,6 +7,7 @@ import { useAuthStore } from "@/store/use-auth-store";
 import { decodeJWT } from "@/lib/auth-admin";
 import { getCurrentUser } from "@/lib/user-api";
 import api from "@/lib/api";
+import { NotificationBell } from "@/components/notifications";
 
 interface RecruiterHeaderProps {
   sidebarOpen?: boolean;
@@ -165,6 +166,9 @@ export function RecruiterHeader({ sidebarOpen = false }: RecruiterHeaderProps) {
                   <span className="sm:block text-gray-300 hover:text-white transition-colors hidden text-xs md:inline">
                     For Recruiter {userInfo?.username || userInfo?.name || "abc"}
                   </span>
+
+                  {/* Notification Bell with SSE */}
+                  <NotificationBell />
 
                   <ProfileDropdown
                     userName={userInfo?.username || userInfo?.name || user?.email || "User"}

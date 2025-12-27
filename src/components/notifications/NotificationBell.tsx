@@ -174,18 +174,18 @@ export function NotificationBell() {
       // ========== ADMIN NOTIFICATIONS (4 types) ==========
       if (eventType === 'SYSTEM_NOTIFICATION') {
         // New job posting pending approval
-        redirectUrl = '/admin/job-management';
-        console.log('✅ [Admin] Job pending approval -> /admin/job-management');
+        redirectUrl = '/admin/job-postings';
+        console.log('✅ [Admin] Job pending approval -> /admin/job-postings');
       } 
       else if (eventType === 'PROFILE_VERIFICATION') {
         // New recruiter registration
-        redirectUrl = '/admin/recruiter-management';
-        console.log('✅ [Admin] New recruiter registration -> /admin/recruiter-management');
+        redirectUrl = '/admin/pending-approval';
+        console.log('✅ [Admin] New recruiter registration -> /admin/pending-approval');
       }
       else if (eventType === 'PROFILE_UPDATE_REQUEST') {
         // Recruiter profile update request
-        redirectUrl = '/admin/recruiter-management';
-        console.log('✅ [Admin] Profile update request -> /admin/recruiter-management');
+        redirectUrl = '/admin/profile-updates';
+        console.log('✅ [Admin] Profile update request -> /admin/profile-updates');
       }
       else if (eventType === 'TEST_ADMIN_NOTIFICATION') {
         // Testing notification
@@ -402,54 +402,73 @@ export function NotificationBell() {
   };
 
   useEffect(() => {
-    // Get token from localStorage
-    const token = localStorage.getItem('access_token');
-    if (!token) {
-      console.warn('⚠️ [Bell] No token found, will not connect');
-      return;
-    }
-
-    console.log('🔌 [Bell] Connecting to notification stream...');
-
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080';
-    const streamUrl = `${apiUrl}/api/notifications/stream`;
     
-    let abortController = new AbortController();
+    // Use fetch() with streaming for SSE to properly send Authorization header
+    // This is the stable, maintainable approach
     let isActive = true;
+    let reconnectTimeout: NodeJS.Timeout | null = null;
+    let reconnectAttempts = 0;
+    const MAX_RECONNECT_ATTEMPTS = 5;
+    const RECONNECT_DELAY = 3000;
+    let reader: ReadableStreamDefaultReader<Uint8Array> | null = null;
 
-    // Use fetch with streaming since EventSource can't send Authorization header
-    const connectStream = async () => {
+    const connectSSE = async () => {
+      if (!isActive) return;
+      
+      const token = localStorage.getItem('access_token');
+      if (!token) {
+        console.warn('⚠️ [Bell] No token found, will not connect');
+        return;
+      }
+      
+      console.log('🔌 [Bell] Connecting to notification stream via fetch()...');
+      
       try {
-        const response = await fetch(streamUrl, {
+        const response = await fetch(`${apiUrl}/api/notifications/stream`, {
+          method: 'GET',
           headers: {
             'Authorization': `Bearer ${token}`,
             'Accept': 'text/event-stream',
+            'Cache-Control': 'no-cache',
           },
-          signal: abortController.signal,
         });
-
+        
         if (!response.ok) {
-          const errorText = await response.text();
-          console.error('❌ [Bell] Stream connection failed:', response.status, errorText);
+          console.error('❌ [Bell] SSE connection failed:', response.status);
           setIsConnected(false);
+          
+          // Don't retry on 401/403 - token issue
+          if (response.status === 401 || response.status === 403) {
+            console.warn('⚠️ [Bell] Authentication failed, falling back to polling');
+            startPollingFallback();
+            return;
+          }
+          
+          // Retry on other errors
+          if (isActive && reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+            reconnectAttempts++;
+            const delay = RECONNECT_DELAY * Math.pow(2, reconnectAttempts - 1);
+            console.log(`🔄 [Bell] Reconnecting in ${delay}ms (attempt ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})...`);
+            reconnectTimeout = setTimeout(connectSSE, delay);
+          }
           return;
         }
-
-        console.log('✅ [Bell] Stream connected');
+        
+        console.log('✅ [Bell] SSE stream connected');
         setIsConnected(true);
-
-        const reader = response.body?.getReader();
-        const decoder = new TextDecoder();
-
+        reconnectAttempts = 0;
+        
+        // Read the stream
+        reader = response.body?.getReader();
         if (!reader) {
           console.error('❌ [Bell] No reader available');
           return;
         }
-
+        
+        const decoder = new TextDecoder();
         let buffer = '';
-        let currentEvent = '';
-        let currentData = '';
-
+        
         while (isActive) {
           const { done, value } = await reader.read();
           
@@ -457,63 +476,119 @@ export function NotificationBell() {
             console.log('🔌 [Bell] Stream ended');
             break;
           }
-
+          
           buffer += decoder.decode(value, { stream: true });
-          const lines = buffer.split('\n');
-          buffer = lines.pop() || '';
-
-          for (const line of lines) {
-            if (line.trim() === '') {
-              // Empty line means end of event, process it
-              if (currentEvent && currentData) {
-                try {
-                  console.log('📨 [Bell] Received event:', currentEvent, 'data:', currentData);
-                  
-                  if (currentEvent === 'connected') {
-                    console.log('✅ [Bell] Connected event received');
-                  } else if (currentEvent === 'unread-count') {
-                    const parsed = JSON.parse(currentData);
-                    const count = parsed.count;
-                    console.log('🔔 [Bell] Badge updated:', count);
-                    setUnreadCount(count);
-                  } else if (currentEvent === 'notification') {
-                    const notification = JSON.parse(currentData);
-                    console.log('📬 [Bell] New notification:', notification.title);
-                    setNotifications(prev => [notification, ...prev].slice(0, 10));
-                  }
-                } catch (e) {
-                  console.warn('⚠️ [Bell] Failed to parse event:', e, currentData);
-                }
-                
-                // Reset for next event
-                currentEvent = '';
-                currentData = '';
+          
+          // Process complete SSE messages (separated by double newlines)
+          const messages = buffer.split('\n\n');
+          buffer = messages.pop() || ''; // Keep incomplete message in buffer
+          
+          for (const message of messages) {
+            if (!message.trim()) continue;
+            
+            // Parse SSE format: "event: eventName\ndata: jsonData"
+            const lines = message.split('\n');
+            let eventType = 'message';
+            let data = '';
+            
+            for (const line of lines) {
+              if (line.startsWith('event:')) {
+                eventType = line.slice(6).trim();
+              } else if (line.startsWith('data:')) {
+                data = line.slice(5).trim();
               }
-            } else if (line.startsWith('event:')) {
-              currentEvent = line.substring(6).trim();
-            } else if (line.startsWith('data:')) {
-              currentData += line.substring(5).trim();
-            } else if (line.startsWith(':')) {
-              // Comment, ignore
-              continue;
+            }
+            
+            // Handle different event types
+            if (eventType === 'connected') {
+              console.log('✅ [Bell] Connected event:', data);
+            } else if (eventType === 'unread-count') {
+              try {
+                const parsed = JSON.parse(data);
+                const count = parsed.count;
+                console.log('🔔 [Bell] Badge updated via SSE:', count);
+                setUnreadCount(count);
+              } catch (e) {
+                console.warn('⚠️ [Bell] Failed to parse unread-count:', e);
+              }
+            } else if (eventType === 'notification') {
+              try {
+                const notification = JSON.parse(data);
+                console.log('📬 [Bell] New notification via SSE:', notification.title);
+                setNotifications(prev => [notification, ...prev].slice(0, 10));
+                setUnreadCount(prev => prev + 1);
+              } catch (e) {
+                console.warn('⚠️ [Bell] Failed to parse notification:', e);
+              }
+            } else if (eventType === 'keepalive') {
+              console.log('💓 [Bell] Keepalive received');
             }
           }
         }
-      } catch (error: any) {
-        if (error.name !== 'AbortError') {
-          console.error('❌ [Bell] Stream error:', error.message);
-          setIsConnected(false);
+      } catch (error) {
+        console.error('❌ [Bell] SSE error:', error);
+        setIsConnected(false);
+        
+        // Attempt reconnection
+        if (isActive && reconnectAttempts < MAX_RECONNECT_ATTEMPTS) {
+          reconnectAttempts++;
+          const delay = RECONNECT_DELAY * Math.pow(2, reconnectAttempts - 1);
+          console.log(`🔄 [Bell] Reconnecting in ${delay}ms (attempt ${reconnectAttempts}/${MAX_RECONNECT_ATTEMPTS})...`);
+          reconnectTimeout = setTimeout(connectSSE, delay);
+        } else if (reconnectAttempts >= MAX_RECONNECT_ATTEMPTS) {
+          console.warn('⚠️ [Bell] Max reconnection attempts reached, falling back to polling');
+          startPollingFallback();
         }
       }
     };
+    
+    // Fallback polling if SSE fails completely
+    let pollingInterval: NodeJS.Timeout | null = null;
+    const startPollingFallback = () => {
+      if (pollingInterval) return;
+      
+      console.log('📊 [Bell] Starting polling fallback (every 30s)...');
+      const fetchUnreadCount = async () => {
+        const freshToken = localStorage.getItem('access_token');
+        if (!freshToken) return;
+        
+        try {
+          const response = await fetch(`${apiUrl}/api/notifications/unread-count`, {
+            headers: { 'Authorization': `Bearer ${freshToken}` },
+          });
+          if (response.ok) {
+            const data = await response.json();
+            let count = 0;
+            if (typeof data === 'number') count = data;
+            else if (typeof data.result === 'number') count = data.result;
+            else if (data.result?.count !== undefined) count = data.result.count;
+            else if (data.count !== undefined) count = data.count;
+            setUnreadCount(count);
+          } else if (response.status === 401) {
+            console.warn('⚠️ [Bell] Token expired during polling, stopping');
+            if (pollingInterval) clearInterval(pollingInterval);
+            pollingInterval = null;
+          }
+        } catch (error) {
+          console.error('❌ [Bell] Polling error:', error);
+        }
+      };
+      
+      // Fetch immediately
+      fetchUnreadCount();
+      pollingInterval = setInterval(fetchUnreadCount, 30000);
+    };
 
-    connectStream();
+    // Start connection
+    connectSSE();
 
     // Cleanup
     return () => {
       console.log('🔌 [Bell] Disconnecting...');
       isActive = false;
-      abortController.abort();
+      reader?.cancel();
+      if (reconnectTimeout) clearTimeout(reconnectTimeout);
+      if (pollingInterval) clearInterval(pollingInterval);
     };
   }, []);
 

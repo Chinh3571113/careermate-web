@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { 
   Briefcase, 
   Clock, 
@@ -9,7 +9,12 @@ import {
   Phone,
   AlertTriangle,
   FileText,
-  XCircle
+  XCircle,
+  Search,
+  Filter,
+  Users,
+  UserCheck,
+  UserX
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -48,6 +53,10 @@ export default function EmploymentsPage() {
   const [selectedEmployment, setSelectedEmployment] = useState<EmploymentVerificationResponse | null>(null);
   const [terminateDialogOpen, setTerminateDialogOpen] = useState(false);
   
+  // Search and filter states
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'probation' | 'terminated'>('all');
+  
   // Termination form - updated to match backend API
   const [terminationForm, setTerminationForm] = useState({
     terminationType: '' as TerminationType | '',
@@ -75,6 +84,41 @@ export default function EmploymentsPage() {
       setLoading(false);
     }
   };
+
+  // Filtered employments based on search and status filter
+  const filteredEmployments = useMemo(() => {
+    return employments.filter((emp) => {
+      // Search filter
+      const searchLower = searchQuery.toLowerCase();
+      const matchesSearch = searchQuery === '' || 
+        (emp.candidateName?.toLowerCase().includes(searchLower)) ||
+        (emp.jobTitle?.toLowerCase().includes(searchLower)) ||
+        (emp.position?.toLowerCase().includes(searchLower)) ||
+        (emp.candidateEmail?.toLowerCase().includes(searchLower)) ||
+        (emp.department?.toLowerCase().includes(searchLower));
+
+      // Status filter
+      let matchesStatus = true;
+      if (statusFilter === 'active') {
+        matchesStatus = emp.employmentStatus === 'ACTIVE' && !isInProbation(emp.startDate, emp.probationEndDate);
+      } else if (statusFilter === 'probation') {
+        matchesStatus = emp.employmentStatus === 'ACTIVE' && isInProbation(emp.startDate, emp.probationEndDate);
+      } else if (statusFilter === 'terminated') {
+        matchesStatus = emp.employmentStatus === 'TERMINATED';
+      }
+
+      return matchesSearch && matchesStatus;
+    });
+  }, [employments, searchQuery, statusFilter]);
+
+  // Stats for quick overview
+  const stats = useMemo(() => {
+    const total = employments.length;
+    const active = employments.filter(e => e.employmentStatus === 'ACTIVE' && !isInProbation(e.startDate, e.probationEndDate)).length;
+    const probation = employments.filter(e => e.employmentStatus === 'ACTIVE' && isInProbation(e.startDate, e.probationEndDate)).length;
+    const terminated = employments.filter(e => e.employmentStatus === 'TERMINATED').length;
+    return { total, active, probation, terminated };
+  }, [employments]);
 
   const handleTerminateEmployment = async () => {
     if (!selectedEmployment) return;
@@ -132,19 +176,118 @@ export default function EmploymentsPage() {
         </p>
       </div>
 
+      {/* Stats Cards */}
+      {employments.length > 0 && (
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+          <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setStatusFilter('all')}>
+            <CardContent className="pt-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Total</p>
+                  <p className="text-2xl font-bold">{stats.total}</p>
+                </div>
+                <Users className={`h-8 w-8 ${statusFilter === 'all' ? 'text-primary' : 'text-muted-foreground'}`} />
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setStatusFilter('active')}>
+            <CardContent className="pt-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Active</p>
+                  <p className="text-2xl font-bold text-green-600">{stats.active}</p>
+                </div>
+                <UserCheck className={`h-8 w-8 ${statusFilter === 'active' ? 'text-green-600' : 'text-muted-foreground'}`} />
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setStatusFilter('probation')}>
+            <CardContent className="pt-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Probation</p>
+                  <p className="text-2xl font-bold text-yellow-600">{stats.probation}</p>
+                </div>
+                <Clock className={`h-8 w-8 ${statusFilter === 'probation' ? 'text-yellow-600' : 'text-muted-foreground'}`} />
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="cursor-pointer hover:bg-muted/50 transition-colors" onClick={() => setStatusFilter('terminated')}>
+            <CardContent className="pt-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-sm text-muted-foreground">Terminated</p>
+                  <p className="text-2xl font-bold text-gray-500">{stats.terminated}</p>
+                </div>
+                <UserX className={`h-8 w-8 ${statusFilter === 'terminated' ? 'text-gray-600' : 'text-muted-foreground'}`} />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Search and Filter Bar */}
+      {employments.length > 0 && (
+        <div className="flex flex-col sm:flex-row gap-4 mb-6">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search by name, position, email, department..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <Select value={statusFilter} onValueChange={(v: 'all' | 'active' | 'probation' | 'terminated') => setStatusFilter(v)}>
+            <SelectTrigger className="w-full sm:w-[180px]">
+              <Filter className="h-4 w-4 mr-2" />
+              <SelectValue placeholder="Filter by status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Employees</SelectItem>
+              <SelectItem value="active">Active Only</SelectItem>
+              <SelectItem value="probation">On Probation</SelectItem>
+              <SelectItem value="terminated">Terminated</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+      )}
+
+      {/* Results count */}
+      {employments.length > 0 && searchQuery && (
+        <p className="text-sm text-muted-foreground mb-4">
+          Showing {filteredEmployments.length} of {employments.length} employees
+          {searchQuery && ` matching "${searchQuery}"`}
+        </p>
+      )}
+
       <div className="grid gap-4">
-        {employments.length === 0 ? (
+        {filteredEmployments.length === 0 ? (
           <Card>
             <CardContent className="py-12 text-center">
               <Briefcase className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-              <h3 className="text-lg font-semibold mb-2">No Active Employments</h3>
+              <h3 className="text-lg font-semibold mb-2">
+                {employments.length === 0 ? 'No Active Employments' : 'No Results Found'}
+              </h3>
               <p className="text-muted-foreground">
-                You don't have any active employees at the moment.
+                {employments.length === 0 
+                  ? "You don't have any active employees at the moment."
+                  : `No employees match your search "${searchQuery}" with the selected filter.`
+                }
               </p>
+              {employments.length > 0 && (
+                <Button 
+                  variant="outline" 
+                  className="mt-4"
+                  onClick={() => { setSearchQuery(''); setStatusFilter('all'); }}
+                >
+                  Clear Filters
+                </Button>
+              )}
             </CardContent>
           </Card>
         ) : (
-          employments.map((employment, index) => {
+          filteredEmployments.map((employment, index) => {
             const duration = calculateEmploymentDuration(employment.startDate, employment.endDate);
             const isProbation = isInProbation(employment.startDate, employment.probationEndDate);
             const canReview = isEligibleForReview(employment.startDate, employment.endDate);
