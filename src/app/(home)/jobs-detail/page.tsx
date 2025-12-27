@@ -231,11 +231,29 @@ const jobs: JobListing[] = [
   },
 ];
 
+// Helper function to split text into bullet points
+const splitToBullets = (text?: string | string[]) => {
+  if (!text) return [];
+
+  const normalize = (t: string) =>
+    t
+      .split(/\r?\n|•|- |\.\s+/)
+      .map(s => s.trim())
+      .filter(Boolean);
+
+  if (Array.isArray(text)) {
+    return text.flatMap(normalize);
+  }
+
+  return normalize(text);
+};
+
+
 export default function JobsDetailPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const urlJobId = searchParams.get("id");
-  
+
   const { isAuthenticated, candidateId, fetchCandidateProfile } =
     useAuthStore();
 
@@ -304,23 +322,23 @@ export default function JobsDetailPage() {
   useEffect(() => {
     const loadSpecificJob = async () => {
       if (!urlJobId) return;
-      
+
       const jobIdNum = parseInt(urlJobId, 10);
       if (isNaN(jobIdNum)) return;
-      
+
       try {
         // Fetch the specific job by ID
         const response = await api.get(`/api/job-postings/${jobIdNum}`);
         if (response.data?.result) {
           const specificJob = transformJobPosting(response.data.result);
-          
+
           // Add to jobs list if not already present
           setJobs(prevJobs => {
             const exists = prevJobs.some(j => j.id === jobIdNum);
             if (exists) return prevJobs;
             return [specificJob, ...prevJobs];
           });
-          
+
           // Select this job
           setSelectedJobId(jobIdNum);
         }
@@ -329,7 +347,7 @@ export default function JobsDetailPage() {
         // Job not found, will fall back to first job in list
       }
     };
-    
+
     loadSpecificJob();
   }, [urlJobId]);
 
@@ -443,7 +461,7 @@ export default function JobsDetailPage() {
   const handleJobSelect = useCallback((jobId: number) => {
     // Update URL to show the selected job
     router.push(`/jobs-detail?id=${jobId}`);
-    
+
     setSelectedJobId(jobId);
 
     // Track job view
@@ -970,7 +988,7 @@ ${jobData.recruiterInfo?.about || 'N/A'}
                               }
                             )}
                           </div>
-                         <button
+                          <button
                             onClick={() => handlePageChange(currentPage + 1)}
                             disabled={currentPage === totalPages - 1}
                             className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
@@ -1153,10 +1171,16 @@ ${jobData.recruiterInfo?.about || 'N/A'}
 
                     {/* Scrollable Content Area - scroll riêng trong card */}
                     <div
-                      className="overflow-y-auto flex-1"
+                      className="
+                                overflow-y-auto flex-1
+                                scrollbar-thin
+                                scrollbar-thumb-gray-300
+                                scrollbar-track-gray-100
+                                hover:scrollbar-thumb-gray-400
+                              "
                       style={{ maxHeight: "calc(100vh - 22rem)" }}
                     >
-                      <div className="p-6">
+                      <div className="p-6 pb-24">
                         {/* NEW: meta bar tóm tắt compensation */}
                         {/* {(selectedJob.salaryRange ||
                           selectedJob.benefitSummary?.length) && (
@@ -1182,7 +1206,7 @@ ${jobData.recruiterInfo?.about || 'N/A'}
                             <h3 className="font-semibold text-gray-900 mb-3">
                               Skills:
                             </h3>
-                            
+
                             {/* Must Have Skills */}
                             {selectedJob.mustHaveSkills && selectedJob.mustHaveSkills.length > 0 && (
                               <div className="mb-4">
@@ -1199,7 +1223,7 @@ ${jobData.recruiterInfo?.about || 'N/A'}
                                 </div>
                               </div>
                             )}
-                            
+
                             {/* Nice to Have Skills */}
                             {selectedJob.niceToHaveSkills && selectedJob.niceToHaveSkills.length > 0 && (
                               <div className="mb-4">
@@ -1216,31 +1240,31 @@ ${jobData.recruiterInfo?.about || 'N/A'}
                                 </div>
                               </div>
                             )}
-                            
+
                             {/* Fallback nếu không có phân loại */}
                             {(!selectedJob.mustHaveSkills || selectedJob.mustHaveSkills.length === 0) &&
-                             (!selectedJob.niceToHaveSkills || selectedJob.niceToHaveSkills.length === 0) &&
-                             selectedJob.skills && selectedJob.skills.length > 0 && (
-                              <div className="flex flex-wrap gap-2 mb-4">
-                                {selectedJob.skills.map((skill, index) => (
-                                  <span
-                                    key={index}
-                                    className="px-4 py-1 bg-white border border-gray-300 text-gray-700 text-sm rounded-full shadow-sm"
-                                  >
-                                    {skill}
-                                  </span>
-                                ))}
-                              </div>
-                            )}
-                            
+                              (!selectedJob.niceToHaveSkills || selectedJob.niceToHaveSkills.length === 0) &&
+                              selectedJob.skills && selectedJob.skills.length > 0 && (
+                                <div className="flex flex-wrap gap-2 mb-4">
+                                  {selectedJob.skills.map((skill, index) => (
+                                    <span
+                                      key={index}
+                                      className="px-4 py-1 bg-white border border-gray-300 text-gray-700 text-sm rounded-full shadow-sm"
+                                    >
+                                      {skill}
+                                    </span>
+                                  ))}
+                                </div>
+                              )}
+
                             {/* No skills */}
                             {(!selectedJob.mustHaveSkills || selectedJob.mustHaveSkills.length === 0) &&
-                             (!selectedJob.niceToHaveSkills || selectedJob.niceToHaveSkills.length === 0) &&
-                             (!selectedJob.skills || selectedJob.skills.length === 0) && (
-                              <span className="text-sm text-gray-500">
-                                No skills listed
-                              </span>
-                            )}
+                              (!selectedJob.niceToHaveSkills || selectedJob.niceToHaveSkills.length === 0) &&
+                              (!selectedJob.skills || selectedJob.skills.length === 0) && (
+                                <span className="text-sm text-gray-500">
+                                  No skills listed
+                                </span>
+                              )}
 
                             <h3 className="font-semibold text-gray-900 mb-3 mt-6">
                               Job Expertise:
@@ -1263,31 +1287,15 @@ ${jobData.recruiterInfo?.about || 'N/A'}
                             <h3 className="font-semibold text-gray-900 mb-4">
                               Why you'll love working here
                             </h3>
-                            <ul className="space-y-3 text-sm ml-4">
-                              {selectedJob.whyYouShouldJoin ? (
-                                selectedJob.whyYouShouldJoin.split('\n').filter(line => line.trim() !== '').map((item, index) => (
-                                  <li
-                                    key={index}
-                                    className="flex items-start gap-2"
-                                  >
-                                    <span className="w-1.5 h-1.5 bg-gray-700 rounded-full mt-2 flex-shrink-0"></span>
-                                    <span className="text-gray-700">{item.trim()}</span>
+                            <ul className="space-y-3 text-sm ml-5 list-disc">
+                              {splitToBullets(selectedJob.whyYouShouldJoin || selectedJob.highlights).length > 0 ? (
+                                splitToBullets(selectedJob.whyYouShouldJoin || selectedJob.highlights).map((item, index) => (
+                                  <li key={index} className="text-gray-700">
+                                    {item}
                                   </li>
                                 ))
-                              ) : selectedJob.highlights && selectedJob.highlights.filter(h => !h.toLowerCase().startsWith('must have:')).length > 0 ? (
-                                selectedJob.highlights
-                                  .filter(h => !h.toLowerCase().startsWith('must have:'))
-                                  .map((item, index) => (
-                                    <li
-                                      key={index}
-                                      className="flex items-start gap-2"
-                                    >
-                                      <span className="w-1.5 h-1.5 bg-gray-700 rounded-full mt-2 flex-shrink-0"></span>
-                                      <span className="text-gray-700">{item}</span>
-                                    </li>
-                                  ))
                               ) : (
-                                <li className="text-gray-500 text-sm">No information available</li>
+                                <li className="text-gray-500 list-none">No information available</li>
                               )}
                             </ul>
                           </div>
@@ -1302,16 +1310,10 @@ ${jobData.recruiterInfo?.about || 'N/A'}
                                   Compensation & Benefits
                                 </h3>
                               </div>
-                              <ul className="space-y-3 text-sm ml-4">
-                                {selectedJob.benefits.flatMap((b) => 
-                                  b.split('\n').filter(line => line.trim() !== '')
-                                ).map((line, i) => (
-                                  <li
-                                    key={i}
-                                    className="flex items-start gap-2"
-                                  >
-                                    <span className="w-1.5 h-1.5 bg-gray-700 rounded-full mt-2 flex-shrink-0"></span>
-                                    <span className="text-gray-700">{line.trim()}</span>
+                              <ul className="space-y-3 text-sm ml-5 list-disc">
+                                {splitToBullets(selectedJob.benefits).map((item, i) => (
+                                  <li key={i} className="text-gray-700">
+                                    {item}
                                   </li>
                                 ))}
                               </ul>
@@ -1324,13 +1326,13 @@ ${jobData.recruiterInfo?.about || 'N/A'}
                               Job description
                             </h3>
                           </div>
-                          <div className="text-sm text-gray-700 leading-relaxed">
-                            {selectedJob.description.map((item, index) => (
-                              <p key={index} className="mb-3">
+                          <ul className="space-y-3 text-sm ml-5 list-disc">
+                            {splitToBullets(selectedJob.description).map((item, index) => (
+                              <li key={index} className="text-gray-700 leading-relaxed">
                                 {item}
-                              </p>
+                              </li>
                             ))}
-                          </div>
+                          </ul>
                         </div>
                       </div>
                     </div>
@@ -1351,7 +1353,7 @@ ${jobData.recruiterInfo?.about || 'N/A'}
           </main>
 
           {/* Floating chat button */}
-          <div
+          {/* <div
             onClick={() => setIsChatOpen(true)}
             className="fixed bottom-6 right-6 w-16 h-16 bg-gradient-to-r from-[#3a4660] to-gray-500 rounded-full shadow-lg flex items-center justify-center cursor-pointer hover:shadow-xl transition-all duration-300 z-40"
           >
@@ -1369,7 +1371,7 @@ ${jobData.recruiterInfo?.about || 'N/A'}
               />
             </svg>
             <span className="absolute top-0 right-0 w-4 h-4 bg-red-500 border-2 border-white rounded-full"></span>
-          </div>
+          </div> */}
 
           {/* CHAT BOX — Commented out for now 
           {isChatOpen && (

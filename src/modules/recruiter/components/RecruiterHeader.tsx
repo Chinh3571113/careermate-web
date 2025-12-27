@@ -142,8 +142,8 @@ export function RecruiterHeader({ sidebarOpen = false }: RecruiterHeaderProps) {
 
   return (
     <header className="sticky top-0 z-50 bg-[#1b1b20f5] text-[#ffffff] w-full">
-      <div className="flex items-center justify-between p-4 border-b border-white/10">
-        <div className="flex items-center gap-6">
+      <div className="flex items-center justify-between p-3 md:p-4 border-b border-white/10">
+        <div className="flex items-center gap-3 md:gap-6">
           {/* Nút menu */}
           <button
             onClick={toggleSidebar}
@@ -154,18 +154,16 @@ export function RecruiterHeader({ sidebarOpen = false }: RecruiterHeaderProps) {
           </button>
 
           {/* Tiêu đề */}
-          <h1 className="text-lg font-semibold">CareerMate</h1>
+          <h1 className="text-base md:text-lg font-semibold">CareerMate</h1>
         </div>
-        <div className="flex items-center gap-4">
-          
-
+        <div className="flex items-center gap-2 md:gap-4">
           {/* Bên phải header */}
-            <div className="flex items-center space-x-4">
-              {isAuthenticated && user ? (
-                <>
-                  <span className="sm:block text-gray-300 hover:text-white transition-colors hidden text-xs md:inline">
-                    For Recruiter {userInfo?.username || userInfo?.name || "abc"}
-                  </span>
+          <div className="flex items-center space-x-2 md:space-x-4">
+            {isAuthenticated && user ? (
+              <>
+                <span className="hidden md:inline text-gray-300 hover:text-white transition-colors text-xs lg:text-sm">
+                  For Recruiter {userInfo?.username || userInfo?.name || "abc"}
+                </span>
 
                   {/* Notification Bell with SSE */}
                   <NotificationBell />

@@ -232,7 +232,7 @@ export interface RecruiterProfileApiResponse {
 }
 
 // Get Recruiter Profile (New endpoint)
-export const getRecruiterProfile = async (): Promise<RecruiterProfileApiResponse> => {
+export const  getRecruiterProfile = async (): Promise<RecruiterProfileApiResponse> => {
   try {
     console.log('🔵 [GET RECRUITER PROFILE] Fetching profile...');
     const response = await api.get('/api/recruiter/profile');

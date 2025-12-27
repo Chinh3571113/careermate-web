@@ -25,13 +25,15 @@ const NAV_ITEMS: NavItem[] = [
         icon: LayoutGrid,
     },
     {
-        label: "Candidates",
-        href: "/recruiter/candidates/applications",
-        icon: Users2,
+        label: "Uploaded Jobs",
+        href: "/recruiter/jobs",
+        icon: BriefcaseBusiness,
         subItems: [
-            { label: "Job applications", href: "/recruiter/recruiter-feature/candidates/applications" },
-            // { label: "Saved candidates", href: "/recruiter/recruiter-feature/candidates/saved" },
-            // { label: "Tag management", href: "/recruiter/recruiter-feature/candidates/tags" },
+            // { label: "Create job post", href: "/recruiter/recruiter-feature/jobs/create" },
+            { label: "Manage jobs", href: "/recruiter/recruiter-feature/jobs/active" },
+            { label: "Job application", href: "/recruiter/recruiter-feature/jobs/applications" },
+            // { label: "Draft jobs", href: "/recruiter/recruiter-feature/jobs/drafts" },
+            { label: "Job templates", href: "/recruiter/recruiter-feature/jobs/templates" },
         ],
     },
     {
@@ -50,28 +52,7 @@ const NAV_ITEMS: NavItem[] = [
         href: "/recruiter/recruiter-feature/reviews",
         icon: MessageSquareText,
     },
-    // {
-    //     label: "Services",
-    //     href: "/recruiter/services",
-    //     icon: Sparkles,
-    //     subItems: [
-    //         { label: "Premium features", href: "/recruiter/recruiter-feature/services/premium" },
-    //         { label: "Job boosting", href: "/recruiter/recruiter-feature/services/boost" },
-    //         { label: "Candidate search", href: "/recruiter/recruiter-feature/services/search" },
-    //     ],
-    // },
     {
-        label: "Uploaded Jobs",
-        href: "/recruiter/jobs",
-        icon: BriefcaseBusiness,
-        subItems: [
-            { label: "Create job post", href: "/recruiter/recruiter-feature/jobs/create" },
-            { label: "Active jobs", href: "/recruiter/recruiter-feature/jobs/active" },
-            // { label: "Draft jobs", href: "/recruiter/recruiter-feature/jobs/drafts" },
-            { label: "Job templates", href: "/recruiter/recruiter-feature/jobs/templates" },
-        ],
-    },
-     {
         label: "Account",
         href: "/recruiter/recruiter-feature/profile/account",
         icon: IdCard,
@@ -83,6 +64,26 @@ const NAV_ITEMS: NavItem[] = [
             { label: "Payment history", href: "/recruiter/transaction-history" },
         ],
     },
+    // {
+    //     label: "Candidates",
+    //     href: "/recruiter/candidates/applications",
+    //     icon: Users2,
+    //     subItems: [
+    //         { label: "Job applications", href: "/recruiter/recruiter-feature/candidates/applications" },
+    //         // { label: "Saved candidates", href: "/recruiter/recruiter-feature/candidates/saved" },
+    //         // { label: "Tag management", href: "/recruiter/recruiter-feature/candidates/tags" },
+    //     ],
+    // },
+    // {
+    //     label: "Services",
+    //     href: "/recruiter/services",
+    //     icon: Sparkles,
+    //     subItems: [
+    //         { label: "Premium features", href: "/recruiter/recruiter-feature/services/premium" },
+    //         { label: "Job boosting", href: "/recruiter/recruiter-feature/services/boost" },
+    //         { label: "Candidate search", href: "/recruiter/recruiter-feature/services/search" },
+    //     ],
+    // },
     // {
     //     label: "Support",
     //     href: "/recruiter/support",
@@ -108,7 +109,7 @@ export function RecruiterSidebar() {
         // Clear localStorage để đảm bảo fresh start
         localStorage.removeItem("sidebar-pinned");
         localStorage.setItem("sidebar-open", "false");
-        
+
         // Set trạng thái mặc định
         setIsOpen(false);
         setShowText(false);
@@ -125,29 +126,29 @@ export function RecruiterSidebar() {
     // Hover mở sidebar
     const handleMouseEnter = () => {
         console.log('🔵 Mouse entered sidebar, isPinned:', isPinned); // Debug log
-        
+
         // Clear timeout nếu có
         if (hoverTimeout) {
             clearTimeout(hoverTimeout);
             setHoverTimeout(null);
         }
-        
+
         // Mở sidebar ngay lập tức
         setIsOpen(true);
         setTimeout(() => setShowText(true), 150);
-        
+
         // Notify header about hover state
         window.dispatchEvent(new CustomEvent('sidebar-hover', {
             detail: { isOpen: true, isHover: true }
         }));
-        
+
         console.log('✅ Sidebar opened by hover');
     };
 
     // Hover rời sidebar → đóng
     const handleMouseLeave = () => {
         console.log('🔴 Mouse left sidebar, isPinned:', isPinned); // Debug log
-        
+
         // Nếu được pin bởi button, không đóng
         if (isPinned) {
             console.log('❌ Sidebar is pinned, not closing');
@@ -159,12 +160,12 @@ export function RecruiterSidebar() {
             console.log('🔒 Closing sidebar due to mouse leave');
             setIsOpen(false);
             setShowText(false);
-            
+
             // Notify header about hover state
             window.dispatchEvent(new CustomEvent('sidebar-hover', {
                 detail: { isOpen: false, isHover: false }
             }));
-            
+
             // Chỉ update localStorage nếu không được pin
             if (!isPinned) {
                 localStorage.setItem("sidebar-open", "false");
@@ -224,7 +225,7 @@ export function RecruiterSidebar() {
                 }
             });
         };
-        
+
         (window as any).resetSidebar = () => {
             console.log('🔄 Resetting sidebar completely');
             setIsPinned(false);
