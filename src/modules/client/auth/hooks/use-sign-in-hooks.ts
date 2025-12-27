@@ -1,5 +1,5 @@
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
@@ -21,6 +21,7 @@ type FormValues = z.infer<typeof formSchema>;
 
 const useSignInHook = () => {
   const route = useRouter();
+  const searchParams = useSearchParams();
   const [showPassword, setShowPassword] = useState(false);
   const login = useAuthStore((s) => s.login);
   const form = useForm<FormValues>({
@@ -30,6 +31,9 @@ const useSignInHook = () => {
       password: "",
     },
   });
+
+  // Get redirect URL from query params (set by middleware when session expired)
+  const redirectUrl = searchParams.get("redirect");
 
   const checkIsAdmin = (token: string): boolean => {
     try {
@@ -150,8 +154,11 @@ const useSignInHook = () => {
             }
           }
 
-          // Determine redirect path based on role
-          const redirectPath = getDefaultRedirectPath(role);
+          // Determine redirect path:
+          // 1. Use redirect URL from query params if available (session expired redirect)
+          // 2. Otherwise use role-based default path
+          const defaultPath = getDefaultRedirectPath(role);
+          const redirectPath = redirectUrl || defaultPath;
 
           // Use multiple redirect methods for reliability
           // Wait longer to ensure state is fully updated
@@ -160,6 +167,7 @@ const useSignInHook = () => {
               safeLog.authState("🟢 [SIGNIN] Redirecting after login", {
                 role,
                 redirectPath,
+                hadRedirectParam: !!redirectUrl,
               });
             }
 
