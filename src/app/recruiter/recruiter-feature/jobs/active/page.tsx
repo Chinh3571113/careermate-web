@@ -84,6 +84,11 @@ export default function ManageJobsPage() {
   const [skillsError, setSkillsError] = useState<string | null>(null);
   const [selectedSkillId, setSelectedSkillId] = useState("");
   const [newSkillMustHave, setNewSkillMustHave] = useState(true);
+  
+  // Edit Job Modal states
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingJob, setEditingJob] = useState<RecruiterJobPosting | null>(null);
+  
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -108,10 +113,10 @@ export default function ManageJobsPage() {
 
   // Fetch skills when create modal opens
   useEffect(() => {
-    if (showCreateModal && availableSkills.length === 0) {
+    if ((showCreateModal || showEditModal) && availableSkills.length === 0) {
       fetchSkillsData();
     }
-  }, [showCreateModal]);
+  }, [showCreateModal, showEditModal]);
 
   const fetchSkillsData = async () => {
     try {
@@ -235,6 +240,104 @@ export default function ManageJobsPage() {
     }
   };
 
+  // Open edit modal with job data (for PENDING/REJECTED jobs)
+  const handleEditJob = (job: RecruiterJobPosting) => {
+    setEditingJob(job);
+    setFormData({
+      title: job.title || "",
+      description: job.description || "",
+      address: job.address || "",
+      expirationDate: job.expirationDate || "",
+      yearsOfExperience: job.yearsOfExperience?.toString() || "",
+      workModel: job.workModel || "",
+      salaryRange: job.salaryRange || "",
+      reason: job.reason || "",
+      jobPackage: job.jobPackage || "",
+      skills: job.skills?.map((s) => ({
+        id: s.id,
+        mustToHave: s.mustToHave,
+        name: s.name,
+      })) || [],
+    });
+    setFormErrors({});
+    setShowEditModal(true);
+  };
+
+  // Submit edit job form
+  const handleEditJobSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingJob) return;
+
+    const errors = validateForm();
+    if (Object.keys(errors).length > 0) {
+      setFormErrors(errors);
+      toast.error("Please fill in all required fields");
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      const jobPostData: CreateJobPostRequest = {
+        title: formData.title,
+        description: formData.description,
+        address: formData.address,
+        expirationDate: formData.expirationDate,
+        jdSkills: formData.skills.map((skill) => ({ id: skill.id, mustToHave: skill.mustToHave })),
+        yearsOfExperience: parseInt(formData.yearsOfExperience),
+        workModel: formData.workModel,
+        salaryRange: formData.salaryRange,
+        reason: formData.reason || "",
+        jobPackage: formData.jobPackage,
+      };
+
+      const response = await updateJobPosting(editingJob.id, jobPostData);
+      if (response.code === 200 || response.code === 201 || response.code === 0) {
+        toast.success("Job post updated successfully!");
+        setShowEditModal(false);
+        setEditingJob(null);
+        // Reset form
+        setFormData({
+          title: "",
+          description: "",
+          address: "",
+          expirationDate: "",
+          yearsOfExperience: "",
+          workModel: "",
+          salaryRange: "",
+          reason: "",
+          jobPackage: "",
+          skills: [],
+        });
+        setFormErrors({});
+        // Refresh job list
+        fetchJobs();
+      }
+    } catch (error: any) {
+      toast.error(error.message || "Failed to update job post");
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Close edit modal
+  const handleCloseEditModal = () => {
+    setShowEditModal(false);
+    setEditingJob(null);
+    setFormData({
+      title: "",
+      description: "",
+      address: "",
+      expirationDate: "",
+      yearsOfExperience: "",
+      workModel: "",
+      salaryRange: "",
+      reason: "",
+      jobPackage: "",
+      skills: [],
+    });
+    setFormErrors({});
+  };
+
   const fetchJobs = async () => {
     setIsLoading(true);
     try {
@@ -343,6 +446,7 @@ export default function ManageJobsPage() {
   const handleEditExpirationDate = async () => {
     if (!selectedJob) return;
 
+    const wasExpired = selectedJob.status === "EXPIRED";
     setIsProcessing(true);
     try {
       const updateData: CreateJobPostRequest = {
@@ -361,7 +465,9 @@ export default function ManageJobsPage() {
       const response = await updateJobPosting(selectedJob.id, updateData);
 
       if (response.code === 0 || response.code === 200) {
-        toast.success("Expiration date updated successfully!");
+        toast.success(wasExpired 
+          ? "Job posting reactivated successfully! It is now visible to candidates." 
+          : "Expiration date updated successfully!");
         setShowEditDateModal(false);
         setSelectedJob(null);
         setNewExpirationDate("");
@@ -534,7 +640,7 @@ export default function ManageJobsPage() {
                     
                     {canEdit(job.status) && (
                       <button
-                        onClick={() => router.push(`/recruiter/recruiter-feature/jobs/edit/${job.id}`)}
+                        onClick={() => handleEditJob(job)}
                         className="p-2 text-gray-600 hover:text-sky-600 hover:bg-white rounded-lg transition-colors"
                         title="Edit Job"
                       >
@@ -542,15 +648,22 @@ export default function ManageJobsPage() {
                       </button>
                     )}
                     
-                    {job.status === "ACTIVE" && (
+                    {(job.status === "ACTIVE" || job.status === "EXPIRED") && (
                       <button
                         onClick={() => {
                           setSelectedJob(job);
-                          setNewExpirationDate(job.expirationDate);
+                          // For expired jobs, set tomorrow as default new date
+                          if (job.status === "EXPIRED") {
+                            const tomorrow = new Date();
+                            tomorrow.setDate(tomorrow.getDate() + 30); // Default to 30 days from now for expired jobs
+                            setNewExpirationDate(tomorrow.toISOString().split('T')[0]);
+                          } else {
+                            setNewExpirationDate(job.expirationDate);
+                          }
                           setShowEditDateModal(true);
                         }}
-                        className="p-2 text-gray-600 hover:text-sky-600 hover:bg-white rounded-lg transition-colors"
-                        title="Edit Expiration Date"
+                        className={`p-2 rounded-lg transition-colors ${job.status === "EXPIRED" ? "text-green-600 hover:text-green-700 hover:bg-green-50" : "text-gray-600 hover:text-sky-600 hover:bg-white"}`}
+                        title={job.status === "EXPIRED" ? "Extend & Reactivate Job" : "Edit Expiration Date"}
                       >
                         <Calendar className="h-4 w-4" />
                       </button>
@@ -841,29 +954,40 @@ export default function ManageJobsPage() {
                   )}
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {selectedJob.status === "ACTIVE" && (
-                    <>
-                      <button
-                        onClick={() => {
-                          setShowDetailModal(false);
+                  {(selectedJob.status === "ACTIVE" || selectedJob.status === "EXPIRED") && (
+                    <button
+                      onClick={() => {
+                        setShowDetailModal(false);
+                        // For expired jobs, set a future date as default
+                        if (selectedJob.status === "EXPIRED") {
+                          const futureDate = new Date();
+                          futureDate.setDate(futureDate.getDate() + 30);
+                          setNewExpirationDate(futureDate.toISOString().split('T')[0]);
+                        } else {
                           setNewExpirationDate(selectedJob.expirationDate);
-                          setShowEditDateModal(true);
-                        }}
-                        className="px-3 py-1.5 border border-gray-200 text-gray-600 hover:bg-gray-100 rounded-md transition-colors text-sm font-medium"
-                      >
-                        Extend
-                      </button>
-                      <button
-                        onClick={() => {
-                          setShowDetailModal(false);
-                          handleViewRecommendations(selectedJob);
-                        }}
-                        className="px-3 py-1.5 bg-violet-600 text-white hover:bg-violet-700 rounded-md transition-colors text-sm font-medium flex items-center gap-1.5"
-                      >
-                        <Sparkles className="h-3.5 w-3.5" />
-                        AI Match
-                      </button>
-                    </>
+                        }
+                        setShowEditDateModal(true);
+                      }}
+                      className={`px-3 py-1.5 rounded-md transition-colors text-sm font-medium ${
+                        selectedJob.status === "EXPIRED" 
+                          ? "bg-green-600 text-white hover:bg-green-700" 
+                          : "border border-gray-200 text-gray-600 hover:bg-gray-100"
+                      }`}
+                    >
+                      {selectedJob.status === "EXPIRED" ? "Extend & Reactivate" : "Extend"}
+                    </button>
+                  )}
+                  {selectedJob.status === "ACTIVE" && (
+                    <button
+                      onClick={() => {
+                        setShowDetailModal(false);
+                        handleViewRecommendations(selectedJob);
+                      }}
+                      className="px-3 py-1.5 bg-violet-600 text-white hover:bg-violet-700 rounded-md transition-colors text-sm font-medium flex items-center gap-1.5"
+                    >
+                      <Sparkles className="h-3.5 w-3.5" />
+                      AI Match
+                    </button>
                   )}
                   {canEdit(selectedJob.status) && (
                     <button
@@ -888,7 +1012,9 @@ export default function ManageJobsPage() {
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-gray-900">Edit Expiration Date</h3>
+              <h3 className="text-lg font-semibold text-gray-900">
+                {selectedJob.status === "EXPIRED" ? "Extend & Reactivate Job" : "Edit Expiration Date"}
+              </h3>
               <button
                 onClick={() => {
                   setShowEditDateModal(false);
@@ -906,10 +1032,19 @@ export default function ManageJobsPage() {
                 <strong>Job Title:</strong> {selectedJob.title}
               </p>
               
+              {/* Show expired notice for expired jobs */}
+              {selectedJob.status === "EXPIRED" && (
+                <div className="mb-4 bg-orange-50 border border-orange-200 rounded-lg p-3">
+                  <p className="text-sm text-orange-800">
+                    <strong>⚠️ This job has expired.</strong> Setting a new expiration date will <strong>reactivate</strong> the job posting and make it visible to candidates again.
+                  </p>
+                </div>
+              )}
+              
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Current Expiration Date
+                    {selectedJob.status === "EXPIRED" ? "Expired On" : "Current Expiration Date"}
                   </label>
                   <input
                     type="date"
@@ -956,17 +1091,21 @@ export default function ManageJobsPage() {
               <button
                 onClick={handleEditExpirationDate}
                 disabled={isProcessing || !newExpirationDate || newExpirationDate === selectedJob.expirationDate}
-                className="flex-1 px-4 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+                className={`flex-1 px-4 py-2 text-white rounded-lg transition-colors disabled:opacity-50 flex items-center justify-center gap-2 ${
+                  selectedJob.status === "EXPIRED" 
+                    ? "bg-green-600 hover:bg-green-700" 
+                    : "bg-sky-600 hover:bg-sky-700"
+                }`}
               >
                 {isProcessing ? (
                   <>
                     <RefreshCw className="h-4 w-4 animate-spin" />
-                    Saving...
+                    {selectedJob.status === "EXPIRED" ? "Reactivating..." : "Saving..."}
                   </>
                 ) : (
                   <>
                     <Calendar className="h-4 w-4" />
-                    Save Changes
+                    {selectedJob.status === "EXPIRED" ? "Extend & Reactivate" : "Save Changes"}
                   </>
                 )}
               </button>
@@ -1441,6 +1580,272 @@ export default function ManageJobsPage() {
                     <>
                       <Save className="w-4 h-4" />
                       Create Job Post
+                    </>
+                  )}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Job Modal */}
+      {showEditModal && editingJob && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4 overflow-y-auto">
+          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto my-4">
+            {/* Header */}
+            <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+              <div>
+                <h2 className="text-xl font-bold text-gray-900 flex items-center gap-2">
+                  <Pencil className="h-5 w-5 text-amber-600" />
+                  Edit Job Post
+                </h2>
+                <p className="text-sm text-gray-500 mt-1">
+                  Editing: <span className="font-medium">{editingJob.title}</span>
+                  <span className={`ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getStatusBadge(editingJob.status)}`}>
+                    {editingJob.status}
+                  </span>
+                </p>
+              </div>
+              <button
+                onClick={handleCloseEditModal}
+                className="p-1.5 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              >
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+
+            {/* Form */}
+            <form onSubmit={handleEditJobSubmit} className="px-6 py-5 space-y-4">
+              {/* Job Title */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Job Title <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="title"
+                  value={formData.title}
+                  onChange={handleFormChange}
+                  className={`w-full p-2.5 border rounded-lg ${formErrors.title ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-amber-500 focus:border-transparent`}
+                  placeholder="e.g. Frontend Developer"
+                />
+                {formErrors.title && <p className="text-sm text-red-600 mt-1">{formErrors.title}</p>}
+              </div>
+
+              {/* Description */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  Description <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  name="description"
+                  value={formData.description}
+                  onChange={handleFormChange}
+                  rows={4}
+                  className={`w-full p-2.5 border rounded-lg ${formErrors.description ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-amber-500 focus:border-transparent`}
+                  placeholder="Describe the job responsibilities and requirements..."
+                />
+                {formErrors.description && <p className="text-sm text-red-600 mt-1">{formErrors.description}</p>}
+              </div>
+
+              {/* Address */}
+              <div>
+                <label className="flex items-center text-sm font-medium text-gray-700 mb-1">
+                  <MapPin className="w-4 h-4 mr-1 text-gray-400" /> Address <span className="text-red-500 ml-1">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="address"
+                  value={formData.address}
+                  onChange={handleFormChange}
+                  className={`w-full p-2.5 border rounded-lg ${formErrors.address ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-amber-500 focus:border-transparent`}
+                  placeholder="e.g. Ho Chi Minh City, Vietnam"
+                />
+                {formErrors.address && <p className="text-sm text-red-600 mt-1">{formErrors.address}</p>}
+              </div>
+
+              {/* Grid: Experience & Work Model */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="flex items-center text-sm font-medium text-gray-700 mb-1">
+                    <Clock className="w-4 h-4 mr-1 text-gray-400" /> Experience <span className="text-red-500 ml-1">*</span>
+                  </label>
+                  <input
+                    type="number"
+                    name="yearsOfExperience"
+                    value={formData.yearsOfExperience}
+                    onChange={handleFormChange}
+                    min="0"
+                    className={`w-full p-2.5 border rounded-lg ${formErrors.yearsOfExperience ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-amber-500 focus:border-transparent`}
+                    placeholder="Years"
+                  />
+                  {formErrors.yearsOfExperience && <p className="text-sm text-red-600 mt-1">{formErrors.yearsOfExperience}</p>}
+                </div>
+                <div>
+                  <label className="flex items-center text-sm font-medium text-gray-700 mb-1">
+                    <Briefcase className="w-4 h-4 mr-1 text-gray-400" /> Work Model <span className="text-red-500 ml-1">*</span>
+                  </label>
+                  <select
+                    name="workModel"
+                    value={formData.workModel}
+                    onChange={handleFormChange}
+                    className={`w-full p-2.5 border rounded-lg ${formErrors.workModel ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-amber-500 focus:border-transparent`}
+                  >
+                    <option value="">Select...</option>
+                    <option value="Remote">Remote</option>
+                    <option value="Hybrid">Hybrid</option>
+                    <option value="Onsite">Onsite</option>
+                  </select>
+                  {formErrors.workModel && <p className="text-sm text-red-600 mt-1">{formErrors.workModel}</p>}
+                </div>
+              </div>
+
+              {/* Salary & Expiration */}
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="flex items-center text-sm font-medium text-gray-700 mb-1">
+                    <DollarSign className="w-4 h-4 mr-1 text-gray-400" /> Salary Range <span className="text-red-500 ml-1">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="salaryRange"
+                    value={formData.salaryRange}
+                    onChange={handleFormChange}
+                    className={`w-full p-2.5 border rounded-lg ${formErrors.salaryRange ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-amber-500 focus:border-transparent`}
+                    placeholder="e.g. $1000 - $2000"
+                  />
+                  {formErrors.salaryRange && <p className="text-sm text-red-600 mt-1">{formErrors.salaryRange}</p>}
+                </div>
+                <div>
+                  <label className="flex items-center text-sm font-medium text-gray-700 mb-1">
+                    <Calendar className="w-4 h-4 mr-1 text-gray-400" /> Expiration Date <span className="text-red-500 ml-1">*</span>
+                  </label>
+                  <input
+                    type="date"
+                    name="expirationDate"
+                    value={formData.expirationDate}
+                    onChange={handleFormChange}
+                    className={`w-full p-2.5 border rounded-lg ${formErrors.expirationDate ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-amber-500 focus:border-transparent`}
+                  />
+                  {formErrors.expirationDate && <p className="text-sm text-red-600 mt-1">{formErrors.expirationDate}</p>}
+                </div>
+              </div>
+
+              {/* Privilege */}
+              <div>
+                <label className="flex items-center text-sm font-medium text-gray-700 mb-1">
+                  <Package className="w-4 h-4 mr-1 text-gray-400" /> Privilege <span className="text-red-500 ml-1">*</span>
+                </label>
+                <input
+                  type="text"
+                  name="jobPackage"
+                  value={formData.jobPackage}
+                  onChange={handleFormChange}
+                  className={`w-full p-2.5 border rounded-lg ${formErrors.jobPackage ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-amber-500 focus:border-transparent`}
+                  placeholder="e.g. Health insurance, Free lunch"
+                />
+                {formErrors.jobPackage && <p className="text-sm text-red-600 mt-1">{formErrors.jobPackage}</p>}
+              </div>
+
+              {/* Skills */}
+              <div>
+                <label className="flex items-center text-sm font-medium text-gray-700 mb-1">
+                  <Tag className="w-4 h-4 mr-1 text-gray-400" /> Skills <span className="text-red-500 ml-1">*</span>
+                </label>
+                <div className="flex gap-2 mb-2">
+                  <select
+                    value={selectedSkillId}
+                    onChange={(e) => setSelectedSkillId(e.target.value)}
+                    className="flex-1 p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                    disabled={isLoadingSkills}
+                  >
+                    <option value="">
+                      {isLoadingSkills ? "Loading skills..." : skillsError ? "Skills unavailable" : "Select a skill"}
+                    </option>
+                    {availableSkills.map((skill) => (
+                      <option key={skill.id} value={skill.id}>{skill.name}</option>
+                    ))}
+                  </select>
+                  <label className="flex items-center gap-2 px-3 border border-gray-300 rounded-lg bg-white">
+                    <input
+                      type="checkbox"
+                      checked={newSkillMustHave}
+                      onChange={(e) => setNewSkillMustHave(e.target.checked)}
+                      className="h-4 w-4 text-amber-600 rounded"
+                    />
+                    <span className="text-sm text-gray-700 whitespace-nowrap">Must Have</span>
+                  </label>
+                  <button
+                    type="button"
+                    onClick={handleAddSkill}
+                    disabled={isLoadingSkills}
+                    className="px-3 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 disabled:opacity-50"
+                  >
+                    <Plus className="w-4 h-4" />
+                  </button>
+                </div>
+                {formErrors.skills && <p className="text-sm text-red-600 mb-2">{formErrors.skills}</p>}
+
+                {formData.skills.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {formData.skills.map((skill) => (
+                      <span
+                        key={skill.id}
+                        className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm ${
+                          skill.mustToHave ? "bg-rose-100 text-rose-700" : "bg-gray-100 text-gray-700"
+                        }`}
+                      >
+                        {skill.name}{skill.mustToHave && " *"}
+                        <button
+                          type="button"
+                          onClick={() => handleRemoveSkill(skill.id)}
+                          className="ml-1 hover:text-red-600"
+                        >
+                          <X className="w-3.5 h-3.5" />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Reason (optional) */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Benefits & Additional Info (Optional)</label>
+                <textarea
+                  name="reason"
+                  value={formData.reason}
+                  onChange={handleFormChange}
+                  rows={2}
+                  className="w-full p-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-amber-500 focus:border-transparent"
+                  placeholder="Additional benefits or information about the job..."
+                />
+              </div>
+
+              {/* Actions */}
+              <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
+                <button
+                  type="button"
+                  onClick={handleCloseEditModal}
+                  className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-100 transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="px-4 py-2 bg-amber-600 text-white rounded-lg hover:bg-amber-700 disabled:opacity-50 transition-colors flex items-center gap-2"
+                >
+                  {isSubmitting ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin" />
+                      Updating...
+                    </>
+                  ) : (
+                    <>
+                      <Save className="w-4 h-4" />
+                      Update Job Post
                     </>
                   )}
                 </button>

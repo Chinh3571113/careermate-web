@@ -141,8 +141,8 @@ export function RecruiterHeader({ sidebarOpen = false }: RecruiterHeaderProps) {
 
   return (
     <header className="sticky top-0 z-50 bg-[#1b1b20f5] text-[#ffffff] w-full">
-      <div className="flex items-center justify-between p-4 border-b border-white/10">
-        <div className="flex items-center gap-6">
+      <div className="flex items-center justify-between p-3 md:p-4 border-b border-white/10">
+        <div className="flex items-center gap-3 md:gap-6">
           {/* Nút menu */}
           <button
             onClick={toggleSidebar}
@@ -153,43 +153,41 @@ export function RecruiterHeader({ sidebarOpen = false }: RecruiterHeaderProps) {
           </button>
 
           {/* Tiêu đề */}
-          <h1 className="text-lg font-semibold">CareerMate</h1>
+          <h1 className="text-base md:text-lg font-semibold">CareerMate</h1>
         </div>
-        <div className="flex items-center gap-4">
-          
-
+        <div className="flex items-center gap-2 md:gap-4">
           {/* Bên phải header */}
-            <div className="flex items-center space-x-4">
-              {isAuthenticated && user ? (
-                <>
-                  <span className="sm:block text-gray-300 hover:text-white transition-colors hidden text-xs md:inline">
-                    For Recruiter {userInfo?.username || userInfo?.name || "abc"}
-                  </span>
+          <div className="flex items-center space-x-2 md:space-x-4">
+            {isAuthenticated && user ? (
+              <>
+                <span className="hidden md:inline text-gray-300 hover:text-white transition-colors text-xs lg:text-sm">
+                  For Recruiter {userInfo?.username || userInfo?.name || "abc"}
+                </span>
 
-                  <ProfileDropdown
-                    userName={userInfo?.username || userInfo?.name || user?.email || "User"}
-                    userEmail={userInfo?.email || user?.email}
-                    role={role || undefined}
-                    userAvatar={localAvatarUrl || recruiterAvatarUrl || undefined}
-                  />
-                </>
-              ) : (
-                <>
-                  <Link
-                    href="/sign-in"
-                    className="px-4 py-2 text-white hover:text-gray-300 transition-colors"
-                  >
-                    Sign In
-                  </Link>
-                  <Link
-                    href="/sign-up"
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                  >
-                    Sign Up
-                  </Link>
-                </>
-              )}
-            </div>
+                <ProfileDropdown
+                  userName={userInfo?.username || userInfo?.name || user?.email || "User"}
+                  userEmail={userInfo?.email || user?.email}
+                  role={role || undefined}
+                  userAvatar={localAvatarUrl || recruiterAvatarUrl || undefined}
+                />
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/sign-in"
+                  className="px-3 py-1.5 md:px-4 md:py-2 text-sm md:text-base text-white hover:text-gray-300 transition-colors"
+                >
+                  Sign In
+                </Link>
+                <Link
+                  href="/sign-up"
+                  className="px-3 py-1.5 md:px-4 md:py-2 text-sm md:text-base bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                >
+                  Sign Up
+                </Link>
+              </>
+            )}
+          </div>
         </div>
       </div>
       <div className="border-b border-[#1f4171]"></div>

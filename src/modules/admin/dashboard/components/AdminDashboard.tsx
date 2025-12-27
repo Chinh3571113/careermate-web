@@ -336,29 +336,6 @@ export default function AdminDashboard() {
                 />
               </PieChart>
             </ResponsiveContainer>
-            <div className="mt-3 lg:mt-4 space-y-1.5 lg:space-y-2">
-              <div className="flex justify-between items-center text-xs lg:text-sm">
-                <span className="flex items-center gap-2">
-                  <div className="w-2.5 h-2.5 lg:w-3 lg:h-3 rounded-full bg-blue-500"></div>
-                  Candidates
-                </span>
-                <span className="font-semibold">{stats.totalCandidates.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between items-center text-xs lg:text-sm">
-                <span className="flex items-center gap-2">
-                  <div className="w-2.5 h-2.5 lg:w-3 lg:h-3 rounded-full bg-green-500"></div>
-                  Recruiters
-                </span>
-                <span className="font-semibold">{stats.totalRecruiters.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between items-center text-xs lg:text-sm">
-                <span className="flex items-center gap-2">
-                  <div className="w-2.5 h-2.5 lg:w-3 lg:h-3 rounded-full bg-yellow-500"></div>
-                  Admins
-                </span>
-                <span className="font-semibold">{stats.totalAdmins.toLocaleString()}</span>
-              </div>
-            </div>
           </CardContent>
         </Card>
 
@@ -400,36 +377,6 @@ export default function AdminDashboard() {
                 />
               </PieChart>
             </ResponsiveContainer>
-            <div className="mt-3 lg:mt-4 space-y-1.5 lg:space-y-2">
-              <div className="flex justify-between items-center text-xs lg:text-sm">
-                <span className="flex items-center gap-2">
-                  <div className="w-2.5 h-2.5 lg:w-3 lg:h-3 rounded-full bg-green-500"></div>
-                  Active
-                </span>
-                <span className="font-semibold">{stats.activeAccounts.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between items-center text-xs lg:text-sm">
-                <span className="flex items-center gap-2">
-                  <div className="w-2.5 h-2.5 lg:w-3 lg:h-3 rounded-full bg-yellow-500"></div>
-                  Pending
-                </span>
-                <span className="font-semibold">{stats.pendingAccounts.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between items-center text-xs lg:text-sm">
-                <span className="flex items-center gap-2">
-                  <div className="w-2.5 h-2.5 lg:w-3 lg:h-3 rounded-full bg-red-500"></div>
-                  Banned
-                </span>
-                <span className="font-semibold">{stats.bannedAccounts.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between items-center text-xs lg:text-sm">
-                <span className="flex items-center gap-2">
-                  <div className="w-2.5 h-2.5 lg:w-3 lg:h-3 rounded-full bg-gray-500"></div>
-                  Rejected
-                </span>
-                <span className="font-semibold">{stats.rejectedAccounts.toLocaleString()}</span>
-              </div>
-            </div>
           </CardContent>
         </Card>
       </div>

@@ -18,30 +18,16 @@ export interface SkillCreateResponse {
 }
 
 // Get all skills (no pagination - returns full list)
-// Fetches both core and soft skills by default for admin management
+// Uses type=all to get all skills regardless of type for admin management
 export const getSkillList = async (): Promise<SkillListResponse> => {
   try {
-    // Fetch both core and soft skills in parallel
-    const [coreResponse, softResponse] = await Promise.all([
-      api.get('/api/jdskill?type=core'),
-      api.get('/api/jdskill?type=soft')
-    ]);
-    
-    // Combine both results
-    const combinedSkills = [
-      ...coreResponse.data.result,
-      ...softResponse.data.result
-    ];
-    
-    // Remove duplicates by ID
-    const uniqueSkills = Array.from(
-      new Map(combinedSkills.map(skill => [skill.id, skill])).values()
-    );
+    // Fetch all skills using type=all
+    const response = await api.get('/api/jdskill?type=all');
     
     return {
       code: 200,
       message: 'success',
-      result: uniqueSkills
+      result: response.data.result || []
     };
   } catch (error) {
     console.error('Error fetching skill list:', error);
