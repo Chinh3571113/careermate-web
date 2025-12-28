@@ -204,12 +204,23 @@ export default function ApplicationsPageContent() {
       }
 
       if (response.code === 200 && response.result) {
-        setApplications(response.result);
-        setFilteredApplications(response.result);
+        // Sort by createAt descending (newest first) for better demo
+        const sortedApplications = [...response.result].sort((a, b) => {
+          const dateA = new Date(a.createAt).getTime();
+          const dateB = new Date(b.createAt).getTime();
+          return dateB - dateA; // Descending order (newest first)
+        });
+        setApplications(sortedApplications);
+        setFilteredApplications(sortedApplications);
       } else if (response.code === 0 && response.result) {
-        // Legacy response format
-        setApplications(response.result);
-        setFilteredApplications(response.result);
+        // Legacy response format - also sort by newest first
+        const sortedApplications = [...response.result].sort((a, b) => {
+          const dateA = new Date(a.createAt).getTime();
+          const dateB = new Date(b.createAt).getTime();
+          return dateB - dateA;
+        });
+        setApplications(sortedApplications);
+        setFilteredApplications(sortedApplications);
       } else {
         toast.error(response.message || "Failed to fetch applications");
       }
