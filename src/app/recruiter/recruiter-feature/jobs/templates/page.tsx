@@ -257,12 +257,12 @@ Requirements:
     return matchesSearch && matchesCategory;
   });
 
-  // Handle "Use Now" - navigate to create page with template data
+  // Handle "Use Now" - navigate to active jobs page with template data
   const handleUseTemplate = (template: JobTemplate) => {
     // Store template data in sessionStorage
     sessionStorage.setItem('jobTemplate', JSON.stringify(template));
-    // Navigate to create page
-    router.push('/recruiter/recruiter-feature/jobs/create');
+    // Navigate to active jobs page (will auto-open create modal with template data)
+    router.push('/recruiter/recruiter-feature/jobs/active');
   };
 
   return (

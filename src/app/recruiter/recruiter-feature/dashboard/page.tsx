@@ -298,7 +298,7 @@ export default function RecruiterDashboardPage() {
                         title="Post a New Job"
                         description="Create and publish job postings to attract top candidates"
                         icon={<Sparkles className="h-6 w-6 text-white" />}
-                        onClick={() => router.push('/recruiter/recruiter-feature/jobs/create')}
+                        onClick={() => router.push('/recruiter/recruiter-feature/jobs/active')}
                         variant="primary"
                     />
                     
@@ -488,12 +488,17 @@ export default function RecruiterDashboardPage() {
                                     <div
                                         key={job.id}
                                         className="group border rounded-lg p-4 hover:bg-blue-50 hover:border-blue-300 transition-all cursor-pointer"
-                                        onClick={() => router.push('/recruiter/recruiter-feature/jobs/active')}
+                                        onClick={() => {
+                                            // Store job data for viewing/editing
+                                            sessionStorage.setItem('viewJobId', job.id.toString());
+                                            router.push('/recruiter/recruiter-feature/jobs/active');
+                                        }}
                                         role="button"
                                         tabIndex={0}
                                         onKeyDown={(e) => {
                                             if (e.key === 'Enter' || e.key === ' ') {
                                                 e.preventDefault();
+                                                sessionStorage.setItem('viewJobId', job.id.toString());
                                                 router.push('/recruiter/recruiter-feature/jobs/active');
                                             }
                                         }}
@@ -540,7 +545,7 @@ export default function RecruiterDashboardPage() {
                             <Briefcase className="h-12 w-12 mx-auto text-gray-300 mb-3" />
                             <p className="text-gray-500 font-medium">No jobs posted yet</p>
                             <button
-                                onClick={() => router.push('/recruiter/recruiter-feature/jobs/create')}
+                                onClick={() => router.push('/recruiter/recruiter-feature/jobs/active')}
                                 className="mt-4 text-sm text-blue-600 hover:text-blue-700 font-medium"
                             >
                                 Create your first job →
@@ -574,12 +579,17 @@ export default function RecruiterDashboardPage() {
                                 <div
                                     key={application.id}
                                     className="group border rounded-lg p-4 hover:bg-purple-50 hover:border-purple-300 transition-all cursor-pointer"
-                                    onClick={() => router.push('/recruiter/recruiter-feature/jobs/applications')}
+                                    onClick={() => {
+                                        // Store application ID for viewing details
+                                        sessionStorage.setItem('viewApplicationId', application.id.toString());
+                                        router.push('/recruiter/recruiter-feature/jobs/applications');
+                                    }}
                                     role="button"
                                     tabIndex={0}
                                     onKeyDown={(e) => {
                                         if (e.key === 'Enter' || e.key === ' ') {
                                             e.preventDefault();
+                                            sessionStorage.setItem('viewApplicationId', application.id.toString());
                                             router.push('/recruiter/recruiter-feature/jobs/applications');
                                         }
                                     }}

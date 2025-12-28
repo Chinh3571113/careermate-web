@@ -88,7 +88,7 @@ interface JobSourceOption {
 export default function AIInterviewPracticePage() {
   const { headerHeight } = useLayout();
   const router = useRouter();
-  const { candidateId, fetchCandidateProfile } = useAuthStore();
+  const { candidateId, profile, fetchCandidateProfile } = useAuthStore();
   
   // Stage management
   const [stage, setStage] = useState<InterviewStage>('start');
@@ -267,7 +267,7 @@ export default function AIInterviewPracticePage() {
 
       if (options.length === 0) {
         setRedirectingToJobs(true);
-        setTimeout(() => router.push('/jobs-list'), 800);
+        setTimeout(() => router.push('/jobs-detail'), 800);
       } else {
         setRedirectingToJobs(false);
       }
@@ -639,8 +639,39 @@ export default function AIInterviewPracticePage() {
 
     if (jobOptions.length === 0 && !loadingJobOptions) {
       setRedirectingToJobs(true);
-      setTimeout(() => router.push('/jobs-list'), 600);
+      setTimeout(() => router.push('/jobs-detail'), 600);
     }
+  };
+
+  // Process report to replace placeholder text with actual data
+  const processReportWithCandidateInfo = (report: string, sessionData?: InterviewSessionResponse) => {
+    if (!report) return report;
+    
+    let processedReport = report;
+    
+    // Replace candidate name placeholder
+    const candidateName = profile?.fullName || 'N/A';
+    processedReport = processedReport
+      .replace(/\[Candidate Name - \*Replace with actual candidate name\*\]/g, candidateName)
+      .replace(/\[Candidate Name\]/g, candidateName);
+    
+    // Extract position from the report itself (from the "Position:" line)
+    // This keeps the position as-is from the AI-generated report (e.g., "ReactJS/TypeScript Developer")
+    // No replacement needed - the position is already in the final report
+    
+    // Replace date placeholder
+    const interviewDate = sessionData?.completedAt 
+      ? new Date(sessionData.completedAt).toLocaleDateString('en-US', { 
+          year: 'numeric', 
+          month: 'long', 
+          day: 'numeric' 
+        })
+      : 'N/A';
+    processedReport = processedReport
+      .replace(/\[Date of Interview - \*Replace with actual date\*\]/g, interviewDate)
+      .replace(/\[Date of Interview\]/g, interviewDate);
+    
+    return processedReport;
   };
 
   const renderReportContent = (report: string) => {
@@ -651,10 +682,10 @@ export default function AIInterviewPracticePage() {
     const flushList = () => {
       if (listBuffer.length === 0) return;
       blocks.push(
-        <ul className="space-y-2" key={`list-${blocks.length}`}>
+        <ul className="space-y-2 ml-6" key={`list-${blocks.length}`}>
           {listBuffer.map((item, idx) => (
             <li key={idx} className="flex items-start gap-3 text-sm text-slate-700 leading-relaxed">
-              <span className="mt-1 h-2 w-2 rounded-full bg-blue-500" />
+              <span className="mt-1 h-2 w-2 rounded-full bg-blue-500 flex-shrink-0" />
               <span className="flex-1">{item}</span>
             </li>
           ))}
@@ -1319,6 +1350,33 @@ export default function AIInterviewPracticePage() {
             <CardContent className="pt-6 space-y-4">
               {session?.finalReport ? (
                 <div className="space-y-5">
+                  {/* Candidate Info Header */}
+                  <div className="bg-white rounded-lg border border-slate-200 p-4 space-y-2">
+                    <div className="flex items-center gap-2 text-sm text-slate-600">
+                      <User className="w-4 h-4" />
+                      <span className="font-medium">Candidate:</span>
+                      <span className="text-slate-900">{profile?.fullName || 'N/A'}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-slate-600">
+                      <Briefcase className="w-4 h-4" />
+                      <span className="font-medium">Position:</span>
+                      <span className="text-slate-900">{profile?.title || 'N/A'}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-slate-600">
+                      <Calendar className="w-4 h-4" />
+                      <span className="font-medium">Date:</span>
+                      <span className="text-slate-900">
+                        {session.completedAt 
+                          ? new Date(session.completedAt).toLocaleDateString('en-US', { 
+                              year: 'numeric', 
+                              month: 'long', 
+                              day: 'numeric' 
+                            })
+                          : 'N/A'}
+                      </span>
+                    </div>
+                  </div>
+
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-xs uppercase text-slate-500 tracking-[0.08em]">AI Summary</p>
@@ -1328,7 +1386,7 @@ export default function AIInterviewPracticePage() {
                     <Badge variant="outline" className="text-xs bg-white text-slate-700 border-slate-200">Auto-generated</Badge>
                   </div>
                   <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-4">
-                    {renderReportContent(session.finalReport)}
+                    {renderReportContent(processReportWithCandidateInfo(session.finalReport, session))}
                   </div>
                 </div>
               ) : (
@@ -1517,9 +1575,37 @@ export default function AIInterviewPracticePage() {
               {/* Final Report */}
               {selectedSession.finalReport && (
                 <div className="mb-6">
-                  <h4 className="font-medium text-gray-700 mb-2">Final Report</h4>
+                  <h4 className="font-medium text-gray-700 mb-3">Final Report</h4>
+                  
+                  {/* Candidate Info Header */}
+                  {/* <div className="bg-white rounded-lg border border-slate-200 p-4 mb-4 space-y-2">
+                    <div className="flex items-center gap-2 text-sm text-slate-600">
+                      <User className="w-4 h-4" />
+                      <span className="font-medium">Candidate:</span>
+                      <span className="text-slate-900">{profile?.fullName || 'N/A'}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-slate-600">
+                      <Briefcase className="w-4 h-4" />
+                      <span className="font-medium">Position:</span>
+                      <span className="text-slate-900">{profile?.title || 'N/A'}</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-slate-600">
+                      <Calendar className="w-4 h-4" />
+                      <span className="font-medium">Date:</span>
+                      <span className="text-slate-900">
+                        {selectedSession.completedAt 
+                          ? new Date(selectedSession.completedAt).toLocaleDateString('en-US', { 
+                              year: 'numeric', 
+                              month: 'long', 
+                              day: 'numeric' 
+                            })
+                          : 'N/A'}
+                      </span>
+                    </div>
+                  </div> */}
+
                   <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs">
-                    {renderReportContent(selectedSession.finalReport)}
+                    {renderReportContent(processReportWithCandidateInfo(selectedSession.finalReport, selectedSession))}
                   </div>
                 </div>
               )}

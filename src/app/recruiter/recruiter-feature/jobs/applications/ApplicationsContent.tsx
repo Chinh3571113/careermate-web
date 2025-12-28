@@ -287,6 +287,32 @@ export function ApplicationsContent() {
     setFilteredApplications(filtered);
   }, [searchQuery, selectedStatus, applications]);
 
+  // Handle viewApplicationId from dashboard - open detail modal for specific application
+  useEffect(() => {
+    const viewApplicationId = sessionStorage.getItem('viewApplicationId');
+    if (viewApplicationId && applications.length > 0) {
+      try {
+        const applicationId = parseInt(viewApplicationId, 10);
+        const applicationToView = applications.find(app => app.id === applicationId);
+        
+        if (applicationToView) {
+          console.log('👁️ Opening application for viewing:', applicationToView);
+          setSelectedApplication(applicationToView);
+          setIsDetailDialogOpen(true);
+          
+          // Clear sessionStorage after loading
+          sessionStorage.removeItem('viewApplicationId');
+        } else {
+          console.warn('Application not found with ID:', applicationId);
+          sessionStorage.removeItem('viewApplicationId');
+        }
+      } catch (error) {
+        console.error('Error loading application for viewing:', error);
+        sessionStorage.removeItem('viewApplicationId');
+      }
+    }
+  }, [applications]); // Depend on applications array to wait until data is loaded
+
   // Approve
   const handleApprove = async () => {
     if (!selectedApplication) return;
