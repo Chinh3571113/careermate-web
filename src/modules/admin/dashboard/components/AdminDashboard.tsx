@@ -22,6 +22,9 @@ import {
   Network,
   Server,
   Flame,
+  DollarSign,
+  CreditCard,
+  TrendingUp,
 } from "lucide-react";
 import Link from "next/link";
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip, Legend } from "recharts";
@@ -141,14 +144,6 @@ export default function AdminDashboard() {
     { name: 'Banned', value: stats.bannedAccounts },
     { name: 'Rejected', value: stats.rejectedAccounts },
   ].filter(item => item.value > 0);
-  
-  const systemComponents = [
-    { name: 'Database', status: stats.databaseStatus, icon: Database },
-    { name: 'Kafka', status: stats.kafkaStatus, icon: Server },
-    { name: 'Weaviate', status: stats.weaviateStatus, icon: Network },
-    { name: 'Email Service', status: stats.emailStatus, icon: Mail },
-    { name: 'Firebase', status: stats.firebaseStatus, icon: Flame },
-  ];
 
   const isSystemHealthy = stats.systemStatus === 'UP';
   const totalPendingItems = stats.pendingRecruiterApprovals + stats.flaggedComments + stats.flaggedRatings;
@@ -425,54 +420,71 @@ export default function AdminDashboard() {
         </CardContent>
       </Card>
 
-      {/* System Components Status */}
+      {/* Revenue & Payment Statistics */}
       <Card>
         <CardHeader className="pb-2 lg:pb-4">
           <CardTitle className="flex items-center gap-2 text-sm lg:text-base xl:text-lg">
-            <Server className="w-4 h-4 lg:w-5 lg:h-5" />
-            System Components
+            <DollarSign className="w-4 h-4 lg:w-5 lg:h-5 text-green-600" />
+            Revenue & Payment Statistics
           </CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-3 lg:gap-4">
-            {systemComponents.map((component) => {
-              const Icon = component.icon;
-              const isUp = component.status === 'UP';
-              const isUnknown = component.status === 'UNKNOWN';
-              
-              return (
-                <div 
-                  key={component.name}
-                  className={`p-3 lg:p-4 rounded-lg border-2 transition-all ${
-                    isUp 
-                      ? 'bg-green-50 border-green-200' 
-                      : isUnknown
-                      ? 'bg-gray-50 border-gray-200'
-                      : 'bg-red-50 border-red-200'
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-1.5 lg:mb-2">
-                    <Icon className={`w-4 h-4 lg:w-5 lg:h-5 ${
-                      isUp 
-                        ? 'text-green-600' 
-                        : isUnknown
-                        ? 'text-gray-600'
-                        : 'text-red-600'
-                    }`} />
-                    <span className={`px-1.5 py-0.5 lg:px-2 lg:py-1 rounded-full text-[10px] lg:text-xs font-semibold ${
-                      isUp 
-                        ? 'bg-green-100 text-green-700' 
-                        : isUnknown
-                        ? 'bg-gray-100 text-gray-700'
-                        : 'bg-red-100 text-red-700'
-                    }`}>
-                      {component.status}
-                    </span>
-                  </div>
-                  <p className="text-xs lg:text-sm font-medium text-gray-900 truncate">{component.name}</p>
+          <div className="grid grid-cols-2 lg:grid-cols-5 gap-3 lg:gap-4 xl:gap-5">
+            <div className="p-3 lg:p-4 bg-green-50 rounded-lg">
+              <div className="flex items-center gap-2 lg:gap-3">
+                <DollarSign className="w-6 h-6 lg:w-7 lg:h-7 xl:w-8 xl:h-8 text-green-600 shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-xs lg:text-sm text-gray-600">Total Revenue</p>
+                  <p className="text-lg lg:text-xl xl:text-2xl font-bold text-gray-900">
+                    {(stats.totalRevenue || 0).toLocaleString()}đ
+                  </p>
                 </div>
-              );
-            })}
+              </div>
+            </div>
+            <div className="p-3 lg:p-4 bg-blue-50 rounded-lg">
+              <div className="flex items-center gap-2 lg:gap-3">
+                <Briefcase className="w-6 h-6 lg:w-7 lg:h-7 xl:w-8 xl:h-8 text-blue-600 shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-xs lg:text-sm text-gray-600">Recruiter Revenue</p>
+                  <p className="text-lg lg:text-xl xl:text-2xl font-bold text-gray-900">
+                    {(stats.recruiterRevenue || 0).toLocaleString()}đ
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="p-3 lg:p-4 bg-purple-50 rounded-lg">
+              <div className="flex items-center gap-2 lg:gap-3">
+                <Users className="w-6 h-6 lg:w-7 lg:h-7 xl:w-8 xl:h-8 text-purple-600 shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-xs lg:text-sm text-gray-600">Candidate Revenue</p>
+                  <p className="text-lg lg:text-xl xl:text-2xl font-bold text-gray-900">
+                    {(stats.candidateRevenue || 0).toLocaleString()}đ
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="p-3 lg:p-4 bg-orange-50 rounded-lg">
+              <div className="flex items-center gap-2 lg:gap-3">
+                <TrendingUp className="w-6 h-6 lg:w-7 lg:h-7 xl:w-8 xl:h-8 text-orange-600 shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-xs lg:text-sm text-gray-600">Active Subscriptions</p>
+                  <p className="text-lg lg:text-xl xl:text-2xl font-bold text-gray-900">
+                    {(stats.activeSubscriptions || 0).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div className="p-3 lg:p-4 bg-gray-50 rounded-lg">
+              <div className="flex items-center gap-2 lg:gap-3">
+                <CreditCard className="w-6 h-6 lg:w-7 lg:h-7 xl:w-8 xl:h-8 text-gray-600 shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-xs lg:text-sm text-gray-600">Total Transactions</p>
+                  <p className="text-lg lg:text-xl xl:text-2xl font-bold text-gray-900">
+                    {(stats.totalTransactions || 0).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+            </div>
           </div>
         </CardContent>
       </Card>

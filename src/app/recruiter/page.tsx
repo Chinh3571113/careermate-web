@@ -231,7 +231,7 @@ export default function RecruiterHomePage() {
                 Account
               </Link>
               <Link
-                href="/recruiter/recruiter-feature/candidates/applications"
+                href="/recruiter/recruiter-feature/jobs/applications"
                 className="text-[#ffffff] hover:text-[#c8c8c8]"
               >
                 Candidates

@@ -206,13 +206,13 @@ export function NotificationBell() {
       }
       else if (eventType === 'APPLICATION_RECEIVED') {
         // New candidate application - go to applications list
-        redirectUrl = '/recruiter/recruiter-feature/candidates/applications';
-        console.log('✅ [Recruiter] Application received -> /recruiter/recruiter-feature/candidates/applications');
+        redirectUrl = '/recruiter/recruiter-feature/jobs/applications';
+        console.log('✅ [Recruiter] Application received -> /recruiter/recruiter-feature/jobs/applications');
       }
       else if (eventType === 'APPLICATION_WITHDRAWN') {
         // Candidate manually withdrew their application
-        redirectUrl = '/recruiter/recruiter-feature/candidates/applications';
-        console.log('✅ [Recruiter] Application withdrawn -> /recruiter/recruiter-feature/candidates/applications');
+        redirectUrl = '/recruiter/recruiter-feature/jobs/applications';
+        console.log('✅ [Recruiter] Application withdrawn -> /recruiter/recruiter-feature/jobs/applications');
       }
       else if (eventType === 'INTERVIEW_CONFIRMED') {
         // Candidate confirmed attendance
@@ -268,13 +268,13 @@ export function NotificationBell() {
       }
       else if (eventType === 'OFFER_ACCEPTED') {
         // v3.1: Candidate accepted offer - notification for recruiter
-        redirectUrl = '/recruiter/recruiter-feature/candidates/applications';
-        console.log('🎉 [Recruiter] Offer accepted by candidate -> /recruiter/recruiter-feature/candidates/applications');
+        redirectUrl = '/recruiter/recruiter-feature/jobs/applications';
+        console.log('🎉 [Recruiter] Offer accepted by candidate -> /recruiter/recruiter-feature/jobs/applications');
       }
       else if (eventType === 'OFFER_DECLINED') {
         // v3.1: Candidate declined offer - notification for recruiter
-        redirectUrl = '/recruiter/recruiter-feature/candidates/applications';
-        console.log('❌ [Recruiter] Offer declined by candidate -> /recruiter/recruiter-feature/candidates/applications');
+        redirectUrl = '/recruiter/recruiter-feature/jobs/applications';
+        console.log('❌ [Recruiter] Offer declined by candidate -> /recruiter/recruiter-feature/jobs/applications');
       }
       // Note: Auto-withdrawal feature removed (v3.2) - platform is neutral
       // Candidates can have multiple employments and manage applications manually
