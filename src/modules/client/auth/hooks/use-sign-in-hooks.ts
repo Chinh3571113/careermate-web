@@ -177,7 +177,7 @@ const useSignInHook = () => {
         } else {
           const error = new Error("No access token found after login");
           safeLog.error("🔴 [SIGNIN] No access token found after login", error);
-          toast.error("Login failed - no token received");
+          // toast.error("Login failed - no token received"); // Hidden - internal error
           route.push("/");
         }
       } else {
