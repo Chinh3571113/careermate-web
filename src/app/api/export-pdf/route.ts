@@ -13,7 +13,7 @@ export const maxDuration = 60; // Maximum execution time in seconds
 // CONFIGURATION
 // ========================================
 
-// Proper base URL resolver
+// Proper base URL resolver (used by GET health check endpoint)
 function getBaseUrl(): string {
   // 1. Check for explicit NEXT_PUBLIC_BASE_URL (production)
   if (process.env.NEXT_PUBLIC_BASE_URL) {
@@ -30,7 +30,7 @@ function getBaseUrl(): string {
   return `http://localhost:${port}`;
 }
 
-const BASE_URL = getBaseUrl();
+// Note: POST handler now derives base URL from req.nextUrl.origin instead
 const isDev = process.env.NODE_ENV === "development";
 
 // Valid template IDs
@@ -54,6 +54,9 @@ interface ExportRequest {
 export async function POST(req: NextRequest) {
   let browser = null;
   const startTime = Date.now();
+  
+  // Derive base URL from incoming request instead of environment variables
+  const baseUrl = req.nextUrl.origin;
   
   try {
     // ========================================
@@ -97,10 +100,7 @@ export async function POST(req: NextRequest) {
     console.log("📁 File name:", fileName || `cv.pdf`);
     console.log("📊 Data size:", (cvDataJson.length / 1024).toFixed(2), "KB");
     console.log("🔧 Environment:", isDev ? "Development" : "Production");
-    console.log("🌐 Resolved Base URL:", BASE_URL);
-    console.log("🔍 PORT env:", process.env.PORT || "not set");
-    console.log("🔍 NEXT_PUBLIC_BASE_URL:", process.env.NEXT_PUBLIC_BASE_URL || "not set");
-    console.log("🔍 VERCEL_URL:", process.env.VERCEL_URL || "not set");
+    console.log("🌐 Resolved Base URL (from request):", baseUrl);
     console.log("========================================");
 
     // ========================================
@@ -168,9 +168,9 @@ export async function POST(req: NextRequest) {
     // Construct absolute print URL with base64-encoded data
     // Include package param to control watermark display
     const packageParam = userPackage ? `&package=${encodeURIComponent(userPackage)}` : '';
-    const printUrl = `${BASE_URL}/candidate/cv/print/${templateId}?data=${encodeURIComponent(encodedData)}${packageParam}`;
+    const printUrl = `${baseUrl}/candidate/cv/print/${templateId}?data=${encodeURIComponent(encodedData)}${packageParam}`;
     console.log("🌐 Attempting to navigate to print page");
-    console.log("🔍 Base URL resolved to:", BASE_URL);
+    console.log("🔍 Base URL (from request origin):", baseUrl);
     console.log("🔍 Template:", templateId);
     console.log("🔍 User Package:", userPackage || "not specified (will show watermark)");
 

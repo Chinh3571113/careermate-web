@@ -3,6 +3,7 @@ import { useState, useEffect, useMemo, useCallback } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import JobCard from "../../../components/JobCard";
 import JobRecommendModal from "../../../components/JobRecommendModal";
+import SalaryRange from "../../../components/SalaryRange";
 import { RiMoneyDollarCircleLine } from "react-icons/ri";
 import { FiMapPin, FiSearch, FiX, FiStar } from "react-icons/fi";
 import { IoFilterOutline } from "react-icons/io5";
@@ -282,7 +283,27 @@ export default function JobsDetailPage() {
   const [showNoCVModal, setShowNoCVModal] = useState<boolean>(false);
   const [showCVAnalyseUpgradeModal, setShowCVAnalyseUpgradeModal] = useState<boolean>(false);
   const [hasCVAnalyseAccess, setHasCVAnalyseAccess] = useState<boolean | null>(null);
+  const [showSalaryDropdown, setShowSalaryDropdown] = useState<boolean>(false);
+  const [salaryRange, setSalaryRange] = useState<[number, number]>([500, 10000]);
   const [checkingCVAnalyseAccess, setCheckingCVAnalyseAccess] = useState<boolean>(false);
+
+  // Close salary dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (showSalaryDropdown && !target.closest('.salary-dropdown-container')) {
+        setShowSalaryDropdown(false);
+      }
+    };
+
+    if (showSalaryDropdown) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [showSalaryDropdown]);
 
   // ✅ Fetch candidateId if authenticated but missing
   useEffect(() => {
@@ -817,17 +838,17 @@ ${jobData.recruiterInfo?.about || 'N/A'}
                   </svg>
                 </div>
 
-                {/* Salary Dropdown */}
-                <div className="relative">
-                  <select className="appearance-none pl-3 pr-8 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 hover:bg-white cursor-pointer text-gray-700 text-sm font-medium transition-colors">
-                    <option>Salary</option>
-                    <option>Dưới 10 triệu</option>
-                    <option>10-15 triệu</option>
-                    <option>15-20 triệu</option>
-                    <option>20-30 triệu</option>
-                    <option>30-50 triệu</option>
-                    <option>Trên 50 triệu</option>
-                  </select>
+                {/* Salary Range Slider Dropdown */}
+                <div className="relative salary-dropdown-container">
+                  <button
+                    onClick={() => setShowSalaryDropdown(!showSalaryDropdown)}
+                    className="appearance-none pl-3 pr-8 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-gray-50 hover:bg-white cursor-pointer text-gray-700 text-sm font-medium transition-colors w-full text-left"
+                  >
+                    {salaryRange[0] === 500 && salaryRange[1] === 10000 
+                      ? 'Salary'
+                      : `$${salaryRange[0].toLocaleString()} - $${salaryRange[1].toLocaleString()}`
+                    }
+                  </button>
                   <svg
                     className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none"
                     fill="none"
@@ -836,6 +857,24 @@ ${jobData.recruiterInfo?.about || 'N/A'}
                   >
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
                   </svg>
+                  
+                  {/* Salary Dropdown Panel with SalaryRange Component */}
+                  {showSalaryDropdown && (
+                    <div className="absolute top-full left-0 mt-2 z-50">
+                      <SalaryRange
+                        minLimit={500}
+                        maxLimit={10000}
+                        onApply={(range) => {
+                          setSalaryRange([range.min, range.max]);
+                          setShowSalaryDropdown(false);
+                          console.log('Applied salary range:', range);
+                        }}
+                        onReset={() => {
+                          setSalaryRange([500, 10000]);
+                        }}
+                      />
+                    </div>
+                  )}
                 </div>
 
                 {/* Job Domain Dropdown */}

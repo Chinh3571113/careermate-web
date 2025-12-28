@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { Link, Menu } from "lucide-react";
+import { Menu } from "lucide-react";
+import Link from "next/link";
 import { ProfileDropdown } from "@/components/profile/ProfileDropdown";
 import { useAuthStore } from "@/store/use-auth-store";
 import { decodeJWT } from "@/lib/auth-admin";
@@ -147,21 +148,21 @@ export function RecruiterHeader({ sidebarOpen = false }: RecruiterHeaderProps) {
           {/* Nút menu */}
           <button
             onClick={toggleSidebar}
-            className="p-2 rounded-lg hover:bg-[#436a9d] transition-colors duration-200"
+            className="p-2 rounded-lg hover:bg-[#436a9d] transition-colors duration-200 flex-shrink-0"
             aria-label="Toggle sidebar"
           >
             <Menu className="h-5 w-5" />
           </button>
 
           {/* Tiêu đề */}
-          <h1 className="text-base md:text-lg font-semibold">CareerMate</h1>
+          <h1 className="text-base md:text-lg font-semibold whitespace-nowrap">CareerMate</h1>
         </div>
-        <div className="flex items-center gap-2 md:gap-4">
+        <div className="flex items-center gap-2 md:gap-4 min-w-0">
           {/* Bên phải header */}
-          <div className="flex items-center space-x-2 md:space-x-4">
+          <div className="flex items-center space-x-2 md:space-x-4 min-w-0">
             {isAuthenticated && user ? (
               <>
-                <span className="hidden md:inline text-gray-300 hover:text-white transition-colors text-xs lg:text-sm">
+                <span className="hidden md:inline text-gray-300 hover:text-white transition-colors text-xs lg:text-sm truncate">
                   For Recruiter {userInfo?.username || userInfo?.name || "abc"}
                 </span>
 
@@ -179,13 +180,13 @@ export function RecruiterHeader({ sidebarOpen = false }: RecruiterHeaderProps) {
                 <>
                   <Link
                     href="/sign-in"
-                    className="px-4 py-2 text-white hover:text-gray-300 transition-colors"
+                    className="px-3 py-2 md:px-4 text-sm md:text-base text-white hover:text-gray-300 transition-colors whitespace-nowrap"
                   >
                     Sign In
                   </Link>
                   <Link
                     href="/sign-up"
-                    className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+                    className="px-3 py-2 md:px-4 text-sm md:text-base bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors whitespace-nowrap"
                   >
                     Sign Up
                   </Link>

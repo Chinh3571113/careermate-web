@@ -118,6 +118,70 @@ export default function ManageJobsPage() {
     }
   }, [showCreateModal, showEditModal]);
 
+  // Load template data from sessionStorage if available
+  useEffect(() => {
+    const templateData = sessionStorage.getItem('jobTemplate');
+    if (templateData) {
+      try {
+        const template = JSON.parse(templateData);
+        console.log('📋 Loading job template:', template);
+        
+        // Fill form with template data
+        setFormData({
+          title: template.title || "",
+          description: template.description || "",
+          address: template.address || "",
+          expirationDate: "", // User should set this
+          yearsOfExperience: template.yearsOfExperience?.toString() || "",
+          workModel: template.workModel || "",
+          salaryRange: template.salaryRange || "",
+          reason: template.reason || "",
+          jobPackage: template.jobPackage || "",
+          skills: template.skills || [],
+        });
+        
+        // Open create modal
+        setShowCreateModal(true);
+        
+        // Clear sessionStorage after loading
+        sessionStorage.removeItem('jobTemplate');
+        
+        toast.success(`Template "${template.title}" loaded successfully!`);
+      } catch (error) {
+        console.error('Error loading template:', error);
+        toast.error('Failed to load template data');
+        sessionStorage.removeItem('jobTemplate');
+      }
+    }
+  }, []);
+
+  // Handle viewJobId from dashboard - open DETAIL modal (view-only) for specific job
+  useEffect(() => {
+    const viewJobId = sessionStorage.getItem('viewJobId');
+    if (viewJobId && jobs.length > 0) {
+      try {
+        const jobId = parseInt(viewJobId, 10);
+        const jobToView = jobs.find(job => job.id === jobId);
+        
+        if (jobToView) {
+          console.log('👁️ Opening job detail view:', jobToView);
+          setSelectedJob(jobToView);
+          setShowDetailModal(true); // Open Detail Modal (view-only), not Edit Modal
+          
+          // Clear sessionStorage after loading
+          sessionStorage.removeItem('viewJobId');
+        } else {
+          console.warn('Job not found with ID:', jobId);
+          sessionStorage.removeItem('viewJobId');
+        }
+      } catch (error) {
+        console.error('Error loading job for viewing:', error);
+        sessionStorage.removeItem('viewJobId');
+      }
+    }
+  }, [jobs]); // Depend on jobs array to wait until data is loaded
+
+
   const fetchSkillsData = async () => {
     try {
       setIsLoadingSkills(true);
@@ -1424,24 +1488,22 @@ export default function ManageJobsPage() {
                 </div>
               </div>
 
-              {/* Salary Range */}
-              <div>
-                <label className="flex items-center text-sm font-medium text-gray-700 mb-1">
-                  <DollarSign className="w-4 h-4 mr-1 text-gray-400" /> Salary Range <span className="text-red-500 ml-1">*</span>
-                </label>
-                <input
-                  type="text"
-                  name="salaryRange"
-                  value={formData.salaryRange}
-                  onChange={handleFormChange}
-                  className={`w-full p-2.5 border rounded-lg ${formErrors.salaryRange ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-sky-500 focus:border-transparent`}
-                  placeholder="e.g. $1000 - $2000 USD"
-                />
-                {formErrors.salaryRange && <p className="text-sm text-red-600 mt-1">{formErrors.salaryRange}</p>}
-              </div>
-
-              {/* Grid: Expiration Date & Privilege */}
+              {/* Grid: Salary Range & Expiration Date */}
               <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="flex items-center text-sm font-medium text-gray-700 mb-1">
+                    <DollarSign className="w-4 h-4 mr-1 text-gray-400" /> Salary Range <span className="text-red-500 ml-1">*</span>
+                  </label>
+                  <input
+                    type="text"
+                    name="salaryRange"
+                    value={formData.salaryRange}
+                    onChange={handleFormChange}
+                    className={`w-full p-2.5 border rounded-lg ${formErrors.salaryRange ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-sky-500 focus:border-transparent`}
+                    placeholder="e.g. $1500 - $3000"
+                  />
+                  {formErrors.salaryRange && <p className="text-sm text-red-600 mt-1">{formErrors.salaryRange}</p>}
+                </div>
                 <div>
                   <label className="flex items-center text-sm font-medium text-gray-700 mb-1">
                     <Calendar className="w-4 h-4 mr-1 text-gray-400" /> Expiration <span className="text-red-500 ml-1">*</span>
@@ -1455,20 +1517,22 @@ export default function ManageJobsPage() {
                   />
                   {formErrors.expirationDate && <p className="text-sm text-red-600 mt-1">{formErrors.expirationDate}</p>}
                 </div>
-                <div>
-                  <label className="flex items-center text-sm font-medium text-gray-700 mb-1">
-                    <Package className="w-4 h-4 mr-1 text-gray-400" /> Privilege <span className="text-red-500 ml-1">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="jobPackage"
-                    value={formData.jobPackage}
-                    onChange={handleFormChange}
-                    className={`w-full p-2.5 border rounded-lg ${formErrors.jobPackage ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-sky-500 focus:border-transparent`}
-                    placeholder="e.g. Health insurance, Gym"
-                  />
-                  {formErrors.jobPackage && <p className="text-sm text-red-600 mt-1">{formErrors.jobPackage}</p>}
-                </div>
+              </div>
+
+              {/* Privilege (Benefits & Additional Info) */}
+              <div>
+                <label className="flex items-center text-sm font-medium text-gray-700 mb-1">
+                  <Package className="w-4 h-4 mr-1 text-gray-400" /> Privilege <span className="text-red-500 ml-1">*</span>
+                </label>
+                <textarea
+                  name="jobPackage"
+                  value={formData.jobPackage}
+                  onChange={handleFormChange}
+                  rows={2}
+                  className={`w-full p-2.5 border rounded-lg ${formErrors.jobPackage ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-sky-500 focus:border-transparent`}
+                  placeholder="Benefits & Additional Info (Optional)"
+                />
+                {formErrors.jobPackage && <p className="text-sm text-red-600 mt-1">{formErrors.jobPackage}</p>}
               </div>
 
               {/* Skills */}
@@ -1740,13 +1804,13 @@ export default function ManageJobsPage() {
                 <label className="flex items-center text-sm font-medium text-gray-700 mb-1">
                   <Package className="w-4 h-4 mr-1 text-gray-400" /> Privilege <span className="text-red-500 ml-1">*</span>
                 </label>
-                <input
-                  type="text"
+                <textarea
                   name="jobPackage"
                   value={formData.jobPackage}
                   onChange={handleFormChange}
+                  rows={2}
                   className={`w-full p-2.5 border rounded-lg ${formErrors.jobPackage ? "border-red-500" : "border-gray-300"} focus:ring-2 focus:ring-amber-500 focus:border-transparent`}
-                  placeholder="e.g. Health insurance, Free lunch"
+                  placeholder="Benefits & Additional Info (Optional)"
                 />
                 {formErrors.jobPackage && <p className="text-sm text-red-600 mt-1">{formErrors.jobPackage}</p>}
               </div>
