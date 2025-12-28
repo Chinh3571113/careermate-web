@@ -9,7 +9,7 @@ const nextConfig = {
   outputFileTracingRoot: __dirname,
 
   // ========================================
-  // 🚀 PERFORMANCE OPTIMIZATIONS
+  // � PERFORMANCE OPTIMIZATIONS
   // ========================================
 
   // Temporarily ignore TypeScript errors during build
