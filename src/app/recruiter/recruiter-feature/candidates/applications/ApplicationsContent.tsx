@@ -5,8 +5,9 @@ import { useEffect, useState, useMemo } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { getJobApplications, getRecruiterApplications, getRecruiterApplicationsFiltered, approveJobApplication, rejectJobApplication, setReviewingJobApplication, JobApplication, updateJobApplicationStatus, extendJobOffer, getRecruiterJobPostings, RecruiterJobPosting } from "@/lib/recruiter-api";
 import { createEmploymentVerification } from "@/lib/employment-api";
+import { getInterviewByJobApplyId, InterviewScheduleResponse } from "@/lib/interview-api";
 import { getRecruiterActions, sortStatuses } from "@/lib/status-utils";
-import { JobApplicationStatus } from "@/types/status";
+import { JobApplicationStatus, StatusAction } from "@/types/status";
 import toast from "react-hot-toast";
 import {
   Dialog,
@@ -41,19 +42,17 @@ export function ApplicationsContent() {
   const [filteredApplications, setFilteredApplications] = useState<JobApplication[]>([]);
   const [jobPostings, setJobPostings] = useState<RecruiterJobPosting[]>([]);
   const [isLoading, setIsLoading] = useState(false);
-  
-  // Get query params for search and job filter
-  const searchParam = searchParams.get('search');
-  const jobIdParam = searchParams.get('jobId');
-  const jobPostingIdParam = searchParams.get('jobPostingId');
-  
-  const [searchQuery, setSearchQuery] = useState(searchParam || "");
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectedStatus, setSelectedStatus] = useState<string>("ALL");
-  const [selectedJobId, setSelectedJobId] = useState<string>(jobIdParam || "all");
+  const [selectedJobId, setSelectedJobId] = useState<string>("all");
   // Get jobPostingId from URL params if provided, otherwise fetch all
+  const jobPostingIdParam = searchParams.get('jobPostingId');
   const [jobPostingId, setJobPostingId] = useState<number | null>(
     jobPostingIdParam ? parseInt(jobPostingIdParam) : null
   );
+  
+  // Interview data cache for checking if reschedule should be disabled
+  const [interviewDataMap, setInterviewDataMap] = useState<Record<number, InterviewScheduleResponse>>({});
 
   // Dialog states
   const [selectedApplication, setSelectedApplication] = useState<JobApplication | null>(null);
@@ -79,6 +78,33 @@ export function ApplicationsContent() {
     'OFFER_EXTENDED',
     'REJECTED',
   ];
+
+  // Helper to check if interview has ended (past scheduled time + duration)
+  const hasInterviewEnded = (interview: InterviewScheduleResponse | undefined): boolean => {
+    if (!interview) return false;
+    const dateStr = interview.scheduledDate || interview.interviewDateTime;
+    if (!dateStr) return false;
+    
+    const startTime = new Date(dateStr).getTime();
+    const endTime = startTime + (interview.durationMinutes || 60) * 60 * 1000;
+    return Date.now() >= endTime;
+  };
+
+  // Get filtered recruiter actions - removes reschedule for past interviews
+  const getFilteredRecruiterActions = (application: JobApplication): StatusAction[] => {
+    const actions = getRecruiterActions(application.status);
+    
+    // For INTERVIEW_SCHEDULED status, check if interview has ended
+    if (application.status === 'INTERVIEW_SCHEDULED') {
+      const interview = interviewDataMap[application.id];
+      if (hasInterviewEnded(interview)) {
+        // Filter out reschedule action for past interviews
+        return actions.filter(action => action.action !== 'reschedule');
+      }
+    }
+    
+    return actions;
+  };
 
   // Compact status badge component
   const StatusBadge = ({ status }: { status: string }) => {
@@ -247,23 +273,28 @@ export function ApplicationsContent() {
       }
 
       if (response.code === 200 && response.result) {
-        // Sort by createAt descending (newest first) for better demo
-        const sortedApplications = [...response.result].sort((a, b) => {
-          const dateA = new Date(a.createAt).getTime();
-          const dateB = new Date(b.createAt).getTime();
-          return dateB - dateA; // Descending order (newest first)
-        });
-        setApplications(sortedApplications);
-        setFilteredApplications(sortedApplications);
+        setApplications(response.result);
+        setFilteredApplications(response.result);
+        
+        // Fetch interview data for INTERVIEW_SCHEDULED applications
+        const interviewScheduledApps = response.result.filter(
+          (app: JobApplication) => app.status === 'INTERVIEW_SCHEDULED'
+        );
+        if (interviewScheduledApps.length > 0) {
+          fetchInterviewData(interviewScheduledApps);
+        }
       } else if (response.code === 0 && response.result) {
-        // Legacy response format - also sort by newest first
-        const sortedApplications = [...response.result].sort((a, b) => {
-          const dateA = new Date(a.createAt).getTime();
-          const dateB = new Date(b.createAt).getTime();
-          return dateB - dateA;
-        });
-        setApplications(sortedApplications);
-        setFilteredApplications(sortedApplications);
+        // Legacy response format
+        setApplications(response.result);
+        setFilteredApplications(response.result);
+        
+        // Fetch interview data for INTERVIEW_SCHEDULED applications
+        const interviewScheduledApps = response.result.filter(
+          (app: JobApplication) => app.status === 'INTERVIEW_SCHEDULED'
+        );
+        if (interviewScheduledApps.length > 0) {
+          fetchInterviewData(interviewScheduledApps);
+        }
       } else {
         toast.error(response.message || "Failed to fetch applications");
       }
@@ -275,6 +306,27 @@ export function ApplicationsContent() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  // Fetch interview data for applications with scheduled interviews
+  const fetchInterviewData = async (apps: JobApplication[]) => {
+    const newInterviewData: Record<number, InterviewScheduleResponse> = {};
+    
+    await Promise.all(
+      apps.map(async (app) => {
+        try {
+          const result = await getInterviewByJobApplyId(app.id);
+          if (result.found) {
+            newInterviewData[app.id] = result.interview;
+          }
+        } catch (error) {
+          // Interview data not found - ignore
+          console.log(`No interview data for application ${app.id}`);
+        }
+      })
+    );
+    
+    setInterviewDataMap(prev => ({ ...prev, ...newInterviewData }));
   };
 
   useEffect(() => {
@@ -302,32 +354,6 @@ export function ApplicationsContent() {
 
     setFilteredApplications(filtered);
   }, [searchQuery, selectedStatus, applications]);
-
-  // Handle viewApplicationId from dashboard - open detail modal for specific application
-  useEffect(() => {
-    const viewApplicationId = sessionStorage.getItem('viewApplicationId');
-    if (viewApplicationId && applications.length > 0) {
-      try {
-        const applicationId = parseInt(viewApplicationId, 10);
-        const applicationToView = applications.find(app => app.id === applicationId);
-        
-        if (applicationToView) {
-          console.log('👁️ Opening application for viewing:', applicationToView);
-          setSelectedApplication(applicationToView);
-          setIsDetailDialogOpen(true);
-          
-          // Clear sessionStorage after loading
-          sessionStorage.removeItem('viewApplicationId');
-        } else {
-          console.warn('Application not found with ID:', applicationId);
-          sessionStorage.removeItem('viewApplicationId');
-        }
-      } catch (error) {
-        console.error('Error loading application for viewing:', error);
-        sessionStorage.removeItem('viewApplicationId');
-      }
-    }
-  }, [applications]); // Depend on applications array to wait until data is loaded
 
   // Approve
   const handleApprove = async () => {
@@ -539,18 +565,18 @@ export function ApplicationsContent() {
 
                         {/* Primary Action Button - Fixed width */}
                         <div className="w-[130px] shrink-0">
-                          {getRecruiterActions(application.status).length > 0 && (
+                          {getFilteredRecruiterActions(application).length > 0 && (
                             <Button
-                              variant={getRecruiterActions(application.status)[0].variant as any}
+                              variant={getFilteredRecruiterActions(application)[0].variant as any}
                               size="sm"
                               onClick={() => handleRecruiterAction(
-                                getRecruiterActions(application.status)[0].action,
+                                getFilteredRecruiterActions(application)[0].action,
                                 application.id
                               )}
                               className="h-8 text-xs w-full justify-center"
                             >
                               {(() => {
-                                const label = getRecruiterActions(application.status)[0].label;
+                                const label = getFilteredRecruiterActions(application)[0].label;
                                 if (label === 'Terminate Employment') return 'Terminate';
                                 if (label === 'Schedule Interview') return 'Schedule';
                                 if (label === 'Start Employment') return 'Start';
@@ -563,7 +589,7 @@ export function ApplicationsContent() {
 
                         {/* More Actions Dropdown - Fixed position */}
                         <div className="w-8 shrink-0">
-                          {getRecruiterActions(application.status).length > 1 && (
+                          {getFilteredRecruiterActions(application).length > 1 && (
                             <DropdownMenu>
                               <DropdownMenuTrigger asChild>
                                 <Button variant="outline" size="sm" className="h-8 w-8 p-0">
@@ -571,7 +597,7 @@ export function ApplicationsContent() {
                                 </Button>
                               </DropdownMenuTrigger>
                               <DropdownMenuContent align="end" className="w-48">
-                                {getRecruiterActions(application.status).slice(1).map((statusAction, index) => (
+                                {getFilteredRecruiterActions(application).slice(1).map((statusAction, index) => (
                                   <DropdownMenuItem
                                     key={statusAction.action}
                                     onClick={() => handleRecruiterAction(statusAction.action, application.id)}

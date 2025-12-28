@@ -413,8 +413,10 @@ function ScheduleInterviewContent() {
       const isLunchTime = slotMinutes >= lunchStartMinutes && slotMinutes < lunchEndMinutes;
       
       // Find overlapping interviews for this slot
+      // Use <= endMinutes to show same number of slots as preview (1 + duration/15)
+      // E.g., 60min from 9:00: shows 9:00, 9:15, 9:30, 9:45, 10:00 (5 slots)
       const overlappingInterviews = existingInterviews.filter(interview => 
-        slotMinutes >= interview.startMinutes && slotMinutes < interview.endMinutes
+        slotMinutes >= interview.startMinutes && slotMinutes <= interview.endMinutes
       );
       
       // Check if this is own interview (for reschedule)
@@ -941,9 +943,9 @@ function ScheduleInterviewContent() {
                         
                         // Duration preview - calculate how many slots the meeting covers
                         // Formula: 1 slot for start + (duration / 15) additional slots
-                        // E.g., 60min = 1 + 60/15 = 5 slots total (start + 4 more)
-                        // E.g., 30min = 1 + 30/15 = 3 slots total (start + 2 more)
-                        // E.g., 45min = 1 + 45/15 = 4 slots total (start + 3 more)
+                        // E.g., 60min = 1 + 60/15 = 5 slots total (indices 0, 1, 2, 3, 4)
+                        // E.g., 30min = 1 + 30/15 = 3 slots total (indices 0, 1, 2)
+                        // E.g., 45min = 1 + 45/15 = 4 slots total (indices 0, 1, 2, 3)
                         let isInDurationPreview = false;
                         if (form.scheduledTime && !isSelected) {
                           const [selectedHour, selectedMin] = form.scheduledTime.split(':').map(Number);

@@ -81,20 +81,20 @@ export function RecruiterLayoutWrapper({ children }: RecruiterLayoutWrapperProps
     const showSetupPrompt = !checkingWorkingHours && hasWorkingHours === false && !isAllowedPage;
 
     return (
-        <div className="min-h-screen bg-white">
-            {/* Header full width */}
+        <div className="min-h-screen bg-white overflow-x-hidden">
+            {/* Header - fixed at top */}
             <RecruiterHeader sidebarOpen={sidebarOpen} />
             
-            <div className="flex">
+            <div className="flex pt-[60px]">
                 {/* Sidebar */}
                 <RecruiterSidebar />
                 
                 {/* Main content */}
                 <main
-                    className={`flex-1 transition-all duration-300 ${sidebarOpen ? 'ml-64' : 'ml-16'
+                    className={`flex-1 transition-all duration-300 min-w-0 ${sidebarOpen ? 'ml-64' : 'ml-16'
                         }`}
                 >
-                    <div className="px-4 py-8">
+                    <div className="px-4 py-8 overflow-x-auto">
                         <div className="mx-auto max-w-6xl">
                             {showSetupPrompt ? (
                                 <div className="flex items-center justify-center min-h-[60vh]">
