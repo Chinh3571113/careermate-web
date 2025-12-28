@@ -747,6 +747,16 @@ export default function CMProfile() {
       await api.put("/api/candidates/profiles", profileData);
 
       toast.success("Personal details updated successfully!");
+      // Generate highlighted resume (roadmap) after personal details save (non-blocking)
+      try {
+        if (resumeId) {
+          await generateHighlightedResume(resumeId);
+          console.log('✅ Highlighted resume generated after saving personal details');
+        }
+      } catch (err: any) {
+        console.error('❌ Error generating highlighted resume after personal details save:', err);
+      }
+
       setIsPersonalDetailOpen(false);
     } catch (error: any) {
       toast.error("Failed to update personal details. Please try again.");
