@@ -34,6 +34,13 @@ export interface DashboardStats {
   flaggedComments: number;
   flaggedRatings: number;
   
+  // Revenue & Payment Statistics
+  totalRevenue: number;
+  recruiterRevenue: number;
+  candidateRevenue: number;
+  activeSubscriptions: number;
+  totalTransactions: number;
+  
   // System Health (Simplified!)
   databaseStatus: 'UP' | 'DOWN' | 'UNKNOWN';
   kafkaStatus: 'UP' | 'DOWN' | 'UNKNOWN';
